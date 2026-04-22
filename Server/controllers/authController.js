@@ -106,13 +106,13 @@ export const register = async (req, res) => {
             ownerDetails: role === "theatre_owner" ? ownerDetails : {}
         });
 
-        const accessToken = generateAccessToken({id: user.id, role: user.role})
-        const refreshToken = generateRefreshToken({id: user.id, role: user.role})
+        const accessToken = generateAccessToken({id: user._id, role: user.role})
+        const refreshToken = generateRefreshToken({id: user._id, role: user.role})
 
         res.cookie("refreshtoken",refreshToken, {
             httpOnly: true,
             secure: false,
-            sameSite: "strict",
+            sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
@@ -165,13 +165,13 @@ export const login = async (req, res) => {
             })
         }
 
-        const accessToken = generateAccessToken({id: user.id, role: user.role})
-        const refreshToken = generateRefreshToken({id: user.id, role: user.role})
+        const accessToken = generateAccessToken({id: user._id, role: user.role})
+        const refreshToken = generateRefreshToken({id: user._id, role: user.role})
 
         res.cookie("refreshtoken",refreshToken, {
             httpOnly: true,
             secure: false,
-            sameSite: "strict",
+            sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
@@ -190,8 +190,8 @@ export const logout = async (req, res) => {
 
     if (token) {
       const decoded = jwt.decode(token);
-      if (decoded?.id) {
-        await User.findByIdAndUpdate(decoded.id, { refreshToken: null });
+      if (decoded?._id) {
+        await User.findByIdAndUpdate(decoded._id, { refreshToken: null });
       }
     }
 
@@ -217,9 +217,9 @@ export const refresh = async (req, res) => {
 
     try {
         
-        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-        const user = await User.findById(decoded.id);
+        const user = await User.findById(decoded._id);
 
         if (!user || user.refreshToken !== token) {
           return res.status(403).json({ 
@@ -229,7 +229,7 @@ export const refresh = async (req, res) => {
         }
 
         const newAccessToken = generateAccessToken({
-            id: decoded.id,
+            id: decoded._id,
             role: decoded.role
         })
 
