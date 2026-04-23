@@ -2,6 +2,8 @@ import express from 'express';
 import passport from "passport";
 import {connectDB} from './config/connectDB.js'
 import authRoutes from './routes/authRoutes.js'
+import movieRoutes from './routes/movieRoutes.js'
+import actorRoutes from './routes/actorRoutes.js'
 import cookieParser from 'cookie-parser';
 import cors from "cors";
 import dotenv from "dotenv";
@@ -26,6 +28,8 @@ app.get('/', (req, res) => {
 })
 
 app.use("/api/auth", authRoutes)
+app.use("/api/movies", movieRoutes)
+app.use("/api/actors", actorRoutes)
 
 app.listen(port, () => {
     console.log(`server started on port ${port}`)
