@@ -15,9 +15,6 @@ export const register = async (req, res) => {
     }
 
     try {
-        let isUpperCase = /[A-Z]/g;
-        let isLowerCase = /[a-z]/g;
-        let isNumber = /[0-9]/g;
         let validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
         if(!validEmail.test(email)){
@@ -37,27 +34,6 @@ export const register = async (req, res) => {
             });
         }
 
-
-        if(!isUpperCase.test(password)){
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 1 uppercase letter"
-            })
-        }
-
-        if(!isLowerCase.test(password)){
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 1 lowercase letter"
-            })
-        }
-
-        if(!isNumber.test(password)){
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 1 number"
-            })
-        }
 
         if(password.length < 8){
             return res.status(400).json({
