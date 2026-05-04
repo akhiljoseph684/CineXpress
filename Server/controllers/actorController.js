@@ -19,7 +19,7 @@ export const createActor = async (req, res) => {
     return res.status(201).json({
         success: true,
         message: "Actor Created Successfully",
-        actor
+        data: actor
     })
 
 }
@@ -40,7 +40,7 @@ export const getActors = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Actors fetched Successfully",
-            actors
+            data: actors
         })
 
     } catch (error) {
@@ -77,7 +77,7 @@ export const getActorById = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Actor Fetched Successfully",
-            actor
+            data: actor
         })
 
     } catch (error) {
