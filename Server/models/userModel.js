@@ -56,6 +56,10 @@ const userSchema = new mongoose.Schema({
     preferredCity: {
         type: String,
         default: ""
+    },
+    refreshToken: {
+        type: String,
+        default: null
     }
 },{ timestamps: true })
 

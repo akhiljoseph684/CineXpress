@@ -1,4 +1,6 @@
 import express from 'express';
+import dotenv from "dotenv";
+dotenv.config();
 import passport from "passport";
 import {connectDB} from './config/connectDB.js'
 import authRoutes from './routes/authRoutes.js'
@@ -7,9 +9,6 @@ import actorRoutes from './routes/actorRoutes.js'
 import theatreRoutes from './routes/theatreRoutes.js'
 import cookieParser from 'cookie-parser';
 import cors from "cors";
-import dotenv from "dotenv";
-dotenv.config();
-
 import "./config/passport.js";
 
 connectDB()

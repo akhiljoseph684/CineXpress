@@ -15,10 +15,12 @@ passport.use(new GoogleStrategy({
 
     let user = await User.findOne({ email });
 
-    if(user && user.provider === "local"){
-      return done(null,  false,{
-        message: "This email is registered with email/password. Please login using credentials."
-      })
+    if (user && user.provider === "local") {
+      user.googleId = profile.id;
+      user.provider = "google";
+      await user.save();
+
+      return done(null, user);
     }
 
     if (user) {

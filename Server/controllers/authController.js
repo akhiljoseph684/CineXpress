@@ -10,6 +10,7 @@ export const register = async (req, res) => {
     if(!name || !email || !password){
         return res.status(400).json({
             success: false,
+            field: !name ? "name" : !email ? "email" : "password",
             message: "Fill the Empty Fields"
         })
     }
@@ -20,6 +21,7 @@ export const register = async (req, res) => {
         if(!validEmail.test(email)){
             return res.status(400).json({
                 success: false,
+                field: "email",
                 message: "Please enter a valid email address."
             })
         }
@@ -30,6 +32,7 @@ export const register = async (req, res) => {
         if(existUser){
             return res.status(409).json({
                 success: false,
+                field: "email",
                 message: "User is Already exists"
             });
         }
@@ -38,6 +41,7 @@ export const register = async (req, res) => {
         if(password.length < 8){
             return res.status(400).json({
                 success: false,
+                field: "password",
                 message: "Password must be at least 8 characters"
             })
         }
@@ -85,7 +89,10 @@ export const register = async (req, res) => {
         const accessToken = generateAccessToken({id: user._id, role: user.role})
         const refreshToken = generateRefreshToken({id: user._id, role: user.role})
 
-        res.cookie("refreshtoken",refreshToken, {
+        user.refreshToken = refreshToken;
+        await user.save()
+
+        res.cookie("refreshToken",refreshToken, {
             httpOnly: true,
             secure: false,
             sameSite: "lax",
@@ -95,10 +102,14 @@ export const register = async (req, res) => {
         return res.status(201).json({
             success: true,
             message: "User Registered Successfully",
+            user: {
+                name: user.name,
+                email: user.email
+            },
             accessToken
         })
     } catch (error) {
-        return res.status(400).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         })
@@ -112,6 +123,7 @@ export const login = async (req, res) => {
         if(!email || !password){
             return res.status(400).json({
                 success: false,
+                field: !email ? "email" : "password",
                 message: "Fill the Empty Fields"
             })
         }
@@ -144,7 +156,10 @@ export const login = async (req, res) => {
         const accessToken = generateAccessToken({id: user._id, role: user.role})
         const refreshToken = generateRefreshToken({id: user._id, role: user.role})
 
-        res.cookie("refreshtoken",refreshToken, {
+        user.refreshToken = refreshToken;
+        await user.save()
+
+        res.cookie("refreshToken",refreshToken, {
             httpOnly: true,
             secure: false,
             sameSite: "lax",
@@ -154,10 +169,17 @@ export const login = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Login successful",
+            user: {
+                name: user.name,
+                email: user.email
+            },
             accessToken
         })
     } catch (error) {
-        
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
     }
 }
 
@@ -166,59 +188,59 @@ export const logout = async (req, res) => {
 
     if (token) {
       const decoded = jwt.decode(token);
-      if (decoded?._id) {
-        await User.findByIdAndUpdate(decoded._id, { refreshToken: null });
+      if (decoded?.id) {
+        await User.findByIdAndUpdate(decoded.id, { refreshToken: null });
       }
     }
 
-    res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
 
     res.json({ 
-        success: false,
+        success: true,
         message: "Logged out" 
     });
 }
 
 
 export const refresh = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.cookies.refreshToken;
 
-    if (!refreshToken) {
-        return res.status(401).json({
-            success: false,
-            message: "No refresh token" 
-        });
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "No refresh token"
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decoded.id);
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid refresh token"
+      });
     }
 
-    try {
-        
-        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const newAccessToken = generateAccessToken({
+      id: user._id,
+      role: user.role
+    });
 
-        const user = await User.findById(decoded._id);
+    return res.status(200).json({
+      success: true,
+      accessToken: newAccessToken
+    });
 
-        if (!user || user.refreshToken !== token) {
-          return res.status(403).json({ 
-            success: false,
-            message: "Invalid refresh token" 
-        });
-        }
-
-        const newAccessToken = generateAccessToken({
-            id: decoded._id,
-            role: decoded.role
-        })
-
-        return res.staus(200).json({
-            success: true,
-            accessToken: newAccessToken
-        })
-
-    } catch (error) {
-        return res.status(403).json({
-            success: false,
-            message: error.message
-        });
-    }
-}
-
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
