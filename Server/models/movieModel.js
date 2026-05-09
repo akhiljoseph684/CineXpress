@@ -15,11 +15,17 @@ const movieSchema = new mongoose.Schema({
         required: true
     },
     language: {
-        type: [String],
+        type: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Language",
+        }],
         default: []
     },
     genre: {
-        type: [String],
+        type: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Genre",
+        }],
         default: []
     },
     releaseDate: {
@@ -56,6 +62,34 @@ const movieSchema = new mongoose.Schema({
             trim: true
         }
     }],
+    reviews: [{
+        comments: {
+            type: String
+        },
+        stars: {
+            type: Number,
+            min: 1,
+            max: 5
+        }
+    }],
+    director: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    
+    producer: {
+      type: String,
+      trim: true,
+    },
+    trailer: {
+        type: String,
+        trim: true
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"

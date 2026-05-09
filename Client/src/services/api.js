@@ -26,7 +26,7 @@ API.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const res = await API.get("/auth/refresh");
+        const res = await API.post("/auth/refresh");
 
         const newToken = res.data.accessToken;
 
