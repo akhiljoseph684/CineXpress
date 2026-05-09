@@ -8,7 +8,6 @@ const router = express.Router();
 router.post("/", authMiddleware, verifyAdmin, createMovie);
 router.get("/", authMiddleware, getAllMovies);
 router.get("/:id", authMiddleware, getMovieById);
-router.get("/search",authMiddleware, searchMovies);
 router.put("/:id", authMiddleware, verifyAdmin, editMovie);
 router.delete("/:id", authMiddleware, verifyAdmin, deleteMovie);
 router.patch("/status/:id", authMiddleware, verifyAdmin, updateMovieStatus);

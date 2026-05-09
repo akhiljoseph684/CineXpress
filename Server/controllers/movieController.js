@@ -304,10 +304,6 @@ export const getMovieById = async (req, res) => {
     }
 }
 
-export const searchMovies = async (req, res) => {
-    
-};
-
 export const editMovie = async (
   req,
   res
@@ -332,9 +328,6 @@ export const editMovie = async (
       trailer
     } = req.body;
 
-    // =====================
-    // FIND MOVIE
-    // =====================
     const movie =
       await Movie.findOne({
         _id: id,
@@ -350,9 +343,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // TITLE
-    // =====================
     if (!title) {
 
       return res.status(400).json({
@@ -363,9 +353,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // DURATION
-    // =====================
     if (!duration) {
 
       return res.status(400).json({
@@ -376,8 +363,7 @@ export const editMovie = async (
       });
     }
 
-    let dur =
-      Number(duration);
+    let dur = Number(duration);
 
     if (isNaN(dur)) {
 
@@ -402,9 +388,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // RELEASE DATE
-    // =====================
     if (!releaseDate) {
 
       return res.status(400).json({
@@ -471,9 +454,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // DIRECTOR
-    // =====================
     if (!director) {
 
       return res.status(400).json({
@@ -484,9 +464,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // LANGUAGE
-    // =====================
     if (
       !language ||
       !language.length
@@ -500,9 +477,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // GENRE
-    // =====================
     if (
       !genre ||
       !genre.length
@@ -516,9 +490,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // POSTER
-    // =====================
     const {
       card,
       banner,
@@ -539,9 +510,6 @@ export const editMovie = async (
       });
     }
 
-    // =====================
-    // CAST
-    // =====================
     const formattedCast =
       (cast || []).map(
         (actor) => {
@@ -565,9 +533,6 @@ export const editMovie = async (
         }
       );
 
-    // =====================
-    // UPDATE MOVIE
-    // =====================
     movie.title =
       title;
 

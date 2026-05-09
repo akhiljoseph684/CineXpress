@@ -49,15 +49,6 @@ export const deleteMovie = async (id) => {
     }
 }
 
-// export const searchMovies = async (query) => {
-//     try {
-//         const res = await API.get("/movies" + query);
-//         return res.data
-//     } catch (error) {
-//         throw error.response?.data
-//     }
-// }
-
 export const updateMovieStatus = async (id, status) => {
     try {
       const res = await API.patch(`/movies/status/${id}`, { status });
