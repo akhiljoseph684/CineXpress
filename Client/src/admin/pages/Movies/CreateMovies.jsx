@@ -64,7 +64,7 @@ function CreateMovie() {
           return;
         }
 
-        const res = await searchActors("name=" + actorSearch);
+        const res = await searchActors("?name=" + actorSearch);
 
         setActors(res.actors || []);
 
