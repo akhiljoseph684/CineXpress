@@ -23,34 +23,101 @@ function Movies() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1); 
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchMovies("all");
   }, []);
+  useEffect(() => {
 
-  const fetchMovies = async (status = "all") => {
+    const timer =
+      setTimeout(() => {
+
+        fetchMovies(
+          activeFilter,
+          search,
+          1
+        );
+
+      }, 500);
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [
+    search,
+    activeFilter
+  ]);
+
+  const fetchMovies = async (status = "all",title = "",currentPage = 1) => {
+
     try {
+
       setLoading(true);
 
       setError("");
 
-      const query = status !== "all" ? `?status=${status}` : "";
+      let query = [];
 
-      const res = await getAllMovies(query);
+      if (status && status !== "all") {
+        query.push(
+          `status=${status}`
+        );
+      }
+
+      if (title.trim()) {
+        query.push(
+          `title=${title}`
+        );
+      }
+
+      query.push(
+        `page=${currentPage}`
+      );
+
+      query.push("limit=12");
+
+      const queryString =
+        `?${query.join("&")}`;
+
+      const res = await getAllMovies(queryString);
 
       if (!res.success) {
-        setError(res.message);
+
+        setError(
+          res.message
+        );
 
         return;
       }
 
-      setMovies(res.movies || []);
+      setMovies(
+        res.movies || []
+      );
+
+      setTotalPages(
+        res.totalPages || 1
+      );
+
+      setPage(
+        res.currentPage || 1
+      );
+
     } catch (error) {
-      setError(error?.message || "Failed to fetch movies");
+
+      setError(
+        error?.message ||
+        "Failed to fetch movies"
+      );
+
     } finally {
+
       setLoading(false);
     }
   };
+
 
   const handleDelete = async (id) => {
     try {
@@ -168,6 +235,32 @@ function Movies() {
         </div>
       ) : (
         <>
+        <div className="mb-8">
+
+          <input
+            type="text"
+            placeholder="Search movies..."
+            value={search}
+            onChange={(e) => {
+            
+              const value =
+                e.target.value;
+            
+              setSearch(value);
+            }}
+            className="
+              w-full
+              bg-[#1a1a1a]
+              border border-gray-800
+              rounded-2xl
+              px-5 py-4
+              outline-none
+              focus:border-[#8b5c76]
+              transition
+            "
+          />
+
+        </div>
           <div
             className="
             flex flex-wrap
@@ -201,8 +294,12 @@ function Movies() {
                 key={item.value}
                 onClick={() => {
                   setActiveFilter(item.value);
-
-                  fetchMovies(item.value);
+                  setPage(1);
+                  fetchMovies(
+                    item.value,
+                    search,
+                    1
+                  );
                 }}
                 className={`
                 px-5 py-3
@@ -345,6 +442,7 @@ function Movies() {
                           className="
                     flex items-center
                     justify-between
+                    gap-5
                   "
                         >
                           <span>Language</span>
@@ -438,6 +536,7 @@ function Movies() {
                   </div>
                 );
               })
+              
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <h2 className="text-2xl font-semibold text-gray-700">
@@ -450,10 +549,113 @@ function Movies() {
               </div>
             )}
           </div>
-        </>
-      )}
-    </div>
-  );
-}
+  {
+    totalPages > 2 && (
+
+      <div
+        className="
+          flex items-center
+          justify-center
+          gap-3
+          mt-10
+          flex-wrap
+        "
+      >
+
+        <button
+          disabled={page === 1}
+          onClick={() =>
+            fetchMovies(
+              activeFilter,
+              search,
+              page - 1
+            )
+          }
+          className="
+            px-5 py-3
+            rounded-xl
+            bg-[#1a1a1a]
+            border border-gray-800
+            disabled:opacity-50
+          "
+        >
+
+          Prev
+
+        </button>
+
+        {[...Array(totalPages)]
+          .map((_, index) => {
+
+            const pageNumber =
+              index + 1;
+
+            return (
+
+              <button
+                key={pageNumber}
+                onClick={() =>
+                  fetchMovies(
+                    activeFilter,
+                    search,
+                    pageNumber
+                  )
+                }
+                className={`
+                  w-12 h-12
+                  rounded-xl
+                  border
+                  transition
+
+                  ${
+                    page ===
+                    pageNumber
+
+                      ? "bg-gradient-to-r from-[#8b5c76] to-[#6f4660] border-[#8b5c76]"
+
+                      : "bg-[#1a1a1a] border-gray-800"
+                  }
+                `}
+              >
+
+                {pageNumber}
+
+              </button>
+            );
+          })}
+
+        <button
+          disabled={
+            page ===
+            totalPages
+          }
+          onClick={() =>
+            fetchMovies(
+              activeFilter,
+              search,
+              page + 1
+            )
+          }
+          className="
+            px-5 py-3
+            rounded-xl
+            bg-[#1a1a1a]
+            border border-gray-800
+            disabled:opacity-50
+          "
+        >
+
+          Next
+
+        </button>
+
+      </div>
+    )
+  }
+          </>
+        )}
+      </div>
+    );
+  }
 
 export default Movies;

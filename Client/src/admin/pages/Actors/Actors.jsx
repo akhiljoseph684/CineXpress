@@ -7,13 +7,13 @@ import {
   FaPlus,
   FaEdit,
   FaTrash,
-  FaEye,
+  FaSearch,
 } from "react-icons/fa";
 
 import {
   useNavigate,
 } from "react-router-dom";
-import { deleteActor, getAllActors } from "../../../services/actorsApi";
+import { deleteActor, getAllActors, searchActors } from "../../../services/actorsApi";
 
 function Actors() {
 
@@ -23,34 +23,83 @@ function Actors() {
 
   const [loading, setLoading] = useState(false);
 
-  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
 
-  // =========================
-  // FETCH ACTORS
-  // =========================
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1); 
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
 
     fetchActors();
 
   }, []);
 
-  const fetchActors = async () => {
+  useEffect(() => {
+
+    const timer =
+      setTimeout(() => {
+
+        fetchActors(search, 1);
+
+      }, 500);
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [search]);
+
+
+  const fetchActors = async (name = "", currentPage = 1) => {
 
     try {
 
       setLoading(true);
 
-      const res = await getAllActors();
+      setError("");
+
+      let query = [];
+
+      if (name.trim()) {
+
+        query.push(
+          `name=${name}`
+        );
+      }
+
+      query.push(
+        `page=${currentPage}`
+      );
+
+      query.push(
+        "limit=12"
+      );
+
+      const queryString =
+        `?${query.join("&")}`;
+
+      const res =
+        await searchActors(
+          queryString
+        );
 
       if (!res.success) {
 
-        setError(res.message);
+        setError(
+          res.message
+        );
 
         return;
       }
 
       setActors(
         res.actors || []
+      );
+
+      setTotalPages(res.totalPages || 1);
+
+      setPage(
+        res.currentPage || 1
       );
 
     } catch (error) {
@@ -66,9 +115,7 @@ function Actors() {
     }
   };
 
-  // =========================
-  // DELETE ACTOR
-  // =========================
+
   const handleDelete = async (
     id
   ) => {
@@ -95,19 +142,13 @@ function Actors() {
     }
   };
 
-  // =========================
-  // EDIT ACTOR
-  // =========================
   const handleEdit = (id) => {
 
     navigate(
-      `/admin/actors/create/${id}`
+      `/admin/actors/edit/${id}`
     );
   };
 
-  // =========================
-  // DETAILS
-  // =========================
   const handleDetails = (
     id
   ) => {
@@ -120,7 +161,6 @@ function Actors() {
   return (
     <div className="w-full">
 
-      {/* HEADER */}
       <div
         className="
           flex flex-col md:flex-row
@@ -142,7 +182,6 @@ function Actors() {
 
         </div>
 
-        {/* CREATE BUTTON */}
         <button
           onClick={() =>
             navigate(
@@ -172,7 +211,6 @@ function Actors() {
 
       </div>
 
-      {/* ERROR */}
       {error && (
 
         <div
@@ -218,8 +256,46 @@ function Actors() {
 
         </div>
       )}
+      <div className="mb-8">
 
-      {/* LOADING */}
+        <div className="relative">
+
+          <FaSearch
+            className="
+              absolute
+              left-4 top-1/2
+              -translate-y-1/2
+              text-gray-500
+            "
+          />
+
+          <input
+            type="text"
+            placeholder="Search actors..."
+            value={search}
+            onChange={(e) => {
+            
+              const value =
+                e.target.value;
+            
+              setSearch(value);
+            }}
+            className="
+              w-full
+              bg-[#1a1a1a]
+              border border-gray-800
+              rounded-2xl
+              pl-12 pr-4 py-4
+              outline-none
+              focus:border-[#8b5c76]
+              transition
+            "
+          />
+
+        </div>
+          
+      </div>
+
       {loading && (
 
         <div className="text-center py-20 text-gray-400">
@@ -227,7 +303,6 @@ function Actors() {
         </div>
       )}
 
-      {/* EMPTY */}
       {!loading &&
         actors.length === 0 &&
         !error && (
@@ -285,7 +360,6 @@ function Actors() {
         </div>
       )}
 
-      {/* ACTORS GRID */}
       {!loading &&
         actors.length > 0 && (
 
@@ -314,7 +388,6 @@ function Actors() {
               "
             >
 
-              {/* PROFILE */}
               <div
                 className="
                   flex flex-col
@@ -368,7 +441,6 @@ function Actors() {
 
               </div>
 
-              {/* ACTIONS */}
               <div
                 className="
                   grid grid-cols-3
@@ -376,30 +448,6 @@ function Actors() {
                 "
               >
 
-                {/* VIEW */}
-                <button
-                  onClick={() =>
-                    handleDetails(
-                      actor._id
-                    )
-                  }
-                  className="
-                    py-3
-                    rounded-xl
-                    bg-[#252525]
-                    hover:bg-[#333]
-                    transition
-                    flex items-center
-                    justify-center
-                    gap-2
-                  "
-                >
-
-                  <FaEye />
-
-                </button>
-
-                {/* EDIT */}
                 <button
                   onClick={() =>
                     handleEdit(
@@ -422,7 +470,6 @@ function Actors() {
 
                 </button>
 
-                {/* DELETE */}
                 <button
                   onClick={() =>
                     handleDelete(
@@ -453,7 +500,125 @@ function Actors() {
           ))}
 
         </div>
+        
       )}
+      {
+        totalPages > 1 && (
+        
+          <div
+            className="
+              flex items-center
+              justify-center
+              gap-3
+              mt-12
+              flex-wrap
+            "
+          >
+          
+            <button
+              disabled={page === 1}
+              onClick={() =>
+                fetchActors(
+                  search,
+                  page - 1
+                )
+              }
+              className="
+                px-5 py-3
+                rounded-xl
+                bg-[#1a1a1a]
+                border border-gray-800
+                hover:border-[#8b5c76]
+                transition
+                disabled:opacity-40
+                disabled:cursor-not-allowed
+              "
+            >
+            
+              Prev
+            
+            </button>
+            
+            {[...Array(totalPages)]
+              .map((_, index) => {
+              
+                const pageNumber =
+                  index + 1;
+              
+                return (
+                
+                  <button
+                    key={pageNumber}
+                    onClick={() =>
+                      fetchActors(
+                        search,
+                        pageNumber
+                      )
+                    }
+                    className={`
+                      w-12 h-12
+                      rounded-xl
+                      font-medium
+                      transition
+                      border
+                    
+                      ${
+                        page ===
+                        pageNumber
+                      
+                          ? `
+                            bg-gradient-to-r
+                            from-[#8b5c76]
+                            to-[#6f4660]
+                            border-[#8b5c76]
+                            text-white
+                          `
+                      
+                          : `
+                            bg-[#1a1a1a]
+                            border-gray-800
+                            hover:border-[#8b5c76]
+                          `
+                      }
+                    `}
+                  >
+                  
+                    {pageNumber}
+                    
+                  </button>
+                );
+              })}
+
+            <button
+              disabled={
+                page ===
+                totalPages
+              }
+              onClick={() =>
+                fetchActors(
+                  search,
+                  page + 1
+                )
+              }
+              className="
+                px-5 py-3
+                rounded-xl
+                bg-[#1a1a1a]
+                border border-gray-800
+                hover:border-[#8b5c76]
+                transition
+                disabled:opacity-40
+                disabled:cursor-not-allowed
+              "
+            >
+            
+              Next
+            
+            </button>
+            
+          </div>
+        )
+      }
 
     </div>
   );

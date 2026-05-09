@@ -1,4 +1,5 @@
 import React, {
+  useEffect,
   useState,
 } from "react";
 
@@ -7,15 +8,19 @@ import axios from "axios";
 import {
   FaUpload,
 } from "react-icons/fa";
-import { createActor } from "../../../services/actorsApi";
+import { createActor, editActor, getActorById } from "../../../services/actorsApi";
+import { useNavigate, useParams } from "react-router-dom";
 
 function CreateActor() {
 
   const [loading, setLoading] =
     useState(false);
 
-  const [errors, setErrors] =
-    useState({});
+  const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+
 
   const [formData, setFormData] =
     useState({
@@ -24,9 +29,40 @@ function CreateActor() {
       profileImage: "",
     });
 
-  // =========================
-  // HANDLE CHANGE
-  // =========================
+  useEffect(() => {
+
+    if (id) {
+      fetchActorDetails();
+    }
+
+  }, [id]);
+
+  const fetchActorDetails =
+    async () => {
+
+      try {
+
+        const res = await getActorById(id);
+
+        if (!res.success)return;
+
+        const actor = res.actor;
+
+        setFormData({
+          name: actor.name || "",
+          bio: actor.bio || "",
+          profileImage: actor.profileImage || "",
+        });
+
+      } catch (error) {
+        setErrors({
+          general:
+            "Failed to fetch actor",
+        });
+      }
+    };
+
+
   const handleChange = (e) => {
 
     const { name, value } =
@@ -98,78 +134,67 @@ function CreateActor() {
     }
   };
 
-  // =========================
-  // SUBMIT
-  // =========================
-  const handleSubmit = async (
-    e
-  ) => {
-
+  const handleSubmit = async (e) => {
+  
     e.preventDefault();
-
+  
     try {
-
+    
       setLoading(true);
-
+    
       setErrors({});
-
-      const res =
-        await createActor(
-          formData
-        );
-
+    
+      const res = isEdit ? await editActor(id, formData) : await createActor(formData);
+        
       if (!res.success) {
-
         setErrors({
           [res.field]:
             res.message,
         });
-
+      
         return;
       }
-
-      setFormData({
-        name: "",
-        bio: "",
-        profileImage: "",
-      });
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-
+    
+      navigate("/admin/actors");
+    
     } catch (error) {
-
+    
       setErrors({
         general:
           error?.message ||
-          "Failed to create actor",
+          `Failed to ${
+            isEdit
+              ? "update"
+              : "create"
+          } actor`,
       });
-
+    
     } finally {
-
+    
       setLoading(false);
     }
   };
 
+
   return (
     <div className="w-full">
 
-      {/* HEADER */}
       <div className="mb-8">
 
         <h1 className="text-2xl md:text-3xl font-bold">
-          Create Actor 🎭
+          {isEdit
+            ? "Edit Actor 🎭"
+            : "Create Actor 🎭"}
         </h1>
 
         <p className="text-gray-400 text-sm mt-2">
-          Add actor details here
+          {isEdit
+            ? "Update actor details"
+            : "Add actor details here"}
         </p>
 
       </div>
 
-      {/* ERROR */}
       {errors.general && (
 
         <div
@@ -216,7 +241,6 @@ function CreateActor() {
         </div>
       )}
 
-      {/* FORM */}
       <form
         onSubmit={handleSubmit}
         className="
@@ -228,7 +252,6 @@ function CreateActor() {
         "
       >
 
-        {/* NAME */}
         <div>
 
           <label className="text-sm text-gray-300 mb-2 block">
@@ -266,7 +289,6 @@ function CreateActor() {
 
         </div>
 
-        {/* BIO */}
         <div>
 
           <label className="text-sm text-gray-300 mb-2 block">
@@ -305,7 +327,6 @@ function CreateActor() {
 
         </div>
 
-        {/* PROFILE IMAGE */}
         <div>
 
           <label className="text-sm text-gray-300 mb-3 block">
@@ -406,7 +427,6 @@ function CreateActor() {
 
         </div>
 
-        {/* SUBMIT */}
         <button
           disabled={loading}
           type="submit"
@@ -424,8 +444,12 @@ function CreateActor() {
         >
 
           {loading
-            ? "Creating..."
-            : "Create Actor"}
+            ? isEdit
+              ? "Updating..."
+              : "Creating..."
+            : isEdit
+              ? "Update Actor"
+              : "Create Actor"}
 
         </button>
 

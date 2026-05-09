@@ -50,15 +50,23 @@ function App() {
       <Route path="/signup" element={<RegisterLogin status="signup"/>} />
       <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
+
           <Route path="theatre" element={<Theatre />} />
+
           <Route path="screens" element={<Screens />} />
+
           <Route path="movies" element={<Movies />} />
           <Route path="movies/create" element={<CreateMovie />} />
           <Route path="movies/edit/:id" element={<CreateMovie />} />
+
           <Route path="users" element={<Users />} />
+
           <Route path="actors" element={<Actors />} />
           <Route path="actors/create" element={<CreateActors />} />
+          <Route path="actors/edit/:id" element={<CreateActors />} />
+          
           <Route path="bookings" element={<Bookings />} />
+
           <Route path="categories" element={<LanguageGenre />} />
         </Route>
     </Routes>

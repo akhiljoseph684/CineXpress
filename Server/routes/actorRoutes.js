@@ -7,10 +7,10 @@ const router = express.Router();
 
 router.post("/", authMiddleware, verifyAdmin, createActor);
 router.get("/", authMiddleware, verifyAdmin, getActors);
+router.get("/search", authMiddleware, searchActors);
 router.get("/:id", authMiddleware, verifyAdmin, getActorById);
 router.put("/:id", authMiddleware, verifyAdmin, editActor);
 router.delete("/:id", authMiddleware, verifyAdmin, deleteActor);
-router.get("/search", authMiddleware, searchActors);
 router.get("/actors/:id/movies", authMiddleware, getMoviesByActor);
 
 export default router;

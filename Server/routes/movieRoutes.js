@@ -1,6 +1,6 @@
 import express from "express";
 import { verifyAdmin } from "../middleware/verifyAdmin.js";
-import { createMovie, deleteMovie, editMovie, getAllMovies, getMovieById, searchMovies, updateMovieStatus } from "../controllers/movieController.js";
+import { createMovie, deleteMovie, editMovie, getAllMovies, getMovieById, updateMovieStatus } from "../controllers/movieController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();

@@ -123,7 +123,7 @@ export const editActor = async (req, res) => {
             actor.profileImage = profileImage;
         }
 
-        if (bio) {
+        if (bio !== undefined) {
             actor.bio = bio;
         }
 
@@ -188,7 +188,7 @@ export const deleteActor = async (req, res) => {
 export const searchActors = async (req, res) => {
     try {
 
-        const { name } = req.query;
+        const { name, page, limit } = req.query;
 
         let filter = {
             isDeleted: false
@@ -201,12 +201,49 @@ export const searchActors = async (req, res) => {
             };
         }
 
-        const actors = await Actor.find(filter);
+        const pageNumber = Number(page) || 1;
+        const limitNumber = Number(limit) || 12;
+        const skip = (pageNumber - 1) * limitNumber;
+
+        const result =
+          await Actor.aggregate([
+            {
+              $match: filter
+            },
+            {
+              $facet: {
+                actors: [
+                  {
+                    $skip: skip
+                  },
+                  {
+                    $limit:
+                      limitNumber
+                  }
+                ],
+            
+                totalCount: [
+                  {
+                    $count: "count"
+                  }
+                ]
+              }
+            }
+          ]);
+            
+        const actors = result[0].actors;
+            
+        const totalActors = result[0].totalCount[0]?.count || 0;
+            
+        const totalPages = Math.ceil(totalActors / limitNumber);
+
 
         return res.status(200).json({
-            success: true,
-            count: actors.length,
-            actors
+          success: true,
+          actors,
+          totalActors,
+          totalPages,
+          currentPage: pageNumber,
         });
 
     } catch (error) {

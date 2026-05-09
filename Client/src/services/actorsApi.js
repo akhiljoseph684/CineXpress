@@ -47,7 +47,7 @@ export const deleteActor = async (id) => {
 
 export const searchActors = async (query) => {
     try {
-        const res = await API.get("/actors?" + query);
+        const res = await API.get("/actors/search" + query);
         return res.data;
     } catch (error) {
         throw error.response?.data;

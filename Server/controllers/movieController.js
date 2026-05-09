@@ -176,95 +176,175 @@ export const createMovie = async (req, res) => {
 export const getAllMovies = async (req, res) => {
 
     try {
-        
-        const { title, language, genre, status } = req.query;
 
-        let filter = {
-            isDeleted: false
+      const {
+        title,
+        language,
+        genre,
+        status,
+        page,
+        limit
+      } = req.query;
+
+      let filter = {
+        isDeleted: false
+      };
+
+      if (status && status !== "all") {
+        filter.status =
+          status;
+      }
+
+      if (title?.trim()) {
+
+        filter.title = {
+          $regex:
+            title.trim(),
+
+          $options: "i"
         };
+      }
 
-        if(status){
-            filter.status = status;
-        }
+      if (language) {
 
-        if (title?.trim()) {
-            filter.title = {
-                $regex: title.trim(),
-                $options: "i"
-            };
-        }
+        filter.language = {
+          $in: [language]
+        };
+      }
 
-        if (language) {
-            filter.language = {
-                $in: [language]
-            };
-        }
+      if (genre) {
 
-        if (genre) {
-            filter.genre = {
-                $in: [genre]
-            };
-        }
+        filter.genre = {
+          $in: [genre]
+        };
+      }
 
-        const movies = await Movie.aggregate([
-           {
-             $match: filter
-           },
-           {
-             $addFields: {
-               avgRating: {
-                 $avg: "$reviews.stars"
-               },
-               totalRatings: {
-                 $size: "$reviews"
-               }
-             }
-           },
-           {
-              $lookup: {
-                from: "languages",
-                localField:
-                  "language",
-                foreignField:
-                  "_id",
-                as: "language"
+      const pageNumber = Number(page) || 1;
+
+      const limitNumber = Number(limit) || 12;
+
+      const skip = (pageNumber - 1) * limitNumber;
+
+      const result =
+        await Movie.aggregate([
+          {
+            $match: filter
+          },
+
+          {
+            $addFields: {
+
+              avgRating: {
+                $avg:
+                  "$reviews.stars"
+              },
+
+              totalRatings: {
+                $size:
+                  "$reviews"
               }
-            },
-        
-            {
-              $lookup: {
-                from: "genres",
-                localField:
-                  "genre",
-                foreignField:
-                  "_id",
-                as: "genre"
-              }
-            },
-           {
-             $sort: {
-               avgRating: -1
-             }
-           }
-         ])
 
-        return res.status(200).json({
-            success: true,
-            count: movies.length,
-            movies
-        });
+            }
+          },
+
+          {
+            $facet: {
+
+              movies: [
+
+                {
+                  $lookup: {
+                    from:
+                      "languages",
+
+                    localField:
+                      "language",
+
+                    foreignField:
+                      "_id",
+
+                    as:
+                      "language"
+                  }
+                },
+
+                {
+                  $lookup: {
+                    from:
+                      "genres",
+
+                    localField:
+                      "genre",
+
+                    foreignField:
+                      "_id",
+
+                    as:
+                      "genre"
+                  }
+                },
+
+                {
+                  $sort: {
+                    avgRating: -1
+                  }
+                },
+
+                {
+                  $skip: skip
+                },
+
+                {
+                  $limit:
+                    limitNumber
+                }
+
+              ],
+
+              totalCount: [
+
+                {
+                  $count:
+                    "count"
+                }
+
+              ]
+
+            }
+          }
+
+        ]);
+
+      const movies = result[0].movies;
+
+      const totalMovies = result[0].totalCount[0]?.count || 0;
+
+      const totalPages = Math.ceil(totalMovies / limitNumber);
+
+      return res.status(200).json({
+
+        success: true,
+        count: movies.length,
+        totalMovies,
+        totalPages,
+        currentPage: pageNumber,
+        movies
+
+      });
 
     } catch (error) {
-        console.log(error.message)
 
-        return res.status(500).json({
-            success: false,
-            message: "Something went wrong"
-        });
+      console.log(
+        error.message
+      );
 
+      return res.status(500).json({
+        success: false,
+        message:
+          "Something went wrong"
+      });
     }
-
-}
+  };
 
 export const getMovieById = async (req, res) => {
 
