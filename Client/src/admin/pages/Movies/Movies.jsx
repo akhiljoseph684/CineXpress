@@ -347,14 +347,14 @@ function Movies() {
                   <div
                     key={movie._id}
                     className="
-              bg-[#1a1a1a]
-              rounded-2xl
-              overflow-hidden
-              shadow-2xl
-              border border-gray-800
-              hover:border-[#8b5c76]
-              transition
-            "
+                    bg-[#1a1a1a]
+                    rounded-2xl
+                    overflow-hidden
+                    shadow-2xl
+                    border border-gray-800
+                    hover:border-[#8b5c76]
+                    transition
+                  "
                   >
                     <div className="relative">
                       <div className="absolute top-4 left-4">
@@ -395,6 +395,7 @@ function Movies() {
                   h-[320px]
                   object-cover
                 "
+                onClick={() => handleDetails(movie._id)}
                       />
                     </div>
 

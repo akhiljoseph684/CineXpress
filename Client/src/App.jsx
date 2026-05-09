@@ -17,6 +17,7 @@ import AdminLayout from "./admin/AdminLayout";
 import CreateMovie from "./admin/pages/Movies/CreateMovies";
 import LanguageGenre from "./admin/pages/Categories";
 import CreateActors from "./admin/pages/Actors/CreateActors";
+import MovieDetails from "./admin/pages/Movies/MovieDetails";
 
 function App() {
   const dispatch = useDispatch();
@@ -58,13 +59,14 @@ function App() {
           <Route path="movies" element={<Movies />} />
           <Route path="movies/create" element={<CreateMovie />} />
           <Route path="movies/edit/:id" element={<CreateMovie />} />
+          <Route path="movies/:id" element={<MovieDetails />} />
 
           <Route path="users" element={<Users />} />
 
           <Route path="actors" element={<Actors />} />
           <Route path="actors/create" element={<CreateActors />} />
           <Route path="actors/edit/:id" element={<CreateActors />} />
-          
+
           <Route path="bookings" element={<Bookings />} />
 
           <Route path="categories" element={<LanguageGenre />} />
