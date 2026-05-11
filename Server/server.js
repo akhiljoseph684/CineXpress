@@ -4,6 +4,7 @@ dotenv.config();
 import passport from "passport";
 import {connectDB} from './config/connectDB.js'
 import authRoutes from './routes/authRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 import movieRoutes from './routes/movieRoutes.js'
 import actorRoutes from './routes/actorRoutes.js'
 import theatreRoutes from './routes/theatreRoutes.js'
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 })
 
 app.use("/api/auth", authRoutes)
+app.use("/api/users", userRoutes)
 app.use("/api/movies", movieRoutes)
 app.use("/api/actors", actorRoutes)
 app.use("/api/theatre", theatreRoutes)

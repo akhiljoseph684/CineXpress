@@ -234,7 +234,15 @@ export const refresh = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      accessToken: newAccessToken
+      accessToken: newAccessToken,
+      user: {
+        _id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        avatar: user.avatar, 
+        role: user.role, 
+        status: user.status 
+      }
     });
 
   } catch (error) {

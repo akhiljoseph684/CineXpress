@@ -12,12 +12,14 @@ passport.use(new GoogleStrategy({
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails[0].value;
+    const avatar = profile.photos?.[0] ?.value || "";
 
     let user = await User.findOne({ email });
 
     if (user && user.provider === "local") {
       user.googleId = profile.id;
       user.provider = "google";
+      user.avatar = avatar
       await user.save();
 
       return done(null, user);
@@ -33,7 +35,8 @@ passport.use(new GoogleStrategy({
         name: profile.displayName,
         email,
         googleId: profile.id,
-        provider: "google"
+        provider: "google",
+        avatar
       });
     }
 

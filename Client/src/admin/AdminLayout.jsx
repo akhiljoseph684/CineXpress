@@ -12,6 +12,9 @@ import {
   FaTimes,
   FaTags,
 } from "react-icons/fa";
+import {
+  useSelector
+} from "react-redux";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 function AdminLayout() {
@@ -19,8 +22,9 @@ function AdminLayout() {
 
   const location = useLocation();
 
-  const currentPage =
-    location.pathname.split("/")[2] || "dashboard";
+  const currentPage = location.pathname.split("/")[2] || "dashboard";
+  const { user } = useSelector((state) => state.auth);
+  console.log(user)
 
   const menu = [
     { name: "Dashboard", path: "/admin", icon: <FaThLarge /> },
@@ -144,8 +148,10 @@ function AdminLayout() {
 
             <div className="flex items-center gap-3 cursor-pointer">
               <img
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjtHioeP3798yMa6QIJsA3piLZlDdOMuA17Q&s"
-                alt="profile"
+                src={
+                  user?.avatar ||
+                  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjtHioeP3798yMa6QIJsA3piLZlDdOMuA17Q&s"
+                }
                 className="w-9 h-9 rounded-full border border-gray-600 object-cover"
               />
 

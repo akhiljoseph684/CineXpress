@@ -10,7 +10,7 @@ import Dashboard from "./admin/pages/Dashboard";
 import Theatre from "./admin/pages/Theatre";
 import Screens from "./admin/pages/Screens";
 import Movies from "./admin/pages/Movies/Movies";
-import Users from "./admin/pages/Users";
+import Users from "./admin/pages/users/Users";
 import Actors from "./admin/pages/Actors/Actors";
 import Bookings from "./admin/pages/Bookings";
 import AdminLayout from "./admin/AdminLayout";
@@ -28,7 +28,7 @@ function App() {
         const res = await refreshToken();
 
         dispatch(setCredentials({
-          user: null,
+          user: res.user,
           accessToken: res.accessToken,
         }));
 
@@ -62,6 +62,7 @@ function App() {
           <Route path="movies/:id" element={<MovieDetails />} />
 
           <Route path="users" element={<Users />} />
+          <Route path="users/:id" element={<Users />} />
 
           <Route path="actors" element={<Actors />} />
           <Route path="actors/create" element={<CreateActors />} />
