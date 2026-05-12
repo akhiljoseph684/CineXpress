@@ -423,14 +423,12 @@ function MovieDetails() {
 
         </div>
 
-        {/* RIGHT */}
         <div
           className="
             space-y-6
           "
         >
 
-          {/* INFO CARD */}
           <div
             className="
               bg-[#1a1a1a]
@@ -618,7 +616,6 @@ function MovieDetails() {
 
           </div>
 
-          {/* TRAILER */}
           {
             movie.trailer && (
 

@@ -225,6 +225,7 @@ export const getAllMovies = async (req, res) => {
 
       const skip = (pageNumber - 1) * limitNumber;
 
+
       const result =
         await Movie.aggregate([
           {
@@ -742,5 +743,82 @@ export const updateMovieStatus = async (req, res) => {
         success: false,
         message: "Something went wrong",
       });
+    }
+};
+
+export const bannerFetch = async (req, res) => {
+    try {
+
+        const movies = await Movie.aggregate([
+
+                {
+                    $match: {
+                        isDeleted: false,
+                        status: "now_showing"
+                    }
+                },
+                {
+                    $addFields: {
+                        ratings: {
+                            $avg:
+                                "$reviews.stars"
+                        }
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "languages",
+                        localField:
+                            "language",
+                        foreignField:
+                            "_id",
+                        as: "language"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "genres",
+                        localField:
+                            "genre",
+                        foreignField:
+                            "_id",
+                        as: "genre"
+
+                    }
+                },
+                {
+                    $sort: {
+                        ratings: -1
+                    }
+                },
+                {
+                    $project: {
+                        title: 1,
+                        description: 1,
+                        duration: 1,
+                        trailer: 1,
+                        status: 1,
+                        ratings: 1,
+                        language: 1,
+                        genre: 1,
+                        poster: {
+                            banner: 1
+                        }
+                    }
+                },
+                {
+                    $limit: 5
+                }
+            ]);
+
+        return res.status(200).json({
+            success: true,
+            movies
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };

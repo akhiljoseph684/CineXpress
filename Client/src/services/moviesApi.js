@@ -58,4 +58,13 @@ export const updateMovieStatus = async (id, status) => {
     }
 };
 
+export const bannerFetch = async () => {
+    try {
+        const res = await API.get("/movies/banners");
+        return res.data;
+    } catch (error) {
+        throw error.response?.data
+    }
+}
+
 

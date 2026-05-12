@@ -1,29 +1,35 @@
-import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import axios from "axios";
-import API from "../services/api";
+import {
+  Navigate
+} from "react-router-dom";
 
-const ProtectedRoute = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [isAuth, setIsAuth] = useState(false);
+import {
+  useSelector
+} from "react-redux";
 
-  useEffect(() => {
-    API.get("/auth/me", {
-      withCredentials: true
-    })
-    .then(() => {
-      setIsAuth(true);
-      setLoading(false);
-    })
-    .catch(() => {
-      setIsAuth(false);
-      setLoading(false);
-    });
-  }, []);
+const ProtectedRoute = ({
+  children
+}) => {
 
-  if (loading) return <div></div>;
+  const { user } =
+    useSelector(
+      (state) => state.auth
+    );
 
-  return isAuth ? children : <Navigate to="/login" />;
+  if (user === undefined) {
+
+    return (
+      <div></div>
+    );
+  }
+
+  if (!user) {
+
+    return (
+      <Navigate to="/login" />
+    );
+  }
+
+  return children;
 };
 
 export default ProtectedRoute;

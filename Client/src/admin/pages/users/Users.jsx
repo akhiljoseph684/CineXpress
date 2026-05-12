@@ -1,7 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   FaUser,
@@ -13,243 +10,125 @@ import {
   FaLockOpen,
 } from "react-icons/fa";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { blockUser, deleteUser, getAllUsers } from "../../../services/usersAPi";
 
 function Users() {
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
+  const [users, setUsers] = useState([]);
 
-  const [users, setUsers] =
-    useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [error, setError] = useState("");
 
-  const [error, setError] =
-    useState("");
+  const [search, setSearch] = useState("");
 
-  const [search, setSearch] =
-    useState("");
+  const [activeRole, setActiveRole] = useState("user");
 
-  const [activeRole, setActiveRole] =
-    useState("user");
+  const [activeStatus, setActiveStatus] = useState("all");
 
-  const [activeStatus, setActiveStatus] =
-    useState("all");
+  const [page, setPage] = useState(1);
 
-  const [page, setPage] =
-    useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const [totalPages, setTotalPages] =
-    useState(1);
+  const fetchUsers = async (
+    role = "user",
+    status = "all",
+    name = "",
+    currentPage = 1,
+  ) => {
+    try {
+      setLoading(true);
 
-  const fetchUsers =
-    async (
-      role = "user",
-      status = "all",
-      name = "",
-      currentPage = 1
-    ) => {
+      setError("");
 
-      try {
+      let query = [];
 
-        setLoading(true);
+      query.push(`role=${role}`);
 
-        setError("");
-
-        let query = [];
-
-        query.push(
-          `role=${role}`
-        );
-
-        if (
-          status &&
-          status !== "all"
-        ) {
-
-          query.push(
-            `status=${status}`
-          );
-        }
-
-        if (name.trim()) {
-
-          query.push(
-            `name=${name}`
-          );
-        }
-
-        query.push(
-          `page=${currentPage}`
-        );
-
-        query.push(
-          "limit=8"
-        );
-
-        const queryString =
-          `?${query.join("&")}`;
-
-        const res =
-          await getAllUsers(queryString);
-
-        if (!res.success) {
-
-          setError(
-            res.message
-          );
-
-          return;
-        }
-
-        setUsers(
-          res.users || []
-        );
-
-        setTotalPages(
-          res.totalPages || 1
-        );
-
-        setPage(
-          res.currentPage || 1
-        );
-
-      } catch (error) {
-
-        setError(
-          error?.message ||
-          "Failed to fetch users"
-        );
-
-      } finally {
-
-        setLoading(false);
+      if (status && status !== "all") {
+        query.push(`status=${status}`);
       }
-    };
+
+      if (name.trim()) {
+        query.push(`name=${name}`);
+      }
+
+      query.push(`page=${currentPage}`);
+
+      query.push("limit=8");
+
+      const queryString = `?${query.join("&")}`;
+
+      const res = await getAllUsers(queryString);
+
+      if (!res.success) {
+        setError(res.message);
+
+        return;
+      }
+
+      setUsers(res.users || []);
+
+      setTotalPages(res.totalPages || 1);
+
+      setPage(res.currentPage || 1);
+    } catch (error) {
+      setError(error?.message || "Failed to fetch users");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers(activeRole, activeStatus, search, page);
+    }, 500);
 
-    const timer =
-      setTimeout(() => {
+    return () => clearTimeout(timer);
+  }, [search, activeRole, activeStatus, page]);
 
-        fetchUsers(
-          activeRole,
-          activeStatus,
-          search,
-          page
-        );
+  const handleDelete = async (id) => {
+    try {
+      const res = await deleteUser(id);
 
-      }, 500);
+      if (!res.success) {
+        setError(res.message);
 
-    return () =>
-      clearTimeout(timer);
-
-  }, [
-    search,
-    activeRole,
-    activeStatus,
-    page
-  ]);
-
-
-  const handleDelete =
-    async (id) => {
-
-      try {
-
-        const res =
-          await deleteUser(id);
-
-        if (!res.success) {
-
-          setError(
-            res.message
-          );
-
-          return;
-        }
-
-        fetchUsers(
-          activeRole,
-          activeStatus,
-          search,
-          page
-        );
-
-      } catch (error) {
-
-        setError(
-          error?.message ||
-          "Failed to delete user"
-        );
+        return;
       }
-    };
 
-  const handleBlock =
-    async (
-      id,
-      isBlocked
-    ) => {
+      fetchUsers(activeRole, activeStatus, search, page);
+    } catch (error) {
+      setError(error?.message || "Failed to delete user");
+    }
+  };
 
-      try {
+  const handleBlock = async (id, isBlocked) => {
+    try {
+      const res = await blockUser(id, {
+        block: isBlocked,
+      });
 
-        const res =
-          await blockUser(
-            id,
-            {
-              block:
-                isBlocked
-            }
-          );
+      if (!res.success) {
+        setError(res.message);
 
-        if (!res.success) {
-
-          setError(
-            res.message
-          );
-
-          return;
-        }
-
-        fetchUsers(
-          activeRole,
-          activeStatus,
-          search,
-          page
-        );
-
-      } catch (error) {
-
-        setError(
-          error?.message ||
-          "Failed to update user"
-        );
+        return;
       }
-    };
 
-  const normalUserStatus =
-    [
-      "all",
-      "active",
-      "blocked"
-    ];
+      fetchUsers(activeRole, activeStatus, search, page);
+    } catch (error) {
+      setError(error?.message || "Failed to update user");
+    }
+  };
 
-  const theatreStatus =
-    [
-      "all",
-      "active",
-      "pending",
-      "rejected"
-    ];
+  const normalUserStatus = ["all", "active", "blocked"];
+
+  const theatreStatus = ["all", "active", "pending", "rejected"];
 
   return (
     <div className="w-full">
-
       <div
         className="
           flex flex-col
@@ -260,9 +139,7 @@ function Users() {
           mb-8
         "
       >
-
         <div>
-
           <h1
             className="
               text-3xl
@@ -278,15 +155,11 @@ function Users() {
               mt-2
             "
           >
-            Manage users and
-            theatre admins
+            Manage users and theatre admins
           </p>
-
         </div>
-
       </div>
 
-      {/* ROLE FILTER */}
       <div
         className="
           flex flex-wrap
@@ -294,45 +167,31 @@ function Users() {
           mb-6
         "
       >
-
         {[
           {
-            label:
-              "Normal Users",
+            label: "Normal Users",
 
-            value:
-              "user",
+            value: "user",
 
-            icon:
-              <FaUser />
+            icon: <FaUser />,
           },
 
           {
-            label:
-              "Theatre Admin",
+            label: "Theatre Admin",
 
-            value:
-              "theatre_owner",
+            value: "theatre_owner",
 
-            icon:
-              <FaUserShield />
-          }
-
+            icon: <FaUserShield />,
+          },
         ].map((item) => (
-
           <button
             key={item.value}
             onClick={() => {
-            
               setPage(1);
-            
-              setActiveRole(
-                item.value
-              );
-            
-              setActiveStatus(
-                "all"
-              );
+
+              setActiveRole(item.value);
+
+              setActiveStatus("all");
             }}
             className={`
               flex items-center
@@ -343,16 +202,13 @@ function Users() {
               transition
 
               ${
-                activeRole ===
-                item.value
-
+                activeRole === item.value
                   ? `
                     bg-gradient-to-r
                     from-[#8b5c76]
                     to-[#6f4660]
                     border-[#8b5c76]
                   `
-
                   : `
                     bg-[#1a1a1a]
                     border-gray-800
@@ -361,14 +217,11 @@ function Users() {
               }
             `}
           >
-
             {item.icon}
 
             {item.label}
-
           </button>
         ))}
-
       </div>
 
       <div
@@ -378,27 +231,16 @@ function Users() {
           mb-8
         "
       >
+        {(activeRole === "user" ? normalUserStatus : theatreStatus).map(
+          (status) => (
+            <button
+              key={status}
+              onClick={() => {
+                setPage(1);
 
-        {(activeRole ===
-        "user"
-
-          ? normalUserStatus
-
-          : theatreStatus
-
-        ).map((status) => (
-
-          <button
-            key={status}
-            onClick={() => {
-            
-              setPage(1);
-            
-              setActiveStatus(
-                status
-              );
-            }}
-            className={`
+                setActiveStatus(status);
+              }}
+              className={`
               px-5 py-3
               rounded-xl
               border
@@ -406,16 +248,13 @@ function Users() {
               transition
 
               ${
-                activeStatus ===
-                status
-
+                activeStatus === status
                   ? `
                     bg-gradient-to-r
                     from-[#8b5c76]
                     to-[#6f4660]
                     border-[#8b5c76]
                   `
-
                   : `
                     bg-[#1a1a1a]
                     border-gray-800
@@ -423,19 +262,15 @@ function Users() {
                   `
               }
             `}
-          >
-
-            {status}
-
-          </button>
-        ))}
-
+            >
+              {status}
+            </button>
+          ),
+        )}
       </div>
 
       <div className="mb-8">
-
         <div className="relative">
-
           <FaSearch
             className="
               absolute
@@ -449,11 +284,7 @@ function Users() {
             type="text"
             placeholder="Search users..."
             value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
+            onChange={(e) => setSearch(e.target.value)}
             className="
               w-full
               bg-[#1a1a1a]
@@ -464,13 +295,10 @@ function Users() {
               focus:border-[#8b5c76]
             "
           />
-
         </div>
-
       </div>
 
       {error && (
-
         <div
           className="
             bg-red-500/10
@@ -481,15 +309,11 @@ function Users() {
             mb-6
           "
         >
-
           {error}
-
         </div>
       )}
 
-      {!loading &&
-        users.length > 0 && (
-
+      {!loading && users.length > 0 && (
         <div
           className="
             grid
@@ -499,9 +323,7 @@ function Users() {
             gap-6
           "
         >
-
           {users.map((user) => (
-
             <div
               key={user._id}
               className="
@@ -513,7 +335,6 @@ function Users() {
                 transition
               "
             >
-
               <div
                 className="
                   flex flex-col
@@ -521,7 +342,6 @@ function Users() {
                   text-center
                 "
               >
-
                 <img
                   src={
                     user.avatar ||
@@ -566,14 +386,11 @@ function Users() {
                     capitalize
 
                     ${
-                      user.status ===
-                      "blocked"
-
+                      user.status === "blocked"
                         ? `
                           bg-red-500/20
                           text-red-400
                         `
-
                         : `
                           bg-green-500/20
                           text-green-400
@@ -581,50 +398,30 @@ function Users() {
                     }
                   `}
                 >
-
                   {user.status}
-
                 </span>
-
               </div>
 
-              {/* THEATRE DETAILS */}
-              {
-                user.role ===
-                "theatre_owner" && (
-
-                  <div
-                    className="
+              {user.role === "theatre_owner" && (
+                <div
+                  className="
                       mt-5
                       space-y-2
                     "
-                  >
-
-                    <div
-                      className="
+                >
+                  <div
+                    className="
                         flex
                         justify-between
                         text-sm
                       "
-                    >
+                  >
+                    <span className="text-gray-400">Business</span>
 
-                      <span className="text-gray-400">
-                        Business
-                      </span>
-
-                      <span>
-                        {
-                          user
-                            .ownerDetails
-                            ?.businessName || "-"
-                        }
-                      </span>
-
-                    </div>
-
+                    <span>{user.ownerDetails?.businessName || "-"}</span>
                   </div>
-                )
-              }
+                </div>
+              )}
 
               <div
                 className="
@@ -634,18 +431,10 @@ function Users() {
                   mt-6
                 "
               >
-
-                {
-                  user.role ===
-                  "theatre_owner" && (
-
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/admin/users/${user._id}`
-                        )
-                      }
-                      className="
+                {user.role === "theatre_owner" && (
+                  <button
+                    onClick={() => navigate(`/admin/users/${user._id}`)}
+                    className="
                         py-3
                         rounded-xl
                         bg-[#252525]
@@ -655,21 +444,14 @@ function Users() {
                         justify-center
                         gap-2
                       "
-                    >
-
-                      <FaEye />
-
-                    </button>
-                  )
-                }
+                  >
+                    <FaEye />
+                  </button>
+                )}
 
                 <button
                   onClick={() =>
-                    handleBlock(
-                      user._id,
-                      user.status !==
-                      "blocked"
-                    )
+                    handleBlock(user._id, user.status !== "blocked")
                   }
                   className={`
                     py-3
@@ -679,14 +461,11 @@ function Users() {
                     justify-center
 
                     ${
-                      user.status ===
-                      "blocked"
-
+                      user.status === "blocked"
                         ? `
                           bg-green-500/10
                           text-green-400
                         `
-
                         : `
                           bg-yellow-500/10
                           text-yellow-400
@@ -694,24 +473,11 @@ function Users() {
                     }
                   `}
                 >
-
-                  {
-                    user.status ===
-                    "blocked"
-
-                      ? <FaLockOpen />
-
-                      : <FaLock />
-                  }
-
+                  {user.status === "blocked" ? <FaLockOpen /> : <FaLock />}
                 </button>
 
                 <button
-                  onClick={() =>
-                    handleDelete(
-                      user._id
-                    )
-                  }
+                  onClick={() => handleDelete(user._id)}
                   className="
                     py-3
                     rounded-xl
@@ -724,23 +490,15 @@ function Users() {
                     justify-center
                   "
                 >
-
                   <FaTrash />
-
                 </button>
-
               </div>
-
             </div>
           ))}
-
         </div>
       )}
 
-      {!loading &&
-        !users.length &&
-        !error && (
-
+      {!loading && !users.length && !error && (
         <div
           className="
             min-h-[60vh]
@@ -749,12 +507,8 @@ function Users() {
             justify-center
           "
         >
-
           <div className="text-center">
-
-            <div className="text-6xl">
-              👥
-            </div>
+            <div className="text-6xl">👥</div>
 
             <h2
               className="
@@ -765,127 +519,87 @@ function Users() {
             >
               No Users Found
             </h2>
-
           </div>
-
         </div>
       )}
 
-      {/* PAGINATION */}
-      {
-        totalPages > 1 && (
-
-          <div
-            className="
+      {totalPages > 1 && (
+        <div
+          className="
               flex items-center
               justify-center
               gap-3
               mt-12
               flex-wrap
             "
-          >
-
-            <button
-              disabled={page === 1}
-              onClick={() =>
-                fetchUsers(
-                  activeRole,
-                  activeStatus,
-                  search,
-                  page - 1
-                )
-              }
-              className="
+        >
+          <button
+            disabled={page === 1}
+            onClick={() =>
+              fetchUsers(activeRole, activeStatus, search, page - 1)
+            }
+            className="
                 px-5 py-3
                 rounded-xl
                 bg-[#1a1a1a]
                 border border-gray-800
                 disabled:opacity-40
               "
-            >
+          >
+            Prev
+          </button>
 
-              Prev
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
 
-            </button>
-
-            {[...Array(totalPages)]
-              .map((_, index) => {
-
-                const pageNumber =
-                  index + 1;
-
-                return (
-
-                  <button
-                    key={pageNumber}
-                    onClick={() =>
-                      fetchUsers(
-                        activeRole,
-                        activeStatus,
-                        search,
-                        pageNumber
-                      )
-                    }
-                    className={`
+            return (
+              <button
+                key={pageNumber}
+                onClick={() =>
+                  fetchUsers(activeRole, activeStatus, search, pageNumber)
+                }
+                className={`
                       w-12 h-12
                       rounded-xl
                       border
 
                       ${
-                        page ===
-                        pageNumber
-
+                        page === pageNumber
                           ? `
                             bg-gradient-to-r
                             from-[#8b5c76]
                             to-[#6f4660]
                             border-[#8b5c76]
                           `
-
                           : `
                             bg-[#1a1a1a]
                             border-gray-800
                           `
                       }
                     `}
-                  >
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
 
-                    {pageNumber}
-
-                  </button>
-                );
-              })}
-
-            <button
-              disabled={
-                page ===
-                totalPages
-              }
-              onClick={() =>
-                fetchUsers(
-                  activeRole,
-                  activeStatus,
-                  search,
-                  page + 1
-                )
-              }
-              className="
+          <button
+            disabled={page === totalPages}
+            onClick={() =>
+              fetchUsers(activeRole, activeStatus, search, page + 1)
+            }
+            className="
                 px-5 py-3
                 rounded-xl
                 bg-[#1a1a1a]
                 border border-gray-800
                 disabled:opacity-40
               "
-            >
-
-              Next
-
-            </button>
-
-          </div>
-        )
-      }
-
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

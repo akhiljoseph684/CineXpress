@@ -24,7 +24,6 @@ function AdminLayout() {
 
   const currentPage = location.pathname.split("/")[2] || "dashboard";
   const { user } = useSelector((state) => state.auth);
-  console.log(user)
 
   const menu = [
     { name: "Dashboard", path: "/admin", icon: <FaThLarge /> },

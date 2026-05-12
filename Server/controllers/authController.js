@@ -241,7 +241,8 @@ export const refresh = async (req, res) => {
         email: user.email, 
         avatar: user.avatar, 
         role: user.role, 
-        status: user.status 
+        status: user.status,
+        preferredCity: user.preferredCity
       }
     });
 
