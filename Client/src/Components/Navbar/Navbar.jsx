@@ -330,6 +330,7 @@ function Navbar() {
             <img
               src={user?.avatar || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"}
               alt=""
+              referrerPolicy="no-referrer"
               className="
                 w-11 h-11
                 rounded-full

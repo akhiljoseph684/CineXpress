@@ -254,7 +254,8 @@ export const updateUser = async (req, res) => {
                 {
                     ...(name && { name }),
                     ...(avatar && { avatar }),
-                    ...(preferredCity && { preferredCity})
+                    ...(preferredCity && { preferredCity}),
+                    ...(phone && { phone})
                 },
                 {
                     returnDocument: "after"

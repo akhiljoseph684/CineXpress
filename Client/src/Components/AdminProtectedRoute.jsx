@@ -6,19 +6,11 @@ import {
   useSelector
 } from "react-redux";
 
-const ProtectedRoute = ({
+function AdminProtectedRoute({
   children
-}) => {
+}) {
 
-  const {
-
-    user,
-
-    loading
-
-  } = useSelector(
-    (state) => state.auth
-  );
+  const { user, loading } = useSelector((state) => state.auth);
 
   if (loading) {
 
@@ -37,11 +29,22 @@ const ProtectedRoute = ({
     return (
       <Navigate
         to="/login"
+        replace
+      />
+    );
+  }
+
+  if (user.role !== "admin") {
+
+    return (
+      <Navigate
+        to="/"
+        replace
       />
     );
   }
 
   return children;
-};
+}
 
-export default ProtectedRoute;
+export default AdminProtectedRoute;

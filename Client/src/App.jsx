@@ -19,28 +19,45 @@ import CreateActors from "./admin/pages/Actors/CreateActors";
 import MovieDetails from "./admin/pages/Movies/MovieDetails";
 import UserLayout from "./user/UserLayout";
 import Home from "./user/Home";
+import MoviesPage from "./user/MoviePage";
+import ProfilePage from "./user/ProfilePage";
+import MovieDetailsPage from "./user/MovieDetialsPage";
+import AdminProtectedRoute from "./Components/AdminProtectedRoute";
 
 function App() {
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    const loadUser = async () => {
+useEffect(() => {
+
+  const loadUser =
+    async () => {
+      console.log("working")
+
       try {
-        const res = await refreshToken();
+
+        const res =
+          await refreshToken();
 
         dispatch(
           setCredentials({
+
             user: res.user,
-            accessToken: res.accessToken,
-          }),
+
+            accessToken:
+              res.accessToken,
+
+          })
         );
+
       } catch (err) {
+
         dispatch(logout());
       }
     };
 
-    loadUser();
-  }, []);
+  loadUser();
+
+}, [dispatch]);
 
   return (
     <Routes>
@@ -51,21 +68,27 @@ function App() {
         path="/"
         element={
           <ProtectedRoute>
-          
             <UserLayout />
-        
           </ProtectedRoute>
         }
       >
       
-        <Route
-          index
-          element={<Home />}
-        />
+        <Route index element={<Home />}/>
+
+        <Route path="movies" element={<MoviesPage/>}></Route>
+
+        <Route path="profile" element={<ProfilePage/>}></Route>
+
+        <Route path="movies/:id" element={<MovieDetailsPage/>}></Route>
       
       </Route>
 
-     <Route path="/admin" element={<AdminLayout />}>
+     <Route path="/admin" element={
+        <AdminProtectedRoute>
+          <AdminLayout />
+        </AdminProtectedRoute>}
+      >
+     
         <Route index element={<Dashboard />} />
 
         <Route path="theatre" element={<Theatre />} />

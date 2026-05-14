@@ -63,15 +63,28 @@ const movieSchema = new mongoose.Schema({
         }
     }],
     reviews: [{
-        comments: {
-            type: String
+          
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User"
         },
+      
+        comments: {
+          type: String
+        },
+      
         stars: {
-            type: Number,
-            min: 1,
-            max: 5
+          type: Number,
+          min: 1,
+          max: 5
+        },
+      
+        createdAt: {
+          type: Date,
+          default: Date.now
         }
-    }],
+      
+      }],
     director: {
       type: String,
       required: true,

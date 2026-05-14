@@ -242,7 +242,8 @@ export const refresh = async (req, res) => {
         avatar: user.avatar, 
         role: user.role, 
         status: user.status,
-        preferredCity: user.preferredCity
+        preferredCity: user.preferredCity,
+        phone: user.phone
       }
     });
 

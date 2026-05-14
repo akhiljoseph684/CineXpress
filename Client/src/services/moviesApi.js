@@ -67,4 +67,12 @@ export const bannerFetch = async () => {
     }
 }
 
-
+export const addReview = async (id, data) => {
+    try {
+        const res = await API.post(`/movies/${id}/review`, data);
+        return res.data;
+    } catch (error) {
+        console.log(error)
+        throw error.response?.data
+    }
+}

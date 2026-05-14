@@ -252,6 +252,7 @@ const uploadImage = async (file, type) => {
       "image/jpg",
       "image/png",
       "image/webp",
+      "image/avif"
     ];
     
     if (!allowedTypes.includes(file.type)) {

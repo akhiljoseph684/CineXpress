@@ -280,7 +280,6 @@ function MovieDetails() {
 
       </div>
 
-      {/* DETAILS */}
       <div
         className="
           grid
@@ -291,7 +290,6 @@ function MovieDetails() {
         "
       >
 
-        {/* LEFT */}
         <div
           className="
             lg:col-span-2
@@ -299,7 +297,6 @@ function MovieDetails() {
           "
         >
 
-          {/* DESCRIPTION */}
           <div
             className="
               bg-[#1a1a1a]
@@ -330,7 +327,6 @@ function MovieDetails() {
 
           </div>
 
-          {/* CAST */}
           <div
             className="
               bg-[#1a1a1a]

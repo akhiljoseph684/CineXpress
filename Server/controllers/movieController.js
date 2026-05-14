@@ -1,4 +1,6 @@
 import Movie from "../models/movieModel.js";
+import User from "../models/userModel.js";
+import mongoose from "mongoose";
 
 export const createMovie = async (req, res) => {
     try {
@@ -127,18 +129,29 @@ export const createMovie = async (req, res) => {
             })
         }
 
-        const formatedCast = (cast || []).map((actor) => {
-            if(!actor._id){
-                return {
-                    actorId: null,
-                    name: actor.name
-                }
-            }else{
-                return {
-                    actorId: actor._id,
-                    name: null
-                }
+        const formatedCast =
+          (cast || []).map((actor) => {
+          
+            if (actor._id) {
+            
+              return {
+              
+                actorId:
+                  actor._id,
+              
+                name: null
+              
+              };
             }
+          
+            return {
+            
+              actorId: null,
+            
+              name:
+                actor.name?.trim() || ""
+            
+            };
         });
 
         const movie = await Movie.create({
@@ -208,14 +221,18 @@ export const getAllMovies = async (req, res) => {
       if (language) {
 
         filter.language = {
-          $in: [language]
+          $in: [new mongoose.Types.ObjectId(
+            language
+          )]
         };
       }
 
       if (genre) {
 
         filter.genre = {
-          $in: [genre]
+          $in: [new mongoose.Types.ObjectId(
+            genre
+          )]
         };
       }
 
@@ -350,40 +367,50 @@ export const getAllMovies = async (req, res) => {
 export const getMovieById = async (req, res) => {
 
     try {
-        
-        const { id } = req.params;
 
-        if(!id){
-            return res.status(400).json({
-                success: false,
-                message: "ID not found"
-            })
-        }
+      const { id } =
+        req.params;
 
-        const movie = await Movie.findById(id).populate( "language", "name" )
-                     .populate( "genre", "name" )
-                     .populate( "cast.actorId", "name profileImage" );
+      const movie =
+        await Movie.findById(id)
+          .populate(
+            "language",
+            "name"
+          )
+          .populate(
+            "genre",
+            "name"
+          )
+          .populate({
+            path: "cast.actorId",
+            select: "name profileImage"
+          })
 
-        if(!movie){
-            return res.status(400).json({
-                success: false,
-                message: "Movie is not found"
-            })
-        }
+          .populate({
+            path: "reviews.user",
+            select: "name avatar"
+          });
 
-        return res.status(200).json({
-            success: true,
-            message: "Movie details fetched successfully",
-            movie
-        })
+      if (!movie) {
+
+        return res.status(404).json({
+          success: false,
+          message: "Movie not found"
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        movie
+      });
 
     } catch (error) {
-        return res.status(400).json({
-            success: false,
-            message: "Something went wrong"
-        })
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong"
+      });
     }
-}
+};
 
 export const editMovie = async (
   req,
@@ -592,27 +619,30 @@ export const editMovie = async (
     }
 
     const formattedCast =
-      (cast || []).map(
-        (actor) => {
-
-          if (
-            actor.isCustom
-          ) {
-
-            return {
-              actorId: null,
-              name:
-                actor.name
-            };
-          }
-
+      (cast || []).map((actor) => {
+      
+        if (actor._id) {
+        
           return {
+          
             actorId:
               actor._id,
+          
             name: null
+          
           };
         }
-      );
+      
+        return {
+        
+          actorId: null,
+        
+          name:
+            actor.name?.trim() || ""
+        
+        };
+      
+    });
 
     movie.title =
       title;
@@ -820,5 +850,93 @@ export const bannerFetch = async (req, res) => {
             success: false,
             message: error.message
         });
+    }
+};
+
+export const addReview = async (req, res) => {
+
+    try {
+
+      const { id } = req.params;
+
+      const userId = req.user.id;
+
+      
+      const { comments, stars } = req.body;
+      
+      const user = await User.findById(userId);
+
+      if(!user){
+        return res.status(400).json({
+          success: false,
+          message: "Invalid User id"
+        });
+      }
+      
+      if (!comments || !stars) {
+
+        return res.status(400).json({
+          success: false,
+          message: "Comment and stars required"
+        });
+      }
+
+      const movie = await Movie.findById(id);
+
+      if (!movie) {
+        return res.status(404).json({
+          success: false,
+          message: "Movie not found"
+
+        });
+      }
+
+      const alreadyReviewed = movie.reviews.find((review) => 
+            review?.user?.toString?.() ===
+            req.user?._id?.toString?.()
+
+        );
+
+      if (alreadyReviewed) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            "You already reviewed this movie"
+
+        });
+      }
+
+      movie.reviews.unshift({
+        user: userId,
+        comments,
+        stars,
+      });
+
+      await movie.save();
+
+      const updatedMovie = await Movie.findById(id)
+
+          .populate({path: "reviews.user", select: "name avatar"
+          });
+
+      return res.status(200).json({
+        success: true,
+        movie: updatedMovie
+      });
+
+    } catch (error) {
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message
+
+      });
+
     }
 };
