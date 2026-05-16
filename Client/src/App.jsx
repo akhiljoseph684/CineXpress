@@ -23,46 +23,43 @@ import MoviesPage from "./user/MoviePage";
 import ProfilePage from "./user/ProfilePage";
 import MovieDetailsPage from "./user/MovieDetialsPage";
 import AdminProtectedRoute from "./Components/AdminProtectedRoute";
+import TheatreOwnerLayout from "./theatre_owner/TheatreOwnerLayout";
+import Show from "./theatre_owner/Show";
+import Screen from "./theatre_owner/Screen";
+import TheatreListPage from "./theatre_owner/Theatre/TheatreListPage";
+import CreateEditTheatre from "./theatre_owner/Theatre/CreateEditTheatre";
+import ScreenListPage from "./theatre_owner/Screen/ScreenListPage";
+import CreateEditScreen from "./theatre_owner/Screen/CreateEditScreen";
 
 function App() {
   const dispatch = useDispatch();
 
-useEffect(() => {
-
-  const loadUser =
-    async () => {
-      console.log("working")
+  useEffect(() => {
+    const loadUser = async () => {
+      console.log("working");
 
       try {
-
-        const res =
-          await refreshToken();
+        const res = await refreshToken();
 
         dispatch(
           setCredentials({
-
             user: res.user,
 
-            accessToken:
-              res.accessToken,
-
-          })
+            accessToken: res.accessToken,
+          }),
         );
-
       } catch (err) {
-
         dispatch(logout());
       }
     };
 
-  loadUser();
-
-}, [dispatch]);
+    loadUser();
+  }, [dispatch]);
 
   return (
     <Routes>
       <Route path="/login" element={<RegisterLogin status="login" />} />
-      <Route path="/signup" element={<RegisterLogin status="signup" />} /> 
+      <Route path="/signup" element={<RegisterLogin status="signup" />} />
 
       <Route
         path="/"
@@ -72,23 +69,33 @@ useEffect(() => {
           </ProtectedRoute>
         }
       >
-      
-        <Route index element={<Home />}/>
+        <Route index element={<Home />} />
 
-        <Route path="movies" element={<MoviesPage/>}></Route>
+        <Route path="movies" element={<MoviesPage />}></Route>
 
-        <Route path="profile" element={<ProfilePage/>}></Route>
+        <Route path="profile" element={<ProfilePage />}></Route>
 
-        <Route path="movies/:id" element={<MovieDetailsPage/>}></Route>
-      
+        <Route path="movies/:id" element={<MovieDetailsPage />}></Route>
       </Route>
 
-     <Route path="/admin" element={
-        <AdminProtectedRoute>
-          <AdminLayout />
-        </AdminProtectedRoute>}
+      <Route path="/theatre-owner" element={<TheatreOwnerLayout />}>
+        <Route path="theatre" element={<TheatreListPage />} />
+        <Route path="theatre/create" element={<CreateEditTheatre />} />
+        <Route path="theatre/edit/:id" element={<CreateEditTheatre />} />
+        <Route path="screens" element={<ScreenListPage />} />
+        <Route path="screens/create/:id" element={<CreateEditScreen />} />
+        <Route path="screens/edit/:id" element={<CreateEditScreen />} />
+        <Route path="shows" element={<Show />} />
+      </Route>
+
+      <Route
+        path="/admin"
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout />
+          </AdminProtectedRoute>
+        }
       >
-     
         <Route index element={<Dashboard />} />
 
         <Route path="theatre" element={<Theatre />} />
@@ -111,6 +118,7 @@ useEffect(() => {
 
         <Route path="categories" element={<LanguageGenre />} />
       </Route>
+
     </Routes>
   );
 }

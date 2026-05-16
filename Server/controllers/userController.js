@@ -53,8 +53,7 @@ export const getAllUsers = async (req, res) => {
 
       const skip = (pageNumber - 1) * limitNumber;
 
-      const result =
-        await User.aggregate([
+      const result = await User.aggregate([
 
           {
             $match: filter
@@ -62,28 +61,20 @@ export const getAllUsers = async (req, res) => {
 
           {
             $facet: {
-
               users: [
-
                 {
                   $sort: {
                     createdAt: -1
                   }
                 },
-
                 {
                   $skip: skip
                 },
-
                 {
-                  $limit:
-                    limitNumber
+                  $limit: limitNumber
                 }
-
               ],
-
               totalCount: [
-
                 {
                   $count: "count"
                 }
@@ -121,30 +112,24 @@ export const getUserById = async (req, res) => {
 
     try {
 
-      const { id } =
-        req.params;
+      const { id } = req.params;
 
       if (!id) {
-
         return res.status(400).json({
           success: false,
-          message:
-            "Id is required"
+          message: "Id is required"
         });
       }
 
-      const user =
-        await User.findOne({
+      const user = await User.findOne({
           _id: id,
           isDeleted: false
         });
 
       if (!user) {
-
         return res.status(404).json({
           success: false,
-          message:
-            "User not found"
+          message: "User not found"
         });
       }
 
@@ -166,15 +151,13 @@ export const deleteUser = async (req, res) => {
 
     try {
 
-      const { id } =
-        req.params;
+      const { id } = req.params;
 
       const user = await User.findOneAndUpdate(
           {
             _id: id,
             isDeleted: false
           },
-
           {
             isDeleted: true
           },
@@ -186,8 +169,7 @@ export const deleteUser = async (req, res) => {
       if (!user) {
         return res.status(404).json({
           success: false,
-          message:
-            "User not found"
+          message: "User not found"
         });
       }
 

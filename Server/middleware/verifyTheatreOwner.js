@@ -8,9 +8,9 @@ export const verifyTheatreOwner = (req, res, next) => {
                 message: "Only Theatre Owner can access this page"
             })
         }
-
+        
         next()
-
+        
     } catch (error) {
         return res.status(500).json({
             success: false,

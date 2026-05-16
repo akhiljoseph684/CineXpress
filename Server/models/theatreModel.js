@@ -15,9 +15,9 @@ const theatreSchema = mongoose.Schema({
     },
     location: {
         type: {
-            type: "String",
-            enum: ["point"],
-            default: "point"
+            type: String,
+            enum: ["Point"],
+            default: "Point"
         },
         coordinates: [Number]
     },
@@ -26,9 +26,22 @@ const theatreSchema = mongoose.Schema({
         enum: ["pending", "approved", "rejected",],
         default: "pending"
     },
+    bannerImage: {
+        type: String,
+        required: true
+    },
+    gallery: [
+        {
+            type: String
+        }
+    ],
     ownerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
     }
 })
 

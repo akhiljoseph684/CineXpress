@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes.js'
 import movieRoutes from './routes/movieRoutes.js'
 import actorRoutes from './routes/actorRoutes.js'
 import theatreRoutes from './routes/theatreRoutes.js'
+import screenRoutes from './routes/screenRoutes.js'
 import languageRoutes from './routes/languageRoutes.js'
 import genreRoutes from './routes/genreRoutes.js'
 import cookieParser from 'cookie-parser';
@@ -24,6 +25,7 @@ app.use(cors({
 app.use(passport.initialize());
 app.use(express.json())
 app.use(cookieParser())
+
 const port = process.env.PORT || 5000;
 
 app.get('/', (req, res) => {
@@ -37,6 +39,7 @@ app.use("/api/actors", actorRoutes)
 app.use("/api/theatre", theatreRoutes)
 app.use("/api/language", languageRoutes)
 app.use("/api/genre", genreRoutes)
+app.use("/api/screens", screenRoutes)
 
 app.listen(port, () => {
     console.log(`server started on port ${port}`)

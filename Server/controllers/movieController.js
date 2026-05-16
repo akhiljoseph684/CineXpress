@@ -129,28 +129,19 @@ export const createMovie = async (req, res) => {
             })
         }
 
-        const formatedCast =
-          (cast || []).map((actor) => {
+        const formatedCast = (cast || []).map((actor) => {
           
             if (actor._id) {
             
               return {
-              
-                actorId:
-                  actor._id,
-              
+                actorId: actor._id,
                 name: null
-              
               };
             }
           
             return {
-            
               actorId: null,
-            
-              name:
-                actor.name?.trim() || ""
-            
+              name: actor.name?.trim() || ""
             };
         });
 
@@ -204,8 +195,7 @@ export const getAllMovies = async (req, res) => {
       };
 
       if (status && status !== "all") {
-        filter.status =
-          status;
+        filter.status = status;
       }
 
       if (title?.trim()) {
@@ -213,7 +203,6 @@ export const getAllMovies = async (req, res) => {
         filter.title = {
           $regex:
             title.trim(),
-
           $options: "i"
         };
       }
@@ -248,7 +237,6 @@ export const getAllMovies = async (req, res) => {
           {
             $match: filter
           },
-
           {
             $addFields: {
 
@@ -256,15 +244,12 @@ export const getAllMovies = async (req, res) => {
                 $avg:
                   "$reviews.stars"
               },
-
               totalRatings: {
-                $size:
-                  "$reviews"
+                $size: "$reviews"
               }
 
             }
           },
-
           {
             $facet: {
 
@@ -288,17 +273,13 @@ export const getAllMovies = async (req, res) => {
 
                 {
                   $lookup: {
-                    from:
-                      "genres",
+                    from: "genres",
 
-                    localField:
-                      "genre",
+                    localField: "genre",
 
-                    foreignField:
-                      "_id",
+                    foreignField: "_id",
 
-                    as:
-                      "genre"
+                    as: "genre"
                   }
                 },
 
@@ -313,8 +294,7 @@ export const getAllMovies = async (req, res) => {
                 },
 
                 {
-                  $limit:
-                    limitNumber
+                  $limit: limitNumber
                 }
 
               ],
@@ -483,10 +463,7 @@ export const editMovie = async (
       });
     }
 
-    if (
-      dur < 30 ||
-      dur > 500
-    ) {
+    if (dur < 30 || dur > 500) {
 
       return res.status(400).json({
         success: false,
@@ -507,15 +484,9 @@ export const editMovie = async (
     }
 
     const date =
-      new Date(
-        releaseDate
-      );
+      new Date(releaseDate);
 
-    if (
-      isNaN(
-        date.getTime()
-      )
-    ) {
+    if (isNaN(date.getTime())) {
 
       return res.status(400).json({
         success: false,
@@ -528,12 +499,7 @@ export const editMovie = async (
     const today =
       new Date();
 
-    today.setHours(
-      0,
-      0,
-      0,
-      0
-    );
+    today.setHours(0, 0, 0, 0);
 
     if (date < today) {
 
@@ -553,7 +519,6 @@ export const editMovie = async (
     );
 
     if (date > maxDate) {
-
       return res.status(400).json({
         success: false,
         field: "releaseDate",
@@ -567,34 +532,24 @@ export const editMovie = async (
       return res.status(400).json({
         success: false,
         field: "director",
-        message:
-          "Director field Required"
+        message: "Director field Required"
       });
     }
 
-    if (
-      !language ||
-      !language.length
-    ) {
+    if (!language || !language.length) {
 
       return res.status(400).json({
         success: false,
         field: "language",
-        message:
-          "Please select at least one language."
+        message: "Please select at least one language."
       });
     }
 
-    if (
-      !genre ||
-      !genre.length
-    ) {
-
+    if (!genre || !genre.length) {
       return res.status(400).json({
         success: false,
         field: "genre",
-        message:
-          "Please select at least one genre."
+        message: "Please select at least one genre."
       });
     }
 
@@ -604,17 +559,12 @@ export const editMovie = async (
       thumbnail
     } = poster || {};
 
-    if (
-      !card ||
-      !banner ||
-      !thumbnail
-    ) {
+    if (!card || !banner || !thumbnail) {
 
       return res.status(400).json({
         success: false,
         field: "poster",
-        message:
-          "Please upload all images"
+        message: "Please upload images"
       });
     }
 
@@ -644,32 +594,23 @@ export const editMovie = async (
       
     });
 
-    movie.title =
-      title;
+    movie.title = title;
 
-    movie.description =
-      description;
+    movie.description = description;
 
-    movie.duration =
-      dur;
+    movie.duration = dur;
 
-    movie.language =
-      language;
+    movie.language = language;
 
-    movie.genre =
-      genre;
+    movie.genre = genre;
 
-    movie.releaseDate =
-      releaseDate;
+    movie.releaseDate = releaseDate;
 
-    movie.director =
-      director;
+    movie.director = director;
 
-    movie.producer =
-      producer;
+    movie.producer = producer;
 
-    movie.trailer =
-      trailer;
+    movie.trailer = trailer;
 
     movie.poster = {
       card,
@@ -677,15 +618,13 @@ export const editMovie = async (
       thumbnail
     };
 
-    movie.cast =
-      formattedCast;
+    movie.cast = formattedCast;
 
     await movie.save();
 
     return res.status(200).json({
       success: true,
-      message:
-        "Movie updated successfully",
+      message: "Movie updated successfully",
       movie
     });
 
