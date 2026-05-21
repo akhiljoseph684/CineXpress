@@ -203,7 +203,6 @@ export const getScreensByOwner = async (req, res) => {
     const ownerId = req.user.id;
 
     const screens = await Screen.aggregate([
-
       {
         $lookup: {
           from: "theatres",
@@ -276,6 +275,131 @@ export const getScreensByOwner = async (req, res) => {
     return res.status(200).json({
       success: true,
       count: screens.length,
+      screens,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+};
+
+export const getAllScreens = async (req, res) => {
+  try {
+    const screens = await Screen.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+        },
+      },
+
+      {
+        $lookup: {
+          from: "theatres",
+
+          localField: "theatreId",
+
+          foreignField: "_id",
+
+          as: "theatre",
+        },
+      },
+
+      {
+        $unwind: "$theatre",
+      },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "theatre.ownerId",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$owner",
+
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      {
+        $addFields: {
+          totalSeats: {
+            $size: {
+              $filter: {
+                input: {
+                  $reduce: {
+                    input: "$seatLayout",
+
+                    initialValue: [],
+
+                    in: {
+                      $concatArrays: ["$$value", "$$this"],
+                    },
+                  },
+                },
+
+                as: "seat",
+
+                cond: {
+                  $ne: ["$$seat", null],
+                },
+              },
+            },
+          },
+        },
+      },
+
+      {
+        $project: {
+          name: 1,
+
+          screenType: 1,
+
+          prices: 1,
+
+          totalSeats: 1,
+
+          createdAt: 1,
+
+          theatre: {
+            _id: "$theatre._id",
+
+            name: "$theatre.name",
+
+            location: "$theatre.location",
+          },
+
+          owner: {
+            _id: "$owner._id",
+
+            name: "$owner.name",
+
+            email: "$owner.email",
+          },
+        },
+      },
+
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+
+      count: screens.length,
+
       screens,
     });
   } catch (error) {

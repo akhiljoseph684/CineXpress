@@ -30,6 +30,7 @@ import TheatreListPage from "./theatre_owner/Theatre/TheatreListPage";
 import CreateEditTheatre from "./theatre_owner/Theatre/CreateEditTheatre";
 import ScreenListPage from "./theatre_owner/Screen/ScreenListPage";
 import CreateEditScreen from "./theatre_owner/Screen/CreateEditScreen";
+import ScreenList from "./admin/pages/Screens/ScreenList";
 
 function App() {
   const dispatch = useDispatch();
@@ -100,7 +101,7 @@ function App() {
 
         <Route path="theatre" element={<Theatre />} />
 
-        <Route path="screens" element={<Screens />} />
+        <Route path="screens" element={<ScreenList />} />
 
         <Route path="movies" element={<Movies />} />
         <Route path="movies/create" element={<CreateMovie />} />
