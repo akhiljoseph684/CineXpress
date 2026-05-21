@@ -355,8 +355,6 @@ function CreateEditTheatre() {
         "
       >
 
-        {/* Header */}
-
         <div
           className="
             p-8
@@ -410,8 +408,6 @@ function CreateEditTheatre() {
             space-y-10
           "
         >
-
-          {/* Banner */}
 
           <div
             className="
@@ -507,8 +503,6 @@ function CreateEditTheatre() {
             }
 
           </div>
-
-          {/* Form Fields */}
 
           <div
             className="
@@ -628,8 +622,6 @@ function CreateEditTheatre() {
 
           </div>
 
-          {/* Address */}
-
           <div>
 
             <label
@@ -685,8 +677,6 @@ function CreateEditTheatre() {
 
           </div>
 
-          {/* Location */}
-
           <div
             className="
               space-y-5
@@ -732,8 +722,6 @@ function CreateEditTheatre() {
             />
 
           </div>
-
-          {/* Gallery */}
 
           <div
             className="
@@ -877,8 +865,6 @@ function CreateEditTheatre() {
             }
 
           </div>
-
-          {/* Submit */}
 
           <div
             className="

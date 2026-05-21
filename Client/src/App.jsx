@@ -84,7 +84,7 @@ function App() {
         <Route path="theatre/edit/:id" element={<CreateEditTheatre />} />
         <Route path="screens" element={<ScreenListPage />} />
         <Route path="screens/create/:id" element={<CreateEditScreen />} />
-        <Route path="screens/edit/:id" element={<CreateEditScreen />} />
+        <Route path="screens/edit/:screenId" element={<CreateEditScreen />} />
         <Route path="shows" element={<Show />} />
       </Route>
 

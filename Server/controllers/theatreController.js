@@ -139,7 +139,6 @@ export const editTheatre = async (req, res) => {
 
         } = req.body;
 
-        /* ---------- FIND THEATRE ---------- */
 
         const theatre =
             await Theatre.findById(id);
@@ -157,7 +156,6 @@ export const editTheatre = async (req, res) => {
 
         }
 
-        /* ---------- OWNER CHECK ---------- */
 
         if (
 
@@ -177,7 +175,6 @@ export const editTheatre = async (req, res) => {
 
         }
 
-        /* ---------- LOCATION ---------- */
 
         let geoLocation =
             theatre.location;
@@ -225,7 +222,6 @@ export const editTheatre = async (req, res) => {
 
         }
 
-        /* ---------- UPDATE ---------- */
 
         theatre.name =
             name || theatre.name;
@@ -248,8 +244,6 @@ export const editTheatre = async (req, res) => {
             geoLocation;
 
         await theatre.save();
-
-        /* ---------- RESPONSE ---------- */
 
         return res.status(200).json({
 

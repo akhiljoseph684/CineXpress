@@ -228,8 +228,6 @@ function TheatreListPage() {
         )
       }
 
-      {/* LIST */}
-
       <div
         className="
           grid
@@ -552,8 +550,6 @@ function TheatreListPage() {
                         Edit
 
                       </button>
-
-                      {/* DELETE */}
 
                       <button
                         onClick={() =>
