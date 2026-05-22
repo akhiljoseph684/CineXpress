@@ -568,8 +568,7 @@ export const editMovie = async (
       });
     }
 
-    const formattedCast =
-      (cast || []).map((actor) => {
+    const formattedCast = (cast || []).map((actor) => {
       
         if (actor._id) {
         
@@ -793,89 +792,81 @@ export const bannerFetch = async (req, res) => {
 };
 
 export const addReview = async (req, res) => {
+  try {
 
-    try {
+    const { id } = req.params;
 
-      const { id } = req.params;
+    const userId = req.user.id;
 
-      const userId = req.user.id;
+    const { comments, stars } = req.body;
 
-      
-      const { comments, stars } = req.body;
-      
-      const user = await User.findById(userId);
-
-      if(!user){
-        return res.status(400).json({
-          success: false,
-          message: "Invalid User id"
-        });
-      }
-      
-      if (!comments || !stars) {
-
-        return res.status(400).json({
-          success: false,
-          message: "Comment and stars required"
-        });
-      }
-
-      const movie = await Movie.findById(id);
-
-      if (!movie) {
-        return res.status(404).json({
-          success: false,
-          message: "Movie not found"
-
-        });
-      }
-
-      const alreadyReviewed = movie.reviews.find((review) => 
-            review?.user?.toString?.() ===
-            req.user?._id?.toString?.()
-
-        );
-
-      if (alreadyReviewed) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            "You already reviewed this movie"
-
-        });
-      }
-
-      movie.reviews.unshift({
-        user: userId,
-        comments,
-        stars,
-      });
-
-      await movie.save();
-
-      const updatedMovie = await Movie.findById(id)
-
-          .populate({path: "reviews.user", select: "name avatar"
-          });
-
-      return res.status(200).json({
-        success: true,
-        movie: updatedMovie
-      });
-
-    } catch (error) {
-
-      return res.status(500).json({
-
+    if (!comments || !stars) {
+      return res.status(400).json({
         success: false,
-
-        message:
-          error.message
-
+        message: "Comments and stars are required",
       });
-
     }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user id",
+      });
+    }
+
+    const movie = await Movie.findById(id);
+
+    if (!movie) {
+      return res.status(404).json({
+        success: false,
+        message: "Movie not found",
+      });
+    }
+
+    const alreadyReviewed = await Movie.exists({
+      _id: id,
+      "reviews.user": userId,
+    });
+
+    if (alreadyReviewed) {
+      return res.status(400).json({
+        success: false,
+        message: "You already reviewed this movie",
+      });
+    }
+
+    await Movie.findByIdAndUpdate(
+      id,
+      {
+        $push: {
+          reviews: {
+            user: userId,
+            comments,
+            stars,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    const updatedMovie = await Movie.findById(id).populate({
+      path: "reviews.user",
+      select: "name avatar",
+    });
+
+    return res.status(200).json({
+      success: true,
+      movie: updatedMovie,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
 };
