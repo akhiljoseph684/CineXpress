@@ -31,6 +31,8 @@ import CreateEditTheatre from "./theatre_owner/Theatre/CreateEditTheatre";
 import ScreenListPage from "./theatre_owner/Screen/ScreenListPage";
 import CreateEditScreen from "./theatre_owner/Screen/CreateEditScreen";
 import ScreenList from "./admin/pages/Screens/ScreenList";
+import CreateShowPage from "./theatre_owner/Shows/CreateShowPage";
+import MovieShowsPage from "./theatre_owner/Shows/MovieShowPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -71,12 +73,10 @@ function App() {
         }
       >
         <Route index element={<Home />} />
-
         <Route path="movies" element={<MoviesPage />}></Route>
-
         <Route path="profile" element={<ProfilePage />}></Route>
-
         <Route path="movies/:id" element={<MovieDetailsPage />}></Route>
+        <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
       </Route>
 
       <Route path="/theatre-owner" element={<TheatreOwnerLayout />}>
@@ -86,7 +86,8 @@ function App() {
         <Route path="screens" element={<ScreenListPage />} />
         <Route path="screens/create/:id" element={<CreateEditScreen />} />
         <Route path="screens/edit/:screenId" element={<CreateEditScreen />} />
-        <Route path="shows" element={<Show />} />
+        <Route path="shows/create/:screenId" element={<CreateShowPage />} />
+        <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
       </Route>
 
       <Route

@@ -34,7 +34,6 @@ export const updateScreen = async (id, data) => {
     const res = await API.put("/screens/" + id, data);
     return res.data;
   } catch (error) {
-    console.log("res");
     throw error.response?.data;
   }
 };

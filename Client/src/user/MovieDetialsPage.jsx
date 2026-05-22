@@ -339,7 +339,7 @@ function MovieDetailsPage() {
               <button
                 onClick={() =>
                   navigate(
-                    `/booking/${movie._id}`
+                    `/shows/movie/${movie._id}`
                   )
                 }
 

@@ -1,24 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 
 import {
   Outlet,
   NavLink,
-  useNavigate,
 } from "react-router-dom";
 
 import {
   useSelector,
 } from "react-redux";
 
-function TheatreOwnerLayout() {
+import {
+  FaBars,
+  FaTimes,
+} from "react-icons/fa";
 
-  const navigate =
-    useNavigate();
+function TheatreOwnerLayout() {
 
   const { user } =
     useSelector(
       (state) => state.auth
     );
+
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
 
   const status =
     user?.status || "pending";
@@ -32,36 +36,89 @@ function TheatreOwnerLayout() {
   const isApproved =
     status === "approved";
 
+  const navItems = [
+    {
+      name: "Dashboard",
+      path: "/theatre-owner",
+    },
+
+    {
+      name: "Theatre",
+      path: "/theatre-owner/theatre",
+    },
+
+    {
+      name: "Screens",
+      path: "/theatre-owner/screens",
+    },
+
+    {
+      name: "Shows",
+      path: "/theatre-owner/shows",
+    },
+
+    {
+      name: "Bookings",
+      path: "/theatre-owner/bookings",
+    },
+  ];
+
   return (
     <div
       className="
         h-screen
-
         bg-black
         text-white
-
         flex
-
         overflow-hidden
       "
     >
 
+      {
+        sidebarOpen && (
+          <div
+            onClick={() =>
+              setSidebarOpen(false)
+            }
+            className="
+              fixed
+              inset-0
+              bg-black/50
+              z-40
+              lg:hidden
+            "
+          />
+        )
+      }
+
       <aside
-        className="
-          hidden
-          lg:flex
+        className={`
+          fixed lg:static
+          top-0 left-0
 
-          flex-col
-
+          h-full
           w-[240px]
-
-          shrink-0
 
           bg-[#111111]
 
           border-r
           border-white/10
-        "
+
+          z-50
+
+          transform
+          transition-transform
+          duration-300
+
+          flex
+          flex-col
+
+          ${
+            sidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0"
+          }
+        `}
       >
 
         <div
@@ -71,34 +128,53 @@ function TheatreOwnerLayout() {
 
             border-b
             border-white/10
+
+            flex
+            items-center
+            justify-between
           "
         >
 
-          <h1
-            className="
-              text-3xl
-              font-bold
+          <div>
 
-              text-pink-500
+            <h1
+              className="
+                text-3xl
+                font-bold
+                text-pink-500
+              "
+            >
+
+              CineXpress
+
+            </h1>
+
+            <p
+              className="
+                text-sm
+                text-gray-500
+                mt-1
+              "
+            >
+
+              Theatre Owner Panel
+
+            </p>
+
+          </div>
+
+          <button
+            onClick={() =>
+              setSidebarOpen(false)
+            }
+            className="
+              lg:hidden
             "
           >
 
-            CineXpress
+            <FaTimes size={22} />
 
-          </h1>
-
-          <p
-            className="
-              text-sm
-              text-gray-500
-
-              mt-1
-            "
-          >
-
-            Theatre Owner Panel
-
-          </p>
+          </button>
 
         </div>
 
@@ -116,7 +192,6 @@ function TheatreOwnerLayout() {
             className="
               text-lg
               font-semibold
-
               truncate
             "
           >
@@ -129,7 +204,6 @@ function TheatreOwnerLayout() {
             className="
               text-sm
               text-gray-500
-
               truncate
             "
           >
@@ -149,7 +223,6 @@ function TheatreOwnerLayout() {
                 mt-4
 
                 bg-yellow-500/10
-
                 text-yellow-400
 
                 rounded-xl
@@ -177,7 +250,6 @@ function TheatreOwnerLayout() {
                 mt-4
 
                 bg-red-500/10
-
                 text-red-400
 
                 rounded-xl
@@ -208,32 +280,7 @@ function TheatreOwnerLayout() {
         >
 
           {
-            [
-              {
-                name: "Dashboard",
-                path: "/theatre-owner",
-              },
-
-              {
-                name: "Theatre",
-                path: "/theatre-owner/theatre",
-              },
-
-              {
-                name: "Screens",
-                path: "/theatre-owner/screens",
-              },
-
-              {
-                name: "Shows",
-                path: "/theatre-owner/shows",
-              },
-
-              {
-                name: "Bookings",
-                path: "/theatre-owner/bookings",
-              },
-            ].map((item) => (
+            navItems.map((item) => (
 
               <NavLink
                 key={item.path}
@@ -243,6 +290,10 @@ function TheatreOwnerLayout() {
                 end={
                   item.path ===
                   "/theatre-owner"
+                }
+
+                onClick={() =>
+                  setSidebarOpen(false)
                 }
 
                 className={({
@@ -287,52 +338,13 @@ function TheatreOwnerLayout() {
 
         </nav>
 
-        <div
-          className="
-            p-4
-
-            border-t
-            border-white/10
-          "
-        >
-
-          <button
-            onClick={() =>
-              navigate("/")
-            }
-
-            className="
-              w-full
-
-              bg-white/5
-              hover:bg-white/10
-
-              transition
-
-              py-3
-
-              rounded-xl
-
-              text-sm
-            "
-          >
-
-            Back To Home
-
-          </button>
-
-        </div>
-
       </aside>
 
       <main
         className="
           flex-1
-
           min-w-0
-
           overflow-y-auto
-
           scrollbar-hide
         "
       >
@@ -341,7 +353,8 @@ function TheatreOwnerLayout() {
           className="
             lg:hidden
 
-            flex items-center
+            flex
+            items-center
             justify-between
 
             px-4
@@ -354,6 +367,16 @@ function TheatreOwnerLayout() {
           "
         >
 
+          <button
+            onClick={() =>
+              setSidebarOpen(true)
+            }
+          >
+
+            <FaBars size={24} />
+
+          </button>
+
           <h1
             className="
               text-xl
@@ -365,87 +388,7 @@ function TheatreOwnerLayout() {
 
           </h1>
 
-          <button
-            onClick={() =>
-              navigate("/")
-            }
-
-            className="
-              text-sm
-
-              bg-white/10
-
-              px-4
-              py-2
-
-              rounded-lg
-            "
-          >
-
-            Home
-
-          </button>
-
-        </div>
-
-        <div
-          className="
-            lg:hidden
-
-            px-4
-            py-4
-          "
-        >
-
-          {
-            isPending && (
-
-              <div
-                className="
-                  bg-yellow-500/10
-
-                  text-yellow-400
-
-                  rounded-xl
-
-                  px-4
-                  py-3
-
-                  text-sm
-                "
-              >
-
-                Pending Approval
-
-              </div>
-
-            )
-          }
-
-          {
-            isRejected && (
-
-              <div
-                className="
-                  bg-red-500/10
-
-                  text-red-400
-
-                  rounded-xl
-
-                  px-4
-                  py-3
-
-                  text-sm
-                "
-              >
-
-                Request Rejected
-
-              </div>
-
-            )
-          }
+          <div className="w-[24px]" />
 
         </div>
 
@@ -457,16 +400,6 @@ function TheatreOwnerLayout() {
 
           <div
             className={`
-              bg-[#111111]
-
-              rounded-2xl
-
-              border
-              border-white/10
-
-              min-h-[calc(100vh-48px)]
-
-              p-4 md:p-6
 
               ${
                 isPending ||
