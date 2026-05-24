@@ -1,4 +1,5 @@
 import React, {
+  useEffect,
   useState,
 } from "react";
 
@@ -35,6 +36,18 @@ import {
 import { logoutApi } from "../services/authApi";
 
 function ProfilePage() {
+
+  useEffect(() => {
+      
+        window.scrollTo({
+      
+          top: 0,
+      
+          behavior: "smooth"
+      
+        });
+    
+      }, []);
 
   const navigate =
     useNavigate();

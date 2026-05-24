@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-import { getMovieShows } from "../../services/showApi";
-import { getMovieById } from "../../services/moviesApi";
+import { getMovieShows } from "../services/showApi";
+import { getMovieById } from "../services/moviesApi";
 
 const MovieShowsPage = () => {
   const { movieId } = useParams();
+
+  const navigate = useNavigate();
 
   const [shows, setShows] = useState([]);
   const [movie, setMovie] = useState({});
@@ -14,6 +16,14 @@ const MovieShowsPage = () => {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0],
   );
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+
+      behavior: "smooth",
+    });
+  }, []);
 
   useEffect(() => {
     fetchShows();
@@ -26,7 +36,7 @@ const MovieShowsPage = () => {
   const fetchMovie = async () => {
     try {
       const res = await getMovieById(movieId);
-      setMovie(res.movie);
+      setMovie(res.movie || {});
     } catch (error) {
       console.log(error);
     }
@@ -56,7 +66,6 @@ const MovieShowsPage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-
       <div className="relative border-b border-white/10 bg-gradient-to-b from-[#141414] to-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14">
           <div className="max-w-3xl">
@@ -79,9 +88,9 @@ const MovieShowsPage = () => {
             </h1>
 
             <div className="flex flex-wrap gap-2 mt-5">
-              {["Drama", "Mystery", "Thriller"].map((genre) => (
+              {movie.genre?.map((genre) => (
                 <div
-                  key={genre}
+                  key={genre.name}
                   className="
                     px-3 py-1.5
                     sm:px-4 sm:py-2
@@ -93,7 +102,7 @@ const MovieShowsPage = () => {
                     backdrop-blur-md
                   "
                 >
-                  {genre}
+                  {genre.name}
                 </div>
               ))}
             </div>
@@ -126,10 +135,10 @@ const MovieShowsPage = () => {
             const isSelected = selectedDate === formattedDate;
 
             return (
-                <button
-                  key={formattedDate}
-                  onClick={() => setSelectedDate(formattedDate)}
-                  className={`
+              <button
+                key={formattedDate}
+                onClick={() => setSelectedDate(formattedDate)}
+                className={`
                     flex-1
                     min-w-0
                 
@@ -153,17 +162,17 @@ const MovieShowsPage = () => {
                         `
                     }
                   `}
-                >
+              >
                 <p className="text-[9px] sm:text-[10px] uppercase text-white/60">
                   {date.toLocaleDateString("en-US", {
                     weekday: "short",
                   })}
                 </p>
-              
+
                 <h2 className="text-base sm:text-lg font-black mt-0.5">
                   {date.getDate()}
                 </h2>
-              
+
                 <p className="text-[9px] sm:text-[10px] mt-0.5 text-white/60">
                   {date.toLocaleDateString("en-US", {
                     month: "short",
@@ -190,9 +199,7 @@ const MovieShowsPage = () => {
               text-center
             "
           >
-            <h2 className="text-2xl sm:text-3xl font-bold">
-              No Shows Found
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">No Shows Found</h2>
 
             <p className="text-white/50 mt-3 text-sm sm:text-base">
               No shows available for selected date
@@ -216,7 +223,6 @@ const MovieShowsPage = () => {
                     xl:flex-row
                   "
                 >
-
                   <div
                     className="
                       xl:w-80
@@ -266,6 +272,7 @@ const MovieShowsPage = () => {
                       {item.shows.map((show) => (
                         <button
                           key={show._id}
+                          onClick={() => navigate(`/booking/movie/${show._id}`)}
                           className="
                             group
                             w-full

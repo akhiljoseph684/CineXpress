@@ -7,7 +7,7 @@ import Show from "../models/showModel.js";
 import User from "../models/userModel.js";
 
 import { geocodeCity } from "../utils/geocodeCity.js";
-
+import Booking from "../models/bookingModel.js";
 
 export const createShow = async (req, res) => {
   try {
@@ -87,124 +87,65 @@ export const createShow = async (req, res) => {
     }
 
     const overlappingShow = await Show.aggregate([
-  
       {
         $match: {
-      
-          screenId:
-            new mongoose.Types.ObjectId(
-              screenId
-            ),
-          
+          screenId: new mongoose.Types.ObjectId(screenId),
+
           showDate,
-          
         },
       },
-  
+
       {
         $addFields: {
-      
           existingStart: {
-          
             $dateFromString: {
-          
               dateString: {
-              
-                $concat: [
-                  "$showDate",
-                  "T",
-                  "$startTime",
-                ],
-              
+                $concat: ["$showDate", "T", "$startTime"],
               },
-          
             },
-          
           },
-      
+
           existingEnd: {
-          
             $dateFromString: {
-          
               dateString: {
-              
-                $concat: [
-                  "$showDate",
-                  "T",
-                  "$endTime",
-                ],
-              
+                $concat: ["$showDate", "T", "$endTime"],
               },
-          
             },
-          
           },
-      
+
           newStart: {
-          
             $dateFromString: {
-          
-              dateString:
-                `${showDate}T${startTime}`,
-          
+              dateString: `${showDate}T${startTime}`,
             },
-          
           },
-      
+
           newEnd: {
-          
             $dateFromString: {
-          
-              dateString:
-                `${showDate}T${endTime}`,
-          
+              dateString: `${showDate}T${endTime}`,
             },
-          
           },
-      
         },
-      
       },
-  
+
       {
         $match: {
-      
           $expr: {
-          
             $and: [
-          
               {
-                $lt: [
-              
-                  "$newStart",
-              
-                  "$existingEnd",
-              
-                ],
+                $lt: ["$newStart", "$existingEnd"],
               },
-          
+
               {
-                $gt: [
-              
-                  "$newEnd",
-              
-                  "$existingStart",
-              
-                ],
+                $gt: ["$newEnd", "$existingStart"],
               },
-          
             ],
-          
           },
-      
         },
-      
       },
-  
+
       {
         $limit: 1,
       },
-  
     ]);
     if (overlappingShow.length > 0) {
       return res.status(400).json({
@@ -248,12 +189,12 @@ export const createShow = async (req, res) => {
 export const getMovieShows = async (req, res) => {
   try {
     const { movieId, showDate } = req.query;
-    
+
     if (!movieId || !showDate) {
-        return res.status(400).json({
-            success: false,
-            message: "Movie and date required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Movie and date required",
+      });
     }
 
     const user = await User.findById(req.user.id);
@@ -276,7 +217,6 @@ export const getMovieShows = async (req, res) => {
     }
 
     const shows = await Show.aggregate([
-
       {
         $match: {
           movieId: new mongoose.Types.ObjectId(movieId),
@@ -408,10 +348,74 @@ export const getMovieShows = async (req, res) => {
       shows,
     });
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: "Server error",
+    });
+  }
+};
+
+export const getShowById = async (req, res) => {
+  try {
+    const { showId } = req.params;
+
+    const show = await Show.findById(showId)
+      .populate("movieId")
+
+      .populate("theatreId")
+
+      .populate("screenId");
+
+    if (!show) {
+      return res.status(404).json({
+        success: false,
+        message: "Show not found",
+      });
+    }
+
+    const bookedSeats = await Booking.aggregate([
+      {
+        $match: {
+          show: show._id,
+
+          $or: [
+            {
+              bookingStatus: "CONFIRMED",
+            },
+
+            {
+              bookingStatus: "PENDING",
+
+              expiresAt: {
+                $gt: new Date(),
+              },
+            },
+          ],
+        },
+      },
+
+      {
+        $unwind: "$seats",
+      },
+
+      {
+        $replaceRoot: {
+          newRoot: "$seats",
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      show,
+      bookedSeats,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

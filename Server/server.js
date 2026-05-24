@@ -1,7 +1,10 @@
 import express from 'express';
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({
+  path: "./.env",
+});
 import passport from "passport";
+import "./utils/expireBookings.js";
 import {connectDB} from './config/connectDB.js'
 import authRoutes from './routes/authRoutes.js'
 import userRoutes from './routes/userRoutes.js'
@@ -10,6 +13,8 @@ import actorRoutes from './routes/actorRoutes.js'
 import theatreRoutes from './routes/theatreRoutes.js'
 import screenRoutes from './routes/screenRoutes.js'
 import showsRoutes from './routes/showsRoutes.js'
+import bookingRoutes from './routes/bookingRoutes.js'
+import paymentRoutes from './routes/paymentRoutes.js'
 import languageRoutes from './routes/languageRoutes.js'
 import genreRoutes from './routes/genreRoutes.js'
 import cookieParser from 'cookie-parser';
@@ -42,6 +47,8 @@ app.use("/api/language", languageRoutes)
 app.use("/api/genre", genreRoutes)
 app.use("/api/screens", screenRoutes)
 app.use("/api/shows", showsRoutes)
+app.use("/api/booking", bookingRoutes)
+app.use("/api/payment", paymentRoutes)
 
 app.listen(port, () => {
     console.log(`server started on port ${port}`)

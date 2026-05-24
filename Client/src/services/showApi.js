@@ -17,3 +17,12 @@ export const getMovieShows = async (movieId, showDate) => {
         throw error.response?.data
     }
 }
+
+export const getShowById = async (id) => {
+    try {
+        const res = await API.get("/shows/" + id);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data;
+    }
+}

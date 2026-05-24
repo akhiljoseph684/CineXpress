@@ -32,14 +32,15 @@ import ScreenListPage from "./theatre_owner/Screen/ScreenListPage";
 import CreateEditScreen from "./theatre_owner/Screen/CreateEditScreen";
 import ScreenList from "./admin/pages/Screens/ScreenList";
 import CreateShowPage from "./theatre_owner/Shows/CreateShowPage";
-import MovieShowsPage from "./theatre_owner/Shows/MovieShowPage";
+import MovieShowsPage from "./user/MovieShowPage";
+import SeatBookingPage from "./user/SeatBookingPage";
+import "./App.css"
 
 function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
     const loadUser = async () => {
-      console.log("working");
 
       try {
         const res = await refreshToken();
@@ -77,6 +78,7 @@ function App() {
         <Route path="profile" element={<ProfilePage />}></Route>
         <Route path="movies/:id" element={<MovieDetailsPage />}></Route>
         <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
+        <Route path="booking/movie/:showId" element={<SeatBookingPage />} />
       </Route>
 
       <Route path="/theatre-owner" element={<TheatreOwnerLayout />}>
@@ -120,7 +122,6 @@ function App() {
 
         <Route path="categories" element={<LanguageGenre />} />
       </Route>
-
     </Routes>
   );
 }

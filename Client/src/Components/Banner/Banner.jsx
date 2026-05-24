@@ -109,10 +109,11 @@ function Banner() {
               className={`
                 absolute inset-0
                 transition-all duration-1000 ease-in-out
+              
                 ${
                   current === index
-                    ? "opacity-100 scale-100"
-                    : "opacity-0 scale-105"
+                    ? "opacity-100 scale-100 pointer-events-auto"
+                    : "opacity-0 scale-105 pointer-events-none"
                 }
               `}
             >
@@ -252,8 +253,8 @@ function Banner() {
                       />
 
                       {
-                        movie.ratings ||
-                        "8.5"
+                        movie.ratings.toFixed(1) ||
+                        "3.5"
                       }
 
                     </div>
@@ -358,7 +359,7 @@ function Banner() {
                     <button
                       onClick={() =>
                         navigate(
-                          `/booking/${movie._id}`
+                          `/shows/movie/${movie._id}`
                         )
                       }
                       className="
