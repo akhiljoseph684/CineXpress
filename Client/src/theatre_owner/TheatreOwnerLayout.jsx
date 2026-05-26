@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import {
   Outlet,
   NavLink,
+  useNavigate,
 } from "react-router-dom";
 
 import {
@@ -15,6 +16,7 @@ import {
 } from "react-icons/fa";
 
 function TheatreOwnerLayout() {
+
 
   const { user } =
     useSelector(
@@ -34,7 +36,7 @@ function TheatreOwnerLayout() {
     status === "rejected";
 
   const isApproved =
-    status === "approved";
+    status === "active";
 
   const navItems = [
     {
@@ -63,6 +65,7 @@ function TheatreOwnerLayout() {
     },
   ];
 
+  const navigate = useNavigate()
   return (
     <div
       className="
@@ -186,6 +189,10 @@ function TheatreOwnerLayout() {
             border-b
             border-white/10
           "
+          onClick={
+            ()=> (navigate(
+            "/profile"
+          ))}
         >
 
           <h2

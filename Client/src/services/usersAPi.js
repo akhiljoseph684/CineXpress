@@ -39,6 +39,7 @@ export const blockUser = async (id, data) => {
 
 export const updateUser = async (data) => {
     try {
+        console.log("jnfvjfn")
         const res = await API.put("/users", data);
         return res.data;
     } catch (error) {

@@ -419,3 +419,340 @@ export const getShowById = async (req, res) => {
     });
   }
 };
+
+export const getAllShows = async (req, res) => {
+  try {
+    const {
+      search,
+
+      type,
+
+      page = 1,
+
+      limit = 12,
+    } = req.query;
+
+    let query = {};
+
+    const now = new Date();
+
+    const today = now.toISOString().split("T")[0];
+
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes(),
+    ).padStart(2, "0")}`;
+
+    if (type === "upcoming") {
+      query.$or = [
+        {
+          showDate: {
+            $gt: today,
+          },
+        },
+
+        {
+          showDate: today,
+
+          startTime: {
+            $gt: currentTime,
+          },
+        },
+      ];
+    }
+
+    if (type === "ended") {
+      query.$or = [
+        {
+          showDate: {
+            $lt: today,
+          },
+        },
+
+        {
+          showDate: today,
+
+          endTime: {
+            $lt: currentTime,
+          },
+        },
+      ];
+    }
+
+    if (type === "running") {
+      query.showDate = today;
+
+      query.startTime = {
+        $lte: currentTime,
+      };
+
+      query.endTime = {
+        $gte: currentTime,
+      };
+    }
+
+    if (search) {
+      query.$or = [
+        {
+          startTime: {
+            $regex: search,
+
+            $options: "i",
+          },
+        },
+
+        {
+          endTime: {
+            $regex: search,
+
+            $options: "i",
+          },
+        },
+
+        {
+          showDate: {
+            $regex: search,
+
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const shows = await Show.find(query)
+
+      .populate({
+        path: "movieId",
+
+        select: "title poster",
+      })
+
+      .populate({
+        path: "theatreId",
+
+        select: "name city status",
+      })
+
+      .populate({
+        path: "screenId",
+
+        select: "name screenType",
+      })
+
+      .skip(Number(skip))
+
+      .limit(Number(limit))
+
+      .sort({
+        showDate: 1,
+
+        startTime: 1,
+      });
+
+    const totalShows = await Show.countDocuments(query);
+
+    const totalPages = Math.ceil(totalShows / limit);
+
+    return res.status(200).json({
+      success: true,
+      message: "Shows fetched successfully",
+      shows,
+      currentPage: Number(page),
+      totalPages,
+      totalShows,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+};
+
+export const getShowsByOwner = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+
+    const {
+      type,
+
+      page = 1,
+
+      limit = 12,
+    } = req.query;
+
+    const now = new Date();
+
+    const today = now.toISOString().split("T")[0];
+
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes(),
+    ).padStart(2, "0")}`;
+
+    let query = {
+      theatreId: {
+        $in: await Theatre.find({
+          ownerId,
+
+          isDeleted: false,
+        }).distinct("_id"),
+      },
+    };
+
+    if (type === "upcoming") {
+      query.$or = [
+        {
+          showDate: {
+            $gt: today,
+          },
+        },
+
+        {
+          showDate: today,
+
+          startTime: {
+            $gt: currentTime,
+          },
+        },
+      ];
+    }
+
+    if (type === "running") {
+      query.showDate = today;
+
+      query.startTime = {
+        $lte: currentTime,
+      };
+
+      query.endTime = {
+        $gte: currentTime,
+      };
+    }
+
+    if (type === "ended") {
+      query.$or = [
+        {
+          showDate: {
+            $lt: today,
+          },
+        },
+
+        {
+          showDate: today,
+
+          endTime: {
+            $lt: currentTime,
+          },
+        },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const shows = await Show.aggregate([
+      {
+        $match: query,
+      },
+
+      {
+        $lookup: {
+          from: "screens",
+
+          localField: "screenId",
+
+          foreignField: "_id",
+
+          as: "screen",
+        },
+      },
+
+      {
+        $unwind: "$screen",
+      },
+
+      {
+        $match: {
+          "screen.isDeleted": false,
+        },
+      },
+
+      {
+        $lookup: {
+          from: "movies",
+
+          localField: "movieId",
+
+          foreignField: "_id",
+
+          as: "movieId",
+        },
+      },
+
+      {
+        $unwind: "$movieId",
+      },
+
+      {
+        $lookup: {
+          from: "theatres",
+
+          localField: "theatreId",
+
+          foreignField: "_id",
+
+          as: "theatreId",
+        },
+      },
+
+      {
+        $unwind: "$theatreId",
+      },
+
+      {
+        $sort: {
+          showDate: 1,
+
+          startTime: 1,
+        },
+      },
+
+      {
+        $skip: Number(skip),
+      },
+
+      {
+        $limit: Number(limit),
+      },
+    ]);
+
+    const totalShows = await Show.countDocuments(query);
+
+    const totalPages = Math.ceil(totalShows / limit);
+
+    return res.status(200).json({
+      success: true,
+
+      message: "Shows fetched successfully",
+
+      shows,
+
+      currentPage: Number(page),
+
+      totalPages,
+
+      totalShows,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+};

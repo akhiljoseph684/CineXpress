@@ -220,7 +220,7 @@ export const getScreensByOwner = async (req, res) => {
       {
         $match: {
           "theatre.ownerId": new mongoose.Types.ObjectId(ownerId),
-
+          "theatre.status": "approved",
           isDeleted: false,
         },
       },

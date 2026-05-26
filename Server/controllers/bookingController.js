@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Booking from "../models/bookingModel.js";
 import Show from "../models/showModel.js";
 
@@ -12,7 +13,6 @@ export const reserveSeats = async (req, res) => {
       });
     }
 
-    // CHECK SHOW
     const show = await Show.findById(showId);
 
     if (!show) {
@@ -86,9 +86,7 @@ export const reserveSeats = async (req, res) => {
 
       paymentStatus: "PENDING",
 
-      expiresAt: new Date(
-        Date.now() + 5 * 60 * 1000
-      ),
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
     return res.status(201).json({
@@ -101,6 +99,243 @@ export const reserveSeats = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getAllBookings = async (req, res) => {
+  try {
+    const {
+      page = 1,
+
+      limit = 10,
+
+      status,
+    } = req.query;
+
+    let query = {};
+
+    if (status) {
+      query.bookingStatus = status;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.find(query)
+
+      .populate({
+        path: "user",
+
+        select: "name email avatar",
+      })
+
+      .populate({
+        path: "show",
+
+        populate: [
+          {
+            path: "movieId",
+
+            select: "title poster",
+          },
+
+          {
+            path: "theatreId",
+
+            select: "name city",
+          },
+
+          {
+            path: "screenId",
+
+            select: "name",
+          },
+        ],
+      })
+
+      .sort({
+        createdAt: -1,
+      })
+
+      .skip(Number(skip))
+
+      .limit(Number(limit));
+
+    const totalBookings = await Booking.countDocuments(query);
+
+    return res.status(200).json({
+      success: true,
+
+      message: "Bookings fetched successfully",
+
+      bookings,
+
+      currentPage: Number(page),
+
+      totalPages: Math.ceil(totalBookings / limit),
+
+      totalBookings,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+};
+
+export const getBookingsByOwner = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+
+    const bookings = await Booking.aggregate([
+      {
+        $lookup: {
+          from: "shows",
+
+          localField: "show",
+
+          foreignField: "_id",
+
+          as: "show",
+        },
+      },
+
+      {
+        $unwind: "$show",
+      },
+
+      {
+        $lookup: {
+          from: "theatres",
+
+          localField: "show.theatreId",
+
+          foreignField: "_id",
+
+          as: "theatre",
+        },
+      },
+
+      {
+        $unwind: "$theatre",
+      },
+
+      {
+        $match: {
+          "theatre.ownerId": new mongoose.Types.ObjectId(ownerId),
+        },
+      },
+
+      {
+        $lookup: {
+          from: "users",
+
+          localField: "user",
+
+          foreignField: "_id",
+
+          as: "user",
+        },
+      },
+
+      {
+        $unwind: "$user",
+      },
+
+      {
+        $lookup: {
+          from: "movies",
+
+          localField: "show.movieId",
+
+          foreignField: "_id",
+
+          as: "movie",
+        },
+      },
+
+      {
+        $unwind: "$movie",
+      },
+
+      {
+        $project: {
+          seats: 1,
+
+          totalSeats: 1,
+
+          totalAmount: 1,
+
+          bookingStatus: 1,
+
+          paymentStatus: 1,
+
+          bookedAt: 1,
+
+          createdAt: 1,
+
+          user: {
+            _id: 1,
+
+            name: 1,
+
+            email: 1,
+
+            avatar: 1,
+          },
+
+          movie: {
+            _id: 1,
+
+            title: 1,
+
+            poster: 1,
+          },
+
+          theatre: {
+            _id: 1,
+
+            name: 1,
+
+            city: 1,
+          },
+
+          show: {
+            _id: 1,
+
+            showDate: 1,
+
+            startTime: 1,
+
+            endTime: 1,
+          },
+        },
+      },
+
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Owner bookings fetched successfully",
+      count: bookings.length,
+      bookings,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+
       message: error.message,
     });
   }

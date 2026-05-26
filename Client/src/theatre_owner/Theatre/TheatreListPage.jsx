@@ -131,32 +131,6 @@ function TheatreListPage() {
 
         </div>
 
-        <button
-          onClick={() =>
-            navigate(
-              "/theatre-owner/theatre/create"
-            )
-          }
-
-          className="
-            bg-pink-600
-            hover:bg-pink-700
-
-            transition
-
-            px-6
-            py-3
-
-            rounded-2xl
-
-            font-medium
-          "
-        >
-
-          + Create Theatre
-
-        </button>
-
       </div>
 
 

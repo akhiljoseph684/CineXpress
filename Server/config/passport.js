@@ -36,7 +36,8 @@ passport.use(new GoogleStrategy({
         email,
         googleId: profile.id,
         provider: "google",
-        avatar
+        avatar,
+        role: userRole
       });
     }
 

@@ -66,7 +66,6 @@ export const verifyPayment = async (req, res) => {
 
       .digest("hex");
 
-    // INVALID SIGNATURE
     if (generatedSignature !== razorpay_signature) {
       await Booking.findByIdAndUpdate(
         bookingId,
@@ -84,7 +83,6 @@ export const verifyPayment = async (req, res) => {
       });
     }
 
-    // SUCCESS
     const booking = await Booking.findByIdAndUpdate(
       bookingId,
 

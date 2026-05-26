@@ -1,38 +1,27 @@
 import React, { useEffect, useState } from "react";
 
-import {
-  FaTicketAlt,
-  FaUser,
-  FaFilm,
-  FaMoneyBillWave,
-  FaClock,
-} from "react-icons/fa";
-import { getAllBookings } from "../../services/bookingApi";
+import { FaFilm, FaMapMarkerAlt, FaClock, FaTv } from "react-icons/fa";
 
-function Bookings() {
-  const [bookings, setBookings] = useState([]);
+import { getAllShows } from "../../../services/showApi";
+
+function Shows() {
+  const [shows, setShows] = useState([]);
 
   const [loading, setLoading] = useState(false);
 
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("running");
 
   useEffect(() => {
-    fetchBookings(activeFilter);
+    fetchShows(activeFilter);
   }, [activeFilter]);
 
-  const fetchBookings = async (status) => {
+  const fetchShows = async (type) => {
     try {
       setLoading(true);
 
-      let query = "";
+      const res = await getAllShows(`?type=${type}`);
 
-      if (status !== "all") {
-        query = `?status=${status}`;
-      }
-
-      const res = await getAllBookings(query);
-
-      setBookings(res.bookings || []);
+      setShows(res.shows || []);
     } catch (error) {
       console.log(error);
     } finally {
@@ -50,8 +39,13 @@ function Bookings() {
       <div
         className="
           flex
-          items-center
-          justify-between
+          flex-col
+          md:flex-row
+
+          md:items-center
+          md:justify-between
+
+          gap-5
 
           mb-8
         "
@@ -63,7 +57,7 @@ function Bookings() {
               font-bold
             "
           >
-            Bookings 🎟️
+            Shows 🎬
           </h1>
 
           <p
@@ -72,7 +66,7 @@ function Bookings() {
               mt-2
             "
           >
-            Manage all bookings
+            Manage all movie shows
           </p>
         </div>
       </div>
@@ -90,10 +84,28 @@ function Bookings() {
           mb-8
         "
       >
-        {["all", "PENDING", "CONFIRMED", "CANCELLED", "EXPIRED"].map((item) => (
+        {[
+          {
+            label: "Running",
+
+            value: "running",
+          },
+
+          {
+            label: "Upcoming",
+
+            value: "upcoming",
+          },
+
+          {
+            label: "Ended",
+
+            value: "ended",
+          },
+        ].map((item) => (
           <button
-            key={item}
-            onClick={() => setActiveFilter(item)}
+            key={item.value}
+            onClick={() => setActiveFilter(item.value)}
             className={`
                 px-5 py-3
 
@@ -104,7 +116,7 @@ function Bookings() {
                 transition
 
                 ${
-                  activeFilter === item
+                  activeFilter === item.value
                     ? `
                       bg-gradient-to-r
                       from-[#8b5c76]
@@ -122,7 +134,7 @@ function Bookings() {
                 }
               `}
           >
-            {item}
+            {item.label}
           </button>
         ))}
       </div>
@@ -151,10 +163,10 @@ function Bookings() {
               gap-6
             "
         >
-          {bookings.length ? (
-            bookings.map((booking) => (
+          {shows.length ? (
+            shows.map((show) => (
               <div
-                key={booking._id}
+                key={show._id}
                 className="
                         bg-[#1a1a1a]
 
@@ -177,11 +189,11 @@ function Bookings() {
                         "
                 >
                   <img
-                    src={booking.show?.movieId?.poster?.card}
+                    src={show.movieId?.poster?.card}
                     alt=""
                     className="
                             w-full
-                            h-[300px]
+                            h-[320px]
 
                             object-cover
                           "
@@ -202,12 +214,12 @@ function Bookings() {
                             font-semibold
 
                             ${
-                              booking.bookingStatus === "CONFIRMED"
+                              activeFilter === "running"
                                 ? `
                                   bg-green-500
                                   text-black
                                 `
-                                : booking.bookingStatus === "PENDING"
+                                : activeFilter === "upcoming"
                                   ? `
                                     bg-yellow-500
                                     text-black
@@ -219,7 +231,7 @@ function Bookings() {
                             }
                           `}
                   >
-                    {booking.bookingStatus}
+                    {activeFilter}
                   </div>
                 </div>
 
@@ -237,7 +249,7 @@ function Bookings() {
                             line-clamp-1
                           "
                   >
-                    {booking.show?.movieId?.title}
+                    {show.movieId?.title}
                   </h2>
 
                   <div
@@ -265,34 +277,6 @@ function Bookings() {
                                 gap-2
                               "
                       >
-                        <FaUser />
-                        User
-                      </div>
-
-                      <span
-                        className="
-                                text-white
-                              "
-                      >
-                        {booking.user?.name}
-                      </span>
-                    </div>
-
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-                                gap-2
-                              "
-                      >
                         <FaFilm />
                         Theatre
                       </div>
@@ -302,7 +286,7 @@ function Bookings() {
                                 text-white
                               "
                       >
-                        {booking.show?.theatreId?.name}
+                        {show.theatreId?.name}
                       </span>
                     </div>
 
@@ -321,8 +305,8 @@ function Bookings() {
                                 gap-2
                               "
                       >
-                        <FaTicketAlt />
-                        Seats
+                        <FaTv />
+                        Screen
                       </div>
 
                       <span
@@ -330,7 +314,7 @@ function Bookings() {
                                 text-white
                               "
                       >
-                        {booking.totalSeats}
+                        {show.screenId?.name}
                       </span>
                     </div>
 
@@ -349,8 +333,8 @@ function Bookings() {
                                 gap-2
                               "
                       >
-                        <FaMoneyBillWave />
-                        Amount
+                        <FaMapMarkerAlt />
+                        City
                       </div>
 
                       <span
@@ -358,7 +342,7 @@ function Bookings() {
                                 text-white
                               "
                       >
-                        ₹{booking.totalAmount}
+                        {show.theatreId?.city}
                       </span>
                     </div>
 
@@ -378,7 +362,7 @@ function Bookings() {
                               "
                       >
                         <FaClock />
-                        Show Time
+                        Timing
                       </div>
 
                       <span
@@ -387,7 +371,7 @@ function Bookings() {
                               "
                       >
                         {new Date(
-                          `1970-01-01T${booking.show.startTime}`,
+                          `1970-01-01T${show.startTime}`,
                         ).toLocaleTimeString(
                           "en-IN",
 
@@ -399,6 +383,41 @@ function Bookings() {
                             hour12: true,
                           },
                         )}
+
+                        {" - "}
+
+                        {new Date(
+                          `1970-01-01T${show.endTime}`,
+                        ).toLocaleTimeString(
+                          "en-IN",
+
+                          {
+                            hour: "numeric",
+
+                            minute: "2-digit",
+
+                            hour12: true,
+                          },
+                        )}
+                      </span>
+                    </div>
+
+
+                    <div
+                      className="
+                              flex
+                              items-center
+                              justify-between
+                            "
+                    >
+                      <span>Date</span>
+
+                      <span
+                        className="
+                                text-white
+                              "
+                      >
+                        {show.showDate}
                       </span>
                     </div>
                   </div>
@@ -424,7 +443,7 @@ function Bookings() {
                       text-7xl
                     "
               >
-                🎟️
+                🎬
               </div>
 
               <h2
@@ -435,7 +454,7 @@ function Bookings() {
                       mt-5
                     "
               >
-                No Bookings Found
+                No Shows Found
               </h2>
             </div>
           )}
@@ -445,4 +464,4 @@ function Bookings() {
   );
 }
 
-export default Bookings;
+export default Shows;

@@ -34,7 +34,7 @@ function TheatreOwnerProtectedRoute({
     );
   }
 
-  if (user.role !== "theatre_owner") {
+  if (user?.role !== "theatre_owner") {
 
     return (
       <Navigate

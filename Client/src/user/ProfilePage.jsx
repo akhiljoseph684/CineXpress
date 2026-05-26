@@ -1,7 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   FaEnvelope,
@@ -16,197 +13,119 @@ import {
   FaArrowLeft,
 } from "react-icons/fa";
 
-import {
-  useSelector,
-  useDispatch,
-} from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
-import {
-  updateUser,
-  logout,
-} from "../features/authSlice";
+import { updateUser, logout } from "../features/authSlice";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-import {
-  updateUser as updateUserApi,
-} from "../services/usersAPi";
+import { updateUser as updateUserApi } from "../services/usersAPi";
 import { logoutApi } from "../services/authApi";
 
 function ProfilePage() {
-
   useEffect(() => {
-      
-        window.scrollTo({
-      
-          top: 0,
-      
-          behavior: "smooth"
-      
-        });
-    
-      }, []);
+    window.scrollTo({
+      top: 0,
 
-  const navigate =
-    useNavigate();
-
-  const dispatch =
-    useDispatch();
-
-  const { user } =
-    useSelector(
-      (state) => state.auth
-    );
-
-  const [loading,
-    setLoading] =
-    useState(false);
-
-  const [uploading,
-    setUploading] =
-    useState(false);
-
-  const [formData,
-    setFormData] =
-    useState({
-
-      name:
-        user?.name || "",
-
-      phone:
-        user?.phone || "",
-
-      avatar:
-        user?.avatar || "",
-
+      behavior: "smooth",
     });
+  }, []);
 
-  const handleChange =
-    (e) => {
+  const navigate = useNavigate();
 
-      setFormData({
+  const dispatch = useDispatch();
 
-        ...formData,
+  const { user } = useSelector((state) => state.auth);
 
-        [e.target.name]:
-          e.target.value,
+  const [loading, setLoading] = useState(false);
 
+  const [uploading, setUploading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: user?.name || "",
+
+    phone: user?.phone || "",
+
+    avatar: user?.avatar || "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const uploadImage = async (file) => {
+    try {
+      setUploading(true);
+
+      const data = new FormData();
+
+      data.append("file", file);
+
+      data.append(
+        "upload_preset",
+
+        import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET_USERS_NAME,
+      );
+
+      const res = await fetch(
+        import.meta.env.VITE_CLOUDINARY_URL,
+
+        {
+          method: "POST",
+
+          body: data,
+        },
+      );
+
+      const uploadedImage = await res.json();
+
+      setFormData((prev) => ({
+        ...prev,
+
+        avatar: uploadedImage.secure_url,
+      }));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+
+      const res = await updateUserApi({
+        name: formData.name,
+
+        phone: formData.phone,
+
+        avatar: formData.avatar,
       });
-    };
 
-  const uploadImage =
-    async (file) => {
+      dispatch(updateUser(res.user));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-
-        setUploading(true);
-
-        const data =
-          new FormData();
-
-        data.append(
-          "file",
-          file
-        );
-
-        data.append(
-          "upload_preset",
-
-          import.meta.env
-            .VITE_CLOUDINARY_UPLOAD_PRESET_USERS_NAME
-        );
-
-        const res =
-          await fetch(
-
-            import.meta.env
-              .VITE_CLOUDINARY_URL,
-
-            {
-              method: "POST",
-
-              body: data,
-            }
-
-          );
-
-        const uploadedImage =
-          await res.json();
-
-        setFormData((prev) => ({
-
-          ...prev,
-
-          avatar:
-            uploadedImage.secure_url,
-
-        }));
-
-      } catch (error) {
-
-        console.log(error);
-
-      } finally {
-
-        setUploading(false);
-
-      }
-    };
-
-  const handleSubmit =
-    async (e) => {
-
-      e.preventDefault();
-
-      try {
-
-        setLoading(true);
-
-        const res =
-          await updateUserApi({
-
-            name:
-              formData.name,
-
-            phone:
-              formData.phone,
-
-            avatar:
-              formData.avatar,
-
-          });
-
-        dispatch(
-          updateUser(
-            res.user
-          )
-        );
-
-      } catch (error) {
-
-        console.log(error);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-    };
-
-  const handleLogout =
-    () => {
-
-      try {
-        dispatch(logout());
-        logoutApi()
-        navigate("/login");
-      } catch (error) {
-        console.log(error)
-      }
-
-    };
+  const handleLogout = () => {
+    try {
+      dispatch(logout());
+      logoutApi();
+      navigate("/login");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div
@@ -219,18 +138,14 @@ function ProfilePage() {
         py-10
       "
     >
-
       <div
         className="
           max-w-7xl
           mx-auto
         "
       >
-
         <button
-          onClick={() =>
-            navigate("/")
-          }
+          onClick={() => navigate("/")}
           className="
             flex items-center
             gap-2
@@ -247,11 +162,8 @@ function ProfilePage() {
             transition
           "
         >
-
           <FaArrowLeft />
-
           Back Home
-
         </button>
 
         <div
@@ -263,7 +175,6 @@ function ProfilePage() {
             gap-8
           "
         >
-
           <div
             className="
               bg-[#111]
@@ -277,7 +188,6 @@ function ProfilePage() {
               h-fit
             "
           >
-
             <div
               className="
                 flex flex-col
@@ -285,24 +195,18 @@ function ProfilePage() {
                 text-center
               "
             >
-
               <div
                 className="
                   relative
                 "
               >
-
                 <img
                   src={
                     formData.avatar ||
-
                     user?.avatar ||
-
                     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"
                   }
-
                   alt="profile"
-
                   className="
                     w-32 h-32
 
@@ -333,27 +237,17 @@ function ProfilePage() {
                     cursor-pointer
                   "
                 >
-
                   <FaCamera />
 
                   <input
                     type="file"
-
                     hidden
-
                     accept="image/*"
-
                     onChange={(e) => {
-
-                      uploadImage(
-                        e.target.files[0]
-                      );
-
+                      uploadImage(e.target.files[0]);
                     }}
                   />
-
                 </label>
-
               </div>
 
               <h2
@@ -364,9 +258,7 @@ function ProfilePage() {
                   mt-5
                 "
               >
-
                 {user?.name}
-
               </h2>
 
               <p
@@ -375,9 +267,7 @@ function ProfilePage() {
                   mt-2
                 "
               >
-
                 {user?.email}
-
               </p>
 
               <div
@@ -397,18 +287,12 @@ function ProfilePage() {
                   border-pink-500/20
                 "
               >
-
-                {
-                  user?.role ===
-                  "theatre_owner"
-
-                    ? "Theatre Owner"
-
-                    : user?.role === "admin" ? "Admin" : "User"
-                }
-
+                {user?.role === "theatre_owner"
+                  ? "Theatre Owner"
+                  : user?.role === "admin"
+                    ? "Admin"
+                    : "User"}
               </div>
-
             </div>
 
             <div
@@ -417,14 +301,12 @@ function ProfilePage() {
                 space-y-5
               "
             >
-
               <div
                 className="
                   flex items-center
                   gap-4
                 "
               >
-
                 <div
                   className="
                     w-12 h-12
@@ -437,22 +319,17 @@ function ProfilePage() {
                     justify-center
                   "
                 >
-
                   <FaEnvelope />
-
                 </div>
 
                 <div>
-
                   <p
                     className="
                       text-gray-400
                       text-sm
                     "
                   >
-
                     Email
-
                   </p>
 
                   <h3
@@ -460,13 +337,9 @@ function ProfilePage() {
                       font-medium
                     "
                   >
-
                     {user?.email}
-
                   </h3>
-
                 </div>
-
               </div>
 
               <div
@@ -475,7 +348,6 @@ function ProfilePage() {
                   gap-4
                 "
               >
-
                 <div
                   className="
                     w-12 h-12
@@ -488,22 +360,17 @@ function ProfilePage() {
                     justify-center
                   "
                 >
-
                   <FaPhoneAlt />
-
                 </div>
 
                 <div>
-
                   <p
                     className="
                       text-gray-400
                       text-sm
                     "
                   >
-
                     Phone
-
                   </p>
 
                   <h3
@@ -511,25 +378,17 @@ function ProfilePage() {
                       font-medium
                     "
                   >
-
-                    {
-                      user?.phone ||
-                      "Not Added"
-                    }
-
+                    {user?.phone || "Not Added"}
                   </h3>
-
                 </div>
-
               </div>
-              
+
               <div
                 className="
                   flex items-center
                   gap-4
                 "
               >
-
                 <div
                   className="
                     w-12 h-12
@@ -542,22 +401,17 @@ function ProfilePage() {
                     justify-center
                   "
                 >
-
                   <FaMapMarkerAlt />
-
                 </div>
 
                 <div>
-
                   <p
                     className="
                       text-gray-400
                       text-sm
                     "
                   >
-
                     Preferred City
-
                   </p>
 
                   <h3
@@ -565,18 +419,10 @@ function ProfilePage() {
                       font-medium
                     "
                   >
-
-                    {
-                      user?.preferredCity ||
-                      "Not Selected"
-                    }
-
+                    {user?.preferredCity || "Not Selected"}
                   </h3>
-
                 </div>
-
               </div>
-
             </div>
 
             <div
@@ -585,6 +431,53 @@ function ProfilePage() {
                 space-y-4
               "
             >
+              {user?.role === "user" && (
+                <>
+                  <button
+                    className="
+                  w-full
+
+                  flex items-center
+                  gap-3
+
+                  bg-white/5
+
+                  hover:bg-white/10
+
+                  rounded-2xl
+
+                  px-5 py-4
+
+                  transition
+                "
+                  >
+                    <FaTicketAlt />
+                    My Bookings
+                  </button>
+
+                  <button
+                    className="
+                  w-full
+
+                  flex items-center
+                  gap-3
+
+                  bg-white/5
+
+                  hover:bg-white/10
+
+                  rounded-2xl
+
+                  px-5 py-4
+
+                  transition
+                "
+                  >
+                    <FaHeart />
+                    Favourite Movies
+                  </button>
+                </>
+              )}
 
               <button
                 className="
@@ -604,61 +497,8 @@ function ProfilePage() {
                   transition
                 "
               >
-
-                <FaTicketAlt />
-
-                My Bookings
-
-              </button>
-
-              <button
-                className="
-                  w-full
-
-                  flex items-center
-                  gap-3
-
-                  bg-white/5
-
-                  hover:bg-white/10
-
-                  rounded-2xl
-
-                  px-5 py-4
-
-                  transition
-                "
-              >
-
-                <FaHeart />
-
-                Favourite Movies
-
-              </button>
-
-              <button
-                className="
-                  w-full
-
-                  flex items-center
-                  gap-3
-
-                  bg-white/5
-
-                  hover:bg-white/10
-
-                  rounded-2xl
-
-                  px-5 py-4
-
-                  transition
-                "
-              >
-
                 <FaLock />
-
                 Change Password
-
               </button>
 
               <button
@@ -682,15 +522,10 @@ function ProfilePage() {
                   transition
                 "
               >
-
                 <FaSignOutAlt />
-
                 Logout
-
               </button>
-
             </div>
-
           </div>
 
           <div
@@ -699,7 +534,6 @@ function ProfilePage() {
               space-y-8
             "
           >
-
             <div
               className="
                 bg-[#111]
@@ -711,7 +545,6 @@ function ProfilePage() {
                 p-6 md:p-8
               "
             >
-
               <h2
                 className="
                   text-3xl
@@ -720,9 +553,7 @@ function ProfilePage() {
                   mb-8
                 "
               >
-
                 Edit Profile
-
               </h2>
 
               <form
@@ -731,9 +562,7 @@ function ProfilePage() {
                   space-y-6
                 "
               >
-
                 <div>
-
                   <label
                     className="
                       text-sm
@@ -742,20 +571,14 @@ function ProfilePage() {
                       mb-3
                     "
                   >
-
                     Full Name
-
                   </label>
 
                   <input
                     type="text"
-
                     name="name"
-
                     value={formData.name}
-
                     onChange={handleChange}
-
                     className="
                       w-full
 
@@ -772,11 +595,9 @@ function ProfilePage() {
                       focus:border-pink-500/50
                     "
                   />
-
                 </div>
 
                 <div>
-
                   <label
                     className="
                       text-sm
@@ -785,18 +606,13 @@ function ProfilePage() {
                       mb-3
                     "
                   >
-
                     Email
-
                   </label>
 
                   <input
                     type="email"
-
                     disabled
-
                     value={user?.email}
-
                     className="
                       w-full
 
@@ -811,11 +627,9 @@ function ProfilePage() {
                       opacity-70
                     "
                   />
-
                 </div>
 
                 <div>
-
                   <label
                     className="
                       text-sm
@@ -824,20 +638,14 @@ function ProfilePage() {
                       mb-3
                     "
                   >
-
                     Phone
-
                   </label>
 
                   <input
                     type="text"
-
                     name="phone"
-
                     value={formData.phone}
-
                     onChange={handleChange}
-
                     className="
                       w-full
 
@@ -854,15 +662,10 @@ function ProfilePage() {
                       focus:border-pink-500/50
                     "
                   />
-
                 </div>
 
                 <button
-                  disabled={
-                    loading ||
-                    uploading
-                  }
-
+                  disabled={loading || uploading}
                   className="
                     bg-pink-600
 
@@ -879,132 +682,17 @@ function ProfilePage() {
                     disabled:opacity-50
                   "
                 >
-
-                  {
-                    uploading
-
-                      ? "Uploading Image..."
-
-                      : loading
-
-                        ? "Saving..."
-
-                        : "Save Changes"
-                  }
-
+                  {uploading
+                    ? "Uploading Image..."
+                    : loading
+                      ? "Saving..."
+                      : "Save Changes"}
                 </button>
-
               </form>
-
             </div>
-
-            {
-              user?.role === "user" &&
-              (
-                <div
-                  className="
-                    bg-gradient-to-r
-                    from-pink-500/10
-                    to-purple-500/10
-
-                    border border-pink-500/20
-
-                    rounded-3xl
-
-                    p-8
-                  "
-                >
-
-                  <div
-                    className="
-                      flex flex-col
-                      md:flex-row
-
-                      md:items-center
-                      md:justify-between
-
-                      gap-6
-                    "
-                  >
-
-                    <div>
-
-                      <div
-                        className="
-                          w-16 h-16
-
-                          rounded-2xl
-
-                          bg-pink-500/20
-
-                          text-pink-400
-
-                          flex items-center
-                          justify-center
-
-                          text-2xl
-
-                          mb-5
-                        "
-                      >
-
-                        <FaCrown />
-
-                      </div>
-
-                      <h2
-                        className="
-                          text-3xl
-                          font-bold
-                        "
-                      >
-
-                        Become Theatre Owner
-
-                      </h2>
-
-                      <p
-                        className="
-                          text-gray-300
-                          mt-4
-                          leading-relaxed
-                        "
-                      >
-
-                        Start managing theatres,
-                        screens and bookings 🎬
-
-                      </p>
-
-                    </div>
-
-                    <button
-                      className="
-                        bg-pink-600
-                        hover:bg-pink-700
-                        transition
-                        px-8 py-4
-                        rounded-2xl
-                        font-semibold
-                      "
-                    >
-
-                      Apply Now
-
-                    </button>
-
-                  </div>
-
-                </div>
-              )
-            }
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }

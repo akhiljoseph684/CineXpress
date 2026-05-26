@@ -26,3 +26,21 @@ export const getShowById = async (id) => {
         throw error.response?.data;
     }
 }
+
+export const getAllShows = async (query) => {
+    try {
+        const res = await API.get("/shows/all" + query);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data;
+    }
+}
+
+export const getShowsByOwner = async (query) => {
+    try {
+        const res = await API.get("/shows/owner" + query);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data;
+    }
+}

@@ -123,7 +123,6 @@ const SeatBookingPage = () => {
 
   const handleReserveSeats = async () => {
     try {
-      // RESERVE SEATS
       const res = await reserveSeats({
         showId,
 
@@ -134,14 +133,12 @@ const SeatBookingPage = () => {
 
       const booking = res.booking;
 
-      // CREATE PAYMENT ORDER
       const orderRes = await createPaymentOrder({
         bookingId: booking._id,
       });
 
       const order = orderRes.order;
 
-      // OPEN RAZORPAY
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
 
@@ -160,7 +157,6 @@ const SeatBookingPage = () => {
         },
 
         handler: async function (response) {
-          // VERIFY PAYMENT
           await verifyPayment({
             bookingId: booking._id,
 
@@ -286,7 +282,6 @@ const SeatBookingPage = () => {
         text-white
       "
     >
-      {/* HEADER */}
 
       <div
         className="
@@ -323,7 +318,6 @@ const SeatBookingPage = () => {
         </div>
       </div>
 
-      {/* SEATS */}
 
       <div
         className="
@@ -345,7 +339,6 @@ const SeatBookingPage = () => {
     mb-14
   "
         >
-          {/* REGULAR */}
 
           <Legend
             border="border-pink-500"
@@ -353,7 +346,6 @@ const SeatBookingPage = () => {
             textColor="text-pink-400"
           />
 
-          {/* VIP */}
 
           <Legend
             border="border-green-500"
@@ -361,7 +353,6 @@ const SeatBookingPage = () => {
             textColor="text-green-400"
           />
 
-          {/* RECLINER */}
 
           <Legend
             border="border-yellow-500"
@@ -369,7 +360,6 @@ const SeatBookingPage = () => {
             textColor="text-yellow-400"
           />
 
-          {/* COUPLE */}
 
           <Legend
             border="border-cyan-500"
@@ -377,7 +367,6 @@ const SeatBookingPage = () => {
             textColor="text-cyan-400"
           />
 
-          {/* BOOKED */}
 
           <Legend
             bg="bg-gray-400 opacity-30"
@@ -385,11 +374,9 @@ const SeatBookingPage = () => {
             textColor="text-gray-500"
           />
 
-          {/* SELECTED */}
 
           <Legend bg="bg-pink-600" text="Selected" textColor="text-pink-300" />
         </div>
-        {/* SCREEN */}
 
         <div
           className="
@@ -424,7 +411,6 @@ const SeatBookingPage = () => {
           </p>
         </div>
 
-        {/* SEAT LAYOUT */}
 
         <div
           className="
@@ -454,7 +440,6 @@ const SeatBookingPage = () => {
                 "
               >
                 {row.map((seat, colIndex) => {
-                  // GAP
                   if (seat === null) {
                     return (
                       <div

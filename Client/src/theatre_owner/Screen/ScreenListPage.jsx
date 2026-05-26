@@ -102,20 +102,20 @@ const ScreenListPage = () => {
           >
             {screens.map((screen) => (
               <div
-                key={screen._id}
-                className="
-                bg-[#111]
-
-                border
-                border-white/10
-
-                rounded-3xl
-
-                p-6
-
-                flex
-                flex-col
-                justify-between
+              key={screen._id}
+              className="
+              bg-[#111]
+              
+              border
+              border-white/10
+              
+              rounded-3xl
+              
+              p-6
+              
+              flex
+              flex-col
+              justify-between
               "
               >
                 <div>

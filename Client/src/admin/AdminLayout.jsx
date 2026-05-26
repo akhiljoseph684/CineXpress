@@ -12,34 +12,87 @@ import {
   FaTimes,
   FaTags,
 } from "react-icons/fa";
-import {
-  useSelector
-} from "react-redux";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const location = useLocation();
 
-  const currentPage = location.pathname.split("/")[2] || "dashboard";
+  const currentPage = location.pathname.split("/")[2] || "theatre";
   const { user } = useSelector((state) => state.auth);
 
+  const navigate = useNavigate()
+
   const menu = [
-    { name: "Dashboard", path: "/admin", icon: <FaThLarge /> },
-    { name: "Theatre", path: "/admin/theatre", icon: <FaFilm /> },
-    { name: "Screens", path: "/admin/screens", icon: <FaTv /> },
-    { name: "Movies", path: "/admin/movies", icon: <FaFilm /> },
-    { name: "Users", path: "/admin/users", icon: <FaUsers /> },
-    { name: "Actors", path: "/admin/actors", icon: <FaUserTie /> },
-    { name: "Bookings", path: "/admin/bookings", icon: <FaTicketAlt /> },
-    { name: "Languages / genre", path: "/admin/categories", icon: <FaTags /> },
-    { name: "Settings", path: "/admin/settings", icon: <FaCog /> },
+    {
+      name: "Theatres",
+
+      path: "/admin/theatre",
+
+      icon: <FaFilm />,
+    },
+
+    {
+      name: "Screens",
+
+      path: "/admin/screens",
+
+      icon: <FaTv />,
+    },
+
+    {
+      name: "Shows",
+
+      path: "/admin/shows",
+
+      icon: <FaTicketAlt />,
+    },
+
+    {
+      name: "Movies",
+
+      path: "/admin/movies",
+
+      icon: <FaFilm />,
+    },
+
+    {
+      name: "Actors",
+
+      path: "/admin/actors",
+
+      icon: <FaUserTie />,
+    },
+
+    {
+      name: "Users",
+
+      path: "/admin/users",
+
+      icon: <FaUsers />,
+    },
+
+    {
+      name: "Bookings",
+
+      path: "/admin/bookings",
+
+      icon: <FaTicketAlt />,
+    },
+
+    {
+      name: "Languages / Genre",
+
+      path: "/admin/categories",
+
+      icon: <FaTags />,
+    },
   ];
 
   return (
     <div className="flex h-screen bg-[#0f0f0f] text-white font-[Poppins] overflow-hidden">
-
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -60,22 +113,15 @@ function AdminLayout() {
           md:translate-x-0
         `}
       >
-
         <div className="flex items-center justify-between mb-10">
-          <h1 className="text-xl font-bold text-[#8b5c76]">
-            🎬 Admin Panel
-          </h1>
+          <h1 className="text-xl font-bold text-[#8b5c76]">🎬 Admin Panel</h1>
 
-          <button
-            className="md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
+          <button className="md:hidden" onClick={() => setSidebarOpen(false)}>
             <FaTimes className="text-xl" />
           </button>
         </div>
 
         <nav className="space-y-3">
-
           {menu.map((item, index) => (
             <NavLink
               key={index}
@@ -95,29 +141,18 @@ function AdminLayout() {
                 {item.icon}
               </span>
 
-              <span className="text-sm">
-                {item.name}
-              </span>
+              <span className="text-sm">{item.name}</span>
             </NavLink>
           ))}
-
         </nav>
 
-        <div className="mt-auto text-xs text-gray-500">
-          © 2026 Admin Panel
-        </div>
+        <div className="mt-auto text-xs text-gray-500">© 2026 Admin Panel</div>
       </aside>
 
       <div className="flex-1 flex flex-col w-full overflow-hidden">
-
         <header className="h-[70px] bg-[#1a1a1a] flex items-center justify-between px-4 md:px-6 shadow-md">
-
           <div className="flex items-center gap-4">
-
-            <button
-              className="md:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
+            <button className="md:hidden" onClick={() => setSidebarOpen(true)}>
               <FaBars className="text-xl" />
             </button>
 
@@ -127,7 +162,6 @@ function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-4 md:gap-6">
-
             <div className="relative cursor-pointer">
               <FaBell className="text-gray-300 text-lg hover:text-white transition" />
 
@@ -145,7 +179,7 @@ function AdminLayout() {
               </span>
             </div>
 
-            <div className="flex items-center gap-3 cursor-pointer">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/profile')}>
               <img
                 src={
                   user?.avatar ||
@@ -155,7 +189,7 @@ function AdminLayout() {
               />
 
               <span className="hidden sm:block text-sm text-gray-300">
-                Admin
+                {user.name}
               </span>
             </div>
           </div>

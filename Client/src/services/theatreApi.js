@@ -9,9 +9,9 @@ export const createTheatre = async (data) => {
     }
 };
 
-export const getAllTheatres = async () => {
+export const getAllTheatres = async (query) => {
     try {
-        const res = await API.get("/theatre");
+        const res = await API.get("/theatre" + (query ? query : ""));
         return res.data;
     } catch (error) {
         throw error.response?.data
@@ -49,6 +49,15 @@ export const deleteTheatre = async (id) => {
     try {
         console.log(id)
         const res = await API.delete(`theatre/${id}`);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data;
+    }
+}
+
+export const updateTheatreStatus = async (status) => {
+    try {
+        const res = await API.patch('/theatre/status', status);
         return res.data;
     } catch (error) {
         throw error.response?.data;

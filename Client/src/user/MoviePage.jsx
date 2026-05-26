@@ -638,7 +638,7 @@ function MoviesPage() {
                             e.stopPropagation();
 
                             navigate(
-                              `/booking/${movie._id}`
+                              `/shows/movie/${movie._id}`
                             );
 
                           }}

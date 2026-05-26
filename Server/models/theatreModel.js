@@ -1,51 +1,113 @@
 import mongoose from "mongoose";
 
-const theatreSchema = mongoose.Schema({
+const theatreSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true
+      type: String,
+
+      required: true,
+
+      trim: true,
     },
-    city: {
-        type: String,
-        required: true 
-    },
-    address: {
-        type: String,
-        required: true
-    },
-    location: {
-        type: {
-            type: String,
-            enum: ["Point"],
-            default: "Point"
-        },
-        coordinates: [Number]
-    },
-    status: {
-        type: String,
-        enum: ["pending", "approved", "rejected",],
-        default: "pending"
-    },
-    bannerImage: {
-        type: String,
-        required: true
-    },
-    gallery: [
-        {
-            type: String
-        }
-    ],
+
     ownerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+      type: mongoose.Schema.Types.ObjectId,
+
+      ref: "User",
+
+      default: null,
     },
+
+    ownerEmail: {
+      type: String,
+
+      required: true,
+
+      lowercase: true,
+
+      trim: true,
+    },
+
+    secretCode: {
+      type: String,
+
+      required: true,
+    },
+
+    city: {
+      type: String,
+
+      required: true,
+
+      trim: true,
+    },
+
+    address: {
+      type: String,
+
+      required: true,
+
+      trim: true,
+    },
+
+    bannerImage: {
+      type: String,
+
+      required: true,
+    },
+
+    gallery: [
+      {
+        type: String,
+      },
+    ],
+
+    // NEW LOCATION FORMAT
+
+    location: {
+      lat: {
+        type: Number,
+
+        required: true,
+      },
+
+      lng: {
+        type: Number,
+
+        required: true,
+      },
+    },
+
+    status: {
+      type: String,
+
+      enum: ["pending", "approved", "rejected"],
+
+      default: "approved",
+    },
+
     isDeleted: {
-        type: Boolean,
-        default: false
-    }
-})
+      type: Boolean,
 
-theatreSchema.index({location: "2dsphere"});
+      default: false,
+    },
 
-const Theatre = mongoose.model("Theatre",theatreSchema);
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+
+      ref: "User",
+    },
+  },
+
+  {
+    timestamps: true,
+  },
+);
+
+const Theatre = mongoose.model(
+  "Theatre",
+
+  theatreSchema,
+);
+
 export default Theatre;

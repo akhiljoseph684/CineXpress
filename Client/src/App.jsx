@@ -5,8 +5,6 @@ import { refreshToken } from "./services/authApi";
 import { Route, Routes } from "react-router-dom";
 import RegisterLogin from "./pages/RegisterLogin";
 import ProtectedRoute from "./Components/ProtectRoute";
-import Dashboard from "./admin/pages/Dashboard";
-import Theatre from "./admin/pages/Theatre";
 import Screens from "./admin/pages/Screens";
 import Movies from "./admin/pages/Movies/Movies";
 import Users from "./admin/pages/users/Users";
@@ -35,6 +33,12 @@ import CreateShowPage from "./theatre_owner/Shows/CreateShowPage";
 import MovieShowsPage from "./user/MovieShowPage";
 import SeatBookingPage from "./user/SeatBookingPage";
 import "./App.css"
+import TheatreOwners from "./admin/pages/TheatreOwner";
+import TheatreOwnerProtectedRoute from "./Components/TheatreOwnerProtectedRoute";
+import Theatres from "./admin/pages/Theatre/Theatres";
+import Shows from "./admin/pages/Show/Shows";
+import BookingListPage from "./theatre_owner/Bookings/BookingListPage";
+import ShowListPage from "./theatre_owner/Shows/ShowListPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -64,6 +68,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<RegisterLogin status="login" />} />
       <Route path="/signup" element={<RegisterLogin status="signup" />} />
+      <Route path="profile" element={<ProfilePage />}></Route>
 
       <Route
         path="/"
@@ -75,21 +80,24 @@ function App() {
       >
         <Route index element={<Home />} />
         <Route path="movies" element={<MoviesPage />}></Route>
-        <Route path="profile" element={<ProfilePage />}></Route>
         <Route path="movies/:id" element={<MovieDetailsPage />}></Route>
         <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
         <Route path="booking/movie/:showId" element={<SeatBookingPage />} />
       </Route>
 
-      <Route path="/theatre-owner" element={<TheatreOwnerLayout />}>
+        <Route path="/theatre-owner" element={
+          <TheatreOwnerProtectedRoute>
+            <TheatreOwnerLayout />
+          </TheatreOwnerProtectedRoute>
+          }>
         <Route path="theatre" element={<TheatreListPage />} />
         <Route path="theatre/create" element={<CreateEditTheatre />} />
         <Route path="theatre/edit/:id" element={<CreateEditTheatre />} />
         <Route path="screens" element={<ScreenListPage />} />
         <Route path="screens/create/:id" element={<CreateEditScreen />} />
-        <Route path="screens/edit/:screenId" element={<CreateEditScreen />} />
-        <Route path="shows/create/:screenId" element={<CreateShowPage />} />
         <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
+        <Route path="bookings/" element={<BookingListPage />} />
+        <Route path="shows/" element={<ShowListPage />} />
       </Route>
 
       <Route
@@ -100,9 +108,9 @@ function App() {
           </AdminProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route index element={<Theatres />} />
 
-        <Route path="theatre" element={<Theatre />} />
+        <Route path="theatre" element={<Theatres />} />
 
         <Route path="screens" element={<ScreenList />} />
 
@@ -119,6 +127,10 @@ function App() {
         <Route path="actors/edit/:id" element={<CreateActors />} />
 
         <Route path="bookings" element={<Bookings />} />
+        <Route path="shows" element={<Shows />} />
+
+        <Route path="theatre-owner/register" element={<TheatreOwners />} />
+        <Route path="theatres/edit/:id" element={<TheatreOwners />} />
 
         <Route path="categories" element={<LanguageGenre />} />
       </Route>

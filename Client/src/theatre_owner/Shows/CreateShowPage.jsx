@@ -89,17 +89,11 @@ const CreateShowPage = () => {
     } catch (error) {
       setError(error.message || "Something went wrong");
       setTimeout(() => {
+        document.querySelector("form")?.scrollIntoView({
+          behavior: "smooth",
 
-        document
-          .querySelector("form")
-          ?.scrollIntoView({
-          
-            behavior: "smooth",
-          
-            block: "start",
-          
-          });
-        
+          block: "start",
+        });
       }, 100);
     }
   };
@@ -148,7 +142,6 @@ const CreateShowPage = () => {
           space-y-10
         "
       >
-
         <div>
           <h1
             className="
@@ -173,7 +166,6 @@ const CreateShowPage = () => {
         </div>
 
         {error && (
-        
           <div
             className="
               bg-red-500/10
@@ -193,9 +185,7 @@ const CreateShowPage = () => {
           >
             {error}
           </div>
-
         )}
-
 
         <div
           className="
@@ -284,7 +274,6 @@ const CreateShowPage = () => {
 
         <div className="space-y-6">
           <div className="relative">
-
             <input
               type="text"
               placeholder="Search movies..."
@@ -394,12 +383,7 @@ const CreateShowPage = () => {
                             line-clamp-1
                           "
                       >
-                        {movie.genre
-                          ?.map(
-                            (item) => item.name
-                          )
-                          .join(", ")
-                        }
+                        {movie.genre?.map((item) => item.name).join(", ")}
                       </p>
                     </div>
                   </button>
@@ -481,7 +465,7 @@ const CreateShowPage = () => {
                       mt-2
                     "
                   >
-                    {selectedMovie?.genre?.join(", ")}
+                    {selectedMovie?.genre?.map((item) => item.name).join(", ")}
                   </p>
                 </div>
               </div>
@@ -525,7 +509,6 @@ const CreateShowPage = () => {
             gap-6
           "
         >
-
           <input
             type="date"
             value={formData.showDate}

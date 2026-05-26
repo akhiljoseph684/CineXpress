@@ -520,7 +520,7 @@ function MovieListing({title = "Now Showing", query = ""}) {
                             e.stopPropagation();
 
                             navigate(
-                              `/booking/${movie._id}`
+                              `/shows/movie/${movie._id}`
                             );
 
                           }}
