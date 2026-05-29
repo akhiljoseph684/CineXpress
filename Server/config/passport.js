@@ -37,7 +37,7 @@ passport.use(new GoogleStrategy({
         googleId: profile.id,
         provider: "google",
         avatar,
-        role: userRole
+        role: "user"
       });
     }
 

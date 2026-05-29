@@ -24,37 +24,25 @@ function Movies() {
   const [error, setError] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1); 
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [selectedMovieId, setSelectedMovieId] = useState(null);
 
   useEffect(() => {
     fetchMovies("all");
   }, []);
   useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchMovies(activeFilter, search, 1);
+    }, 500);
 
-    const timer =
-      setTimeout(() => {
+    return () => clearTimeout(timer);
+  }, [search, activeFilter]);
 
-        fetchMovies(
-          activeFilter,
-          search,
-          1
-        );
-
-      }, 500);
-
-    return () =>
-      clearTimeout(timer);
-
-  }, [
-    search,
-    activeFilter
-  ]);
-
-  const fetchMovies = async (status = "all",title = "",currentPage = 1) => {
-
+  const fetchMovies = async (status = "all", title = "", currentPage = 1) => {
     try {
-
       setLoading(true);
 
       setError("");
@@ -62,62 +50,38 @@ function Movies() {
       let query = [];
 
       if (status && status !== "all") {
-        query.push(
-          `status=${status}`
-        );
+        query.push(`status=${status}`);
       }
 
       if (title.trim()) {
-        query.push(
-          `title=${title}`
-        );
+        query.push(`title=${title}`);
       }
 
-      query.push(
-        `page=${currentPage}`
-      );
+      query.push(`page=${currentPage}`);
 
       query.push("limit=12");
 
-      const queryString =
-        `?${query.join("&")}`;
+      const queryString = `?${query.join("&")}`;
 
       const res = await getAllMovies(queryString);
 
       if (!res.success) {
-
-        setError(
-          res.message
-        );
+        setError(res.message);
 
         return;
       }
 
-      setMovies(
-        res.movies || []
-      );
+      setMovies(res.movies || []);
 
-      setTotalPages(
-        res.totalPages || 1
-      );
+      setTotalPages(res.totalPages || 1);
 
-      setPage(
-        res.currentPage || 1
-      );
-
+      setPage(res.currentPage || 1);
     } catch (error) {
-
-      setError(
-        error?.message ||
-        "Failed to fetch movies"
-      );
-
+      setError(error?.message || "Failed to fetch movies");
     } finally {
-
       setLoading(false);
     }
   };
-
 
   const handleDelete = async (id) => {
     try {
@@ -128,6 +92,26 @@ function Movies() {
 
         return;
       }
+
+      fetchMovies();
+    } catch (error) {
+      setError(error?.message || "Failed to delete movie");
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const res = await deleteMovie(selectedMovieId);
+
+      if (!res.success) {
+        setError(res.message);
+
+        return;
+      }
+
+      setShowDeleteModal(false);
+
+      setSelectedMovieId(null);
 
       fetchMovies();
     } catch (error) {
@@ -235,20 +219,17 @@ function Movies() {
         </div>
       ) : (
         <>
-        <div className="mb-8">
+          <div className="mb-8">
+            <input
+              type="text"
+              placeholder="Search movies..."
+              value={search}
+              onChange={(e) => {
+                const value = e.target.value;
 
-          <input
-            type="text"
-            placeholder="Search movies..."
-            value={search}
-            onChange={(e) => {
-            
-              const value =
-                e.target.value;
-            
-              setSearch(value);
-            }}
-            className="
+                setSearch(value);
+              }}
+              className="
               w-full
               bg-[#1a1a1a]
               border border-gray-800
@@ -258,9 +239,8 @@ function Movies() {
               focus:border-[#8b5c76]
               transition
             "
-          />
-
-        </div>
+            />
+          </div>
           <div
             className="
             flex flex-wrap
@@ -295,11 +275,7 @@ function Movies() {
                 onClick={() => {
                   setActiveFilter(item.value);
                   setPage(1);
-                  fetchMovies(
-                    item.value,
-                    search,
-                    1
-                  );
+                  fetchMovies(item.value, search, 1);
                 }}
                 className={`
                 px-5 py-3
@@ -340,7 +316,7 @@ function Movies() {
                               `
                           }
                         `}
-                                >
+          >
             {movies.length ? (
               movies.map((movie) => {
                 return (
@@ -395,7 +371,7 @@ function Movies() {
                   h-[320px]
                   object-cover
                 "
-                onClick={() => handleDetails(movie._id)}
+                        onClick={() => handleDetails(movie._id)}
                       />
                     </div>
 
@@ -527,7 +503,11 @@ function Movies() {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(movie._id)}
+                          onClick={() => {
+                            setSelectedMovieId(movie._id);
+
+                            setShowDeleteModal(true);
+                          }}
                           className=" py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition flex items-center justify-center gap-2 "
                         >
                           <FaTrash />
@@ -537,7 +517,6 @@ function Movies() {
                   </div>
                 );
               })
-              
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <h2 className="text-2xl font-semibold text-gray-700">
@@ -550,113 +529,206 @@ function Movies() {
               </div>
             )}
           </div>
-  {
-    totalPages > 2 && (
-
-      <div
-        className="
+          {totalPages > 2 && (
+            <div
+              className="
           flex items-center
           justify-center
           gap-3
           mt-10
           flex-wrap
         "
-      >
-
-        <button
-          disabled={page === 1}
-          onClick={() =>
-            fetchMovies(
-              activeFilter,
-              search,
-              page - 1
-            )
-          }
-          className="
+            >
+              <button
+                disabled={page === 1}
+                onClick={() => fetchMovies(activeFilter, search, page - 1)}
+                className="
             px-5 py-3
             rounded-xl
             bg-[#1a1a1a]
             border border-gray-800
             disabled:opacity-50
           "
-        >
+              >
+                Prev
+              </button>
 
-          Prev
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
 
-        </button>
-
-        {[...Array(totalPages)]
-          .map((_, index) => {
-
-            const pageNumber =
-              index + 1;
-
-            return (
-
-              <button
-                key={pageNumber}
-                onClick={() =>
-                  fetchMovies(
-                    activeFilter,
-                    search,
-                    pageNumber
-                  )
-                }
-                className={`
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() =>
+                      fetchMovies(activeFilter, search, pageNumber)
+                    }
+                    className={`
                   w-12 h-12
                   rounded-xl
                   border
                   transition
 
                   ${
-                    page ===
-                    pageNumber
-
+                    page === pageNumber
                       ? "bg-gradient-to-r from-[#8b5c76] to-[#6f4660] border-[#8b5c76]"
-
                       : "bg-[#1a1a1a] border-gray-800"
                   }
                 `}
-              >
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
 
-                {pageNumber}
-
-              </button>
-            );
-          })}
-
-        <button
-          disabled={
-            page ===
-            totalPages
-          }
-          onClick={() =>
-            fetchMovies(
-              activeFilter,
-              search,
-              page + 1
-            )
-          }
-          className="
+              <button
+                disabled={page === totalPages}
+                onClick={() => fetchMovies(activeFilter, search, page + 1)}
+                className="
             px-5 py-3
             rounded-xl
             bg-[#1a1a1a]
             border border-gray-800
             disabled:opacity-50
           "
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
+      {showDeleteModal && (
+        <div
+          className="
+        fixed inset-0
+        bg-black/70
+        backdrop-blur-sm
+
+        z-50
+
+        flex
+        items-center
+        justify-center
+
+        p-4
+      "
         >
+          <div
+            className="
+          w-full
+          max-w-md
 
-          Next
+          bg-[#1a1a1a]
 
-        </button>
+          border
+          border-red-500/20
 
-      </div>
-    )
-  }
-          </>
-        )}
-      </div>
-    );
-  }
+          rounded-3xl
+
+          p-8
+
+          text-center
+
+          shadow-2xl
+        "
+          >
+            <div
+              className="
+            w-20 h-20
+
+            mx-auto
+
+            rounded-full
+
+            bg-red-500/10
+
+            flex
+            items-center
+            justify-center
+
+            text-4xl
+
+            mb-5
+          "
+            >
+              🎬
+            </div>
+
+            <h2
+              className="
+            text-2xl
+            font-bold
+          "
+            >
+              Delete Movie?
+            </h2>
+
+            <p
+              className="
+            text-gray-400
+            mt-3
+          "
+            >
+              Are you sure you want to delete this movie? This action cannot be
+              undone.
+            </p>
+
+            <div
+              className="
+            flex
+            gap-4
+            mt-8
+          "
+            >
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+
+                  setSelectedMovieId(null);
+                }}
+                className="
+              flex-1
+
+              py-3
+
+              rounded-xl
+
+              bg-[#252525]
+
+              hover:bg-[#333]
+
+              transition
+            "
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmDelete}
+                className="
+              flex-1
+
+              py-3
+
+              rounded-xl
+
+              bg-red-600
+
+              hover:bg-red-500
+
+              transition
+
+              font-medium
+            "
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default Movies;

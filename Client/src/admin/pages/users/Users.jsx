@@ -32,6 +32,10 @@ function Users() {
 
   const [totalPages, setTotalPages] = useState(1);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [selectedUserId, setSelectedUserId] = useState(null);
+
   const fetchUsers = async (
     role = "user",
     status = "all",
@@ -70,6 +74,7 @@ function Users() {
       }
 
       setUsers(res.users || []);
+      console.log(res)
 
       setTotalPages(res.totalPages || 1);
 
@@ -98,6 +103,26 @@ function Users() {
 
         return;
       }
+
+      fetchUsers(activeRole, activeStatus, search, page);
+    } catch (error) {
+      setError(error?.message || "Failed to delete user");
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const res = await deleteUser(selectedUserId);
+
+      if (!res.success) {
+        setError(res.message);
+
+        return;
+      }
+
+      setShowDeleteModal(false);
+
+      setSelectedUserId(null);
 
       fetchUsers(activeRole, activeStatus, search, page);
     } catch (error) {
@@ -409,17 +434,6 @@ function Users() {
                       space-y-2
                     "
                 >
-                  <div
-                    className="
-                        flex
-                        justify-between
-                        text-sm
-                      "
-                  >
-                    <span className="text-gray-400">Business</span>
-
-                    <span>{user.ownerDetails?.businessName || "-"}</span>
-                  </div>
                 </div>
               )}
 
@@ -477,7 +491,11 @@ function Users() {
                 </button>
 
                 <button
-                  onClick={() => handleDelete(user._id)}
+                  onClick={() => {
+                    setSelectedUserId(user._id);
+
+                    setShowDeleteModal(true);
+                  }}
                   className="
                     py-3
                     rounded-xl
@@ -598,6 +616,132 @@ function Users() {
           >
             Next
           </button>
+        </div>
+      )}
+      {showDeleteModal && (
+        <div
+          className="
+        fixed inset-0
+        bg-black/70
+        backdrop-blur-sm
+        z-50
+
+        flex
+        items-center
+        justify-center
+
+        p-4
+      "
+        >
+          <div
+            className="
+          w-full
+          max-w-md
+
+          bg-[#1a1a1a]
+
+          border
+          border-red-500/20
+
+          rounded-3xl
+
+          p-8
+
+          text-center
+        "
+          >
+            <div
+              className="
+            w-20 h-20
+
+            mx-auto
+
+            rounded-full
+
+            bg-red-500/10
+
+            flex
+            items-center
+            justify-center
+
+            text-4xl
+          "
+            >
+              👤
+            </div>
+
+            <h2
+              className="
+            text-2xl
+            font-bold
+            mt-6
+          "
+            >
+              Delete User?
+            </h2>
+
+            <p
+              className="
+            text-gray-400
+            mt-3
+          "
+            >
+              Are you sure you want to delete this user? This action cannot be
+              undone.
+            </p>
+
+            <div
+              className="
+            flex
+            gap-4
+            mt-8
+          "
+            >
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+
+                  setSelectedUserId(null);
+                }}
+                className="
+              flex-1
+
+              py-3
+
+              rounded-xl
+
+              bg-[#252525]
+
+              hover:bg-[#333]
+
+              transition
+            "
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmDelete}
+                className="
+              flex-1
+
+              py-3
+
+              rounded-xl
+
+              bg-red-600
+
+              hover:bg-red-500
+
+              transition
+
+              font-medium
+            "
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

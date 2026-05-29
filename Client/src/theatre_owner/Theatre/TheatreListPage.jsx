@@ -9,8 +9,7 @@ import {
 
 import {
 
-  getTheatreByOwner,
-  deleteTheatre
+  getTheatreByOwner
 
 } from "../../services/theatreApi";
 
@@ -59,23 +58,6 @@ function TheatreListPage() {
 
   }, []);
 
-
-  const handleDelete =
-    async (id) => {
-
-      try {
-
-        await deleteTheatre(id);
-
-        fetchTheatres();
-
-      } catch (error) {
-
-        console.log(error);
-
-      }
-
-    };
 
   return (
 
@@ -417,49 +399,6 @@ function TheatreListPage() {
 
 
                     <div
-                      className={`
-                        w-fit
-
-                        px-4
-                        py-2
-
-                        rounded-full
-
-                        text-sm
-
-                        ${
-                          theatre.status ===
-                          "approved"
-
-                            ? `
-                              bg-green-500/10
-                              text-green-400
-                            `
-
-                            : theatre.status ===
-                              "rejected"
-
-                            ? `
-                              bg-red-500/10
-                              text-red-400
-                            `
-
-                            : `
-                              bg-yellow-500/10
-                              text-yellow-400
-                            `
-                        }
-                      `}
-                    >
-
-                      {
-                        theatre.status
-                      }
-
-                    </div>
-
-
-                    <div
                       className="
                         flex
                         flex-wrap
@@ -499,57 +438,6 @@ function TheatreListPage() {
 
                         )
                       }
-
-
-                      <button
-                        onClick={() =>
-                          navigate(
-                            `/theatre-owner/theatre/edit/${theatre._id}`
-                          )
-                        }
-
-                        className="
-                          bg-white/10
-                          hover:bg-white/20
-
-                          transition
-
-                          px-5
-                          py-2
-
-                          rounded-xl
-                        "
-                      >
-
-                        Edit
-
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          handleDelete(
-                            theatre._id
-                          )
-                        }
-
-                        className="
-                          bg-red-500/10
-                          hover:bg-red-500/20
-
-                          text-red-400
-
-                          transition
-
-                          px-5
-                          py-2
-
-                          rounded-xl
-                        "
-                      >
-
-                        Delete
-
-                      </button>
 
                     </div>
 

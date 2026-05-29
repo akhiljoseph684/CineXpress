@@ -1,59 +1,45 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
+import React, { useEffect, useState } from "react";
 
-import {
-  FaPlus,
-  FaEdit,
-  FaTrash,
-  FaSearch,
-} from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
 
+import { useNavigate } from "react-router-dom";
 import {
-  useNavigate,
-} from "react-router-dom";
-import { deleteActor, getAllActors, searchActors } from "../../../services/actorsApi";
+  deleteActor,
+  getAllActors,
+  searchActors,
+} from "../../../services/actorsApi";
 
 function Actors() {
-
   const navigate = useNavigate();
 
   const [actors, setActors] = useState([]);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [selectedActorId, setSelectedActorId] = useState(null);
 
   const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState("");
 
   const [error, setError] = useState("");
-  const [page, setPage] = useState(1); 
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-
     fetchActors();
-
   }, []);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchActors(search, 1);
+    }, 500);
 
-    const timer =
-      setTimeout(() => {
-
-        fetchActors(search, 1);
-
-      }, 500);
-
-    return () =>
-      clearTimeout(timer);
-
+    return () => clearTimeout(timer);
   }, [search]);
 
-
   const fetchActors = async (name = "", currentPage = 1) => {
-
     try {
-
       setLoading(true);
 
       setError("");
@@ -61,106 +47,79 @@ function Actors() {
       let query = [];
 
       if (name.trim()) {
-
-        query.push(
-          `name=${name}`
-        );
+        query.push(`name=${name}`);
       }
 
-      query.push(
-        `page=${currentPage}`
-      );
+      query.push(`page=${currentPage}`);
 
-      query.push(
-        "limit=12"
-      );
+      query.push("limit=12");
 
-      const queryString =
-        `?${query.join("&")}`;
+      const queryString = `?${query.join("&")}`;
 
-      const res =
-        await searchActors(
-          queryString
-        );
+      const res = await searchActors(queryString);
 
       if (!res.success) {
-
-        setError(
-          res.message
-        );
+        setError(res.message);
 
         return;
       }
 
-      setActors(
-        res.actors || []
-      );
+      setActors(res.actors || []);
 
       setTotalPages(res.totalPages || 1);
 
-      setPage(
-        res.currentPage || 1
-      );
-
+      setPage(res.currentPage || 1);
     } catch (error) {
-
-      setError(
-        error?.message ||
-        "Failed to fetch actors"
-      );
-
+      setError(error?.message || "Failed to fetch actors");
     } finally {
-
       setLoading(false);
     }
   };
 
-
-  const handleDelete = async (
-    id
-  ) => {
-
+  const handleDelete = async (id) => {
     try {
-
-      const res =
-        await deleteActor(id);
+      const res = await deleteActor(id);
 
       if (!res.success) {
-
         setError(res.message);
 
         return;
       }
 
       fetchActors();
-
     } catch (error) {
+      setError(error?.message || "Failed to delete actor");
+    }
+  };
 
-      setError(
-        error?.message || "Failed to delete actor"
-      );
+  const confirmDelete = async () => {
+    try {
+      const res = await deleteActor(selectedActorId);
+
+      if (!res.success) {
+        setError(res.message);
+        return;
+      }
+
+      setShowDeleteModal(false);
+      setSelectedActorId(null);
+
+      fetchActors();
+    } catch (error) {
+      setError(error?.message || "Failed to delete actor");
     }
   };
 
   const handleEdit = (id) => {
-
-    navigate(
-      `/admin/actors/edit/${id}`
-    );
+    navigate(`/admin/actors/edit/${id}`);
   };
 
-  const handleDetails = (
-    id
-  ) => {
-
-    navigate(
-      `/admin/actors/${id}`
-    );
+  const handleDetails = (id) => {
+    navigate(`/admin/actors/${id}`);
   };
 
   return (
     <div className="w-full">
-
       <div
         className="
           flex flex-col md:flex-row
@@ -169,25 +128,14 @@ function Actors() {
           gap-4 mb-8
         "
       >
-
         <div>
+          <h1 className="text-2xl md:text-3xl font-bold">Actors 🎭</h1>
 
-          <h1 className="text-2xl md:text-3xl font-bold">
-            Actors 🎭
-          </h1>
-
-          <p className="text-gray-400 text-sm mt-2">
-            Manage all actors here
-          </p>
-
+          <p className="text-gray-400 text-sm mt-2">Manage all actors here</p>
         </div>
 
         <button
-          onClick={() =>
-            navigate(
-              "/admin/actors/create"
-            )
-          }
+          onClick={() => navigate("/admin/actors/create")}
           className="
             flex items-center
             justify-center gap-2
@@ -202,17 +150,12 @@ function Actors() {
             w-full md:w-auto
           "
         >
-
           <FaPlus />
-
           Create Actor
-
         </button>
-
       </div>
 
       {error && (
-
         <div
           className="
             w-full
@@ -227,7 +170,6 @@ function Actors() {
             mb-6
           "
         >
-
           <div
             className="
               w-20 h-20
@@ -239,9 +181,7 @@ function Actors() {
               mb-5
             "
           >
-
             ⚠️
-
           </div>
 
           <h2
@@ -253,13 +193,10 @@ function Actors() {
           >
             {error}
           </h2>
-
         </div>
       )}
       <div className="mb-8">
-
         <div className="relative">
-
           <FaSearch
             className="
               absolute
@@ -274,10 +211,8 @@ function Actors() {
             placeholder="Search actors..."
             value={search}
             onChange={(e) => {
-            
-              const value =
-                e.target.value;
-            
+              const value = e.target.value;
+
               setSearch(value);
             }}
             className="
@@ -291,22 +226,14 @@ function Actors() {
               transition
             "
           />
-
         </div>
-          
       </div>
 
       {loading && (
-
-        <div className="text-center py-20 text-gray-400">
-          Loading actors...
-        </div>
+        <div className="text-center py-20 text-gray-400">Loading actors...</div>
       )}
 
-      {!loading &&
-        actors.length === 0 &&
-        !error && (
-
+      {!loading && actors.length === 0 && !error && (
         <div
           className="
             w-full
@@ -320,7 +247,6 @@ function Actors() {
             text-center
           "
         >
-
           <div
             className="
               w-20 h-20
@@ -332,9 +258,7 @@ function Actors() {
               mb-5
             "
           >
-
             🎭
-
           </div>
 
           <h2
@@ -353,16 +277,12 @@ function Actors() {
               max-w-md
             "
           >
-            There are currently no actors
-            available in your collection.
+            There are currently no actors available in your collection.
           </p>
-
         </div>
       )}
 
-      {!loading &&
-        actors.length > 0 && (
-
+      {!loading && actors.length > 0 && (
         <div
           className="
             grid
@@ -372,9 +292,7 @@ function Actors() {
             gap-6
           "
         >
-
           {actors.map((actor) => (
-
             <div
               key={actor._id}
               className="
@@ -387,7 +305,6 @@ function Actors() {
                 shadow-2xl
               "
             >
-
               <div
                 className="
                   flex flex-col
@@ -395,11 +312,8 @@ function Actors() {
                   text-center
                 "
               >
-
                 <img
-                  src={
-                    actor.profileImage
-                  }
+                  src={actor.profileImage}
                   alt={actor.name}
                   className="
                     w-28 h-28
@@ -411,11 +325,7 @@ function Actors() {
                 />
 
                 <h2
-                  onClick={() =>
-                    handleDetails(
-                      actor._id
-                    )
-                  }
+                  onClick={() => handleDetails(actor._id)}
                   className="
                     text-xl
                     font-bold
@@ -438,7 +348,6 @@ function Actors() {
                 >
                   {actor.bio || "-"}
                 </p>
-
               </div>
 
               <div
@@ -447,13 +356,8 @@ function Actors() {
                   gap-3 mt-6
                 "
               >
-
                 <button
-                  onClick={() =>
-                    handleEdit(
-                      actor._id
-                    )
-                  }
+                  onClick={() => handleEdit(actor._id)}
                   className="
                     py-3
                     rounded-xl
@@ -465,17 +369,14 @@ function Actors() {
                     gap-2
                   "
                 >
-
                   <FaEdit />
-
                 </button>
 
                 <button
-                  onClick={() =>
-                    handleDelete(
-                      actor._id
-                    )
-                  }
+                  onClick={() => {
+                    setSelectedActorId(actor._id);
+                    setShowDeleteModal(true);
+                  }}
                   className="
                     py-3
                     rounded-xl
@@ -489,41 +390,27 @@ function Actors() {
                     gap-2
                   "
                 >
-
                   <FaTrash />
-
                 </button>
-
               </div>
-
             </div>
           ))}
-
         </div>
-        
       )}
-      {
-        totalPages > 1 && (
-        
-          <div
-            className="
+      {totalPages > 1 && (
+        <div
+          className="
               flex items-center
               justify-center
               gap-3
               mt-12
               flex-wrap
             "
-          >
-          
-            <button
-              disabled={page === 1}
-              onClick={() =>
-                fetchActors(
-                  search,
-                  page - 1
-                )
-              }
-              className="
+        >
+          <button
+            disabled={page === 1}
+            onClick={() => fetchActors(search, page - 1)}
+            className="
                 px-5 py-3
                 rounded-xl
                 bg-[#1a1a1a]
@@ -533,29 +420,18 @@ function Actors() {
                 disabled:opacity-40
                 disabled:cursor-not-allowed
               "
-            >
-            
-              Prev
-            
-            </button>
-            
-            {[...Array(totalPages)]
-              .map((_, index) => {
-              
-                const pageNumber =
-                  index + 1;
-              
-                return (
-                
-                  <button
-                    key={pageNumber}
-                    onClick={() =>
-                      fetchActors(
-                        search,
-                        pageNumber
-                      )
-                    }
-                    className={`
+          >
+            Prev
+          </button>
+
+          {[...Array(totalPages)].map((_, index) => {
+            const pageNumber = index + 1;
+
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => fetchActors(search, pageNumber)}
+                className={`
                       w-12 h-12
                       rounded-xl
                       font-medium
@@ -563,9 +439,7 @@ function Actors() {
                       border
                     
                       ${
-                        page ===
-                        pageNumber
-                      
+                        page === pageNumber
                           ? `
                             bg-gradient-to-r
                             from-[#8b5c76]
@@ -573,7 +447,6 @@ function Actors() {
                             border-[#8b5c76]
                             text-white
                           `
-                      
                           : `
                             bg-[#1a1a1a]
                             border-gray-800
@@ -581,26 +454,16 @@ function Actors() {
                           `
                       }
                     `}
-                  >
-                  
-                    {pageNumber}
-                    
-                  </button>
-                );
-              })}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
 
-            <button
-              disabled={
-                page ===
-                totalPages
-              }
-              onClick={() =>
-                fetchActors(
-                  search,
-                  page + 1
-                )
-              }
-              className="
+          <button
+            disabled={page === totalPages}
+            onClick={() => fetchActors(search, page + 1)}
+            className="
                 px-5 py-3
                 rounded-xl
                 bg-[#1a1a1a]
@@ -610,16 +473,146 @@ function Actors() {
                 disabled:opacity-40
                 disabled:cursor-not-allowed
               "
+          >
+            Next
+          </button>
+        </div>
+    )}
+          {
+      showDeleteModal && (
+      
+        <div
+          className="
+            fixed inset-0
+            bg-black/70
+            backdrop-blur-sm
+            z-50
+      
+            flex
+            items-center
+            justify-center
+      
+            p-4
+          "
+        >
+        
+          <div
+            className="
+              w-full
+              max-w-md
+      
+              bg-[#1a1a1a]
+      
+              border
+              border-red-500/20
+      
+              rounded-3xl
+      
+              p-8
+      
+              text-center
+            "
+          >
+          
+            <div
+              className="
+                w-20
+                h-20
+      
+                mx-auto
+      
+                rounded-full
+      
+                bg-red-500/10
+      
+                flex
+                items-center
+                justify-center
+      
+                text-4xl
+              "
+            >
+              🗑️
+            </div>
+      
+            <h2
+              className="
+                text-2xl
+                font-bold
+                mt-6
+              "
+            >
+              Delete Actor?
+            </h2>
+      
+            <p
+              className="
+                text-gray-400
+                mt-3
+              "
+            >
+              This action cannot be
+              undone.
+            </p>
+      
+            <div
+              className="
+                flex
+                gap-4
+                mt-8
+              "
             >
             
-              Next
-            
-            </button>
-            
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedActorId(null);
+                }}
+                className="
+                  flex-1
+              
+                  py-3
+              
+                  rounded-xl
+              
+                  bg-[#252525]
+              
+                  hover:bg-[#333]
+              
+                  transition
+                "
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={confirmDelete}
+                className="
+                  flex-1
+              
+                  py-3
+              
+                  rounded-xl
+              
+                  bg-red-600
+              
+                  hover:bg-red-500
+              
+                  transition
+              
+                  font-medium
+                "
+              >
+                Delete
+              </button>
+              
+            </div>
+              
           </div>
-        )
-      }
-
+              
+        </div>
+      )
+    }
     </div>
   );
 }

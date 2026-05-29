@@ -340,3 +340,44 @@ export const getBookingsByOwner = async (req, res) => {
     });
   }
 };
+
+export const getBookingById = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+
+      .populate({
+        path: "show",
+
+        populate: [
+          {
+            path: "movieId",
+          },
+
+          {
+            path: "theatreId",
+          },
+
+          {
+            path: "screenId",
+          },
+        ],
+      });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      booking,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

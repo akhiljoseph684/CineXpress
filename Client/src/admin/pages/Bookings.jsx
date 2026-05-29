@@ -33,6 +33,7 @@ function Bookings() {
       const res = await getAllBookings(query);
 
       setBookings(res.bookings || []);
+      console.log(res.bookings)
     } catch (error) {
       console.log(error);
     } finally {
@@ -387,7 +388,7 @@ function Bookings() {
                               "
                       >
                         {new Date(
-                          `1970-01-01T${booking.show.startTime}`,
+                          `1970-01-01T${booking.show?.startTime}`,
                         ).toLocaleTimeString(
                           "en-IN",
 

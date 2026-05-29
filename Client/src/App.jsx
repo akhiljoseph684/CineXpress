@@ -25,7 +25,6 @@ import TheatreOwnerLayout from "./theatre_owner/TheatreOwnerLayout";
 import Show from "./theatre_owner/Show";
 import Screen from "./theatre_owner/Screen";
 import TheatreListPage from "./theatre_owner/Theatre/TheatreListPage";
-import CreateEditTheatre from "./theatre_owner/Theatre/CreateEditTheatre";
 import ScreenListPage from "./theatre_owner/Screen/ScreenListPage";
 import CreateEditScreen from "./theatre_owner/Screen/CreateEditScreen";
 import ScreenList from "./admin/pages/Screens/ScreenList";
@@ -39,6 +38,9 @@ import Theatres from "./admin/pages/Theatre/Theatres";
 import Shows from "./admin/pages/Show/Shows";
 import BookingListPage from "./theatre_owner/Bookings/BookingListPage";
 import ShowListPage from "./theatre_owner/Shows/ShowListPage";
+import TrailerPage from "./Components/TrailerPage";
+import BookingSuccessPage from "./user/BookingSuccessPage";
+import TicketPage from "./Components/TicketPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -83,21 +85,25 @@ function App() {
         <Route path="movies/:id" element={<MovieDetailsPage />}></Route>
         <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
         <Route path="booking/movie/:showId" element={<SeatBookingPage />} />
+        <Route path="booking-success/:bookingId" element={<BookingSuccessPage />} />
+        <Route path="trailer/:id" element={<TrailerPage />} />
       </Route>
 
-        <Route path="/theatre-owner" element={
-          <TheatreOwnerProtectedRoute>
-            <TheatreOwnerLayout />
-          </TheatreOwnerProtectedRoute>
-          }>
+      <Route path="/theatre-owner" element={
+        <TheatreOwnerProtectedRoute>
+          <TheatreOwnerLayout />
+        </TheatreOwnerProtectedRoute>
+      }>
         <Route path="theatre" element={<TheatreListPage />} />
-        <Route path="theatre/create" element={<CreateEditTheatre />} />
-        <Route path="theatre/edit/:id" element={<CreateEditTheatre />} />
         <Route path="screens" element={<ScreenListPage />} />
         <Route path="screens/create/:id" element={<CreateEditScreen />} />
+        <Route path="screens/edit/:screenId" element={<CreateEditScreen />} />
         <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
         <Route path="bookings/" element={<BookingListPage />} />
         <Route path="shows/" element={<ShowListPage />} />
+        <Route path="shows/create/:screenId" element={<CreateShowPage/>} />
+        <Route path="shows/edit/:id" element={<CreateShowPage/>} />
+        <Route path="ticket/:ticketId" element={<TicketPage />} />
       </Route>
 
       <Route

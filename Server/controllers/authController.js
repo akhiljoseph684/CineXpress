@@ -61,10 +61,11 @@ export const register = async (req, res) => {
     });
 
     if (theatre) {
+      
       userRole = "theatre_owner";
     }
 
-    if(theatre.secretCode !== secretCode){
+    if(theatre && (theatre?.secretCode !== secretCode)){
         return res.status(400).json({
             success: false,
             message: "Does not Create Account With This Email"

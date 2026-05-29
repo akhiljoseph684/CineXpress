@@ -8,7 +8,11 @@ const ScreenListPage = () => {
 
   const [screens, setScreens] = useState([]);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [theatre, setTheatre] = useState(null);
+
+  const [selectedScreenId, setSelectedScreenId] = useState(null);
 
   useEffect(() => {
     fetchScreens();
@@ -102,8 +106,8 @@ const ScreenListPage = () => {
           >
             {screens.map((screen) => (
               <div
-              key={screen._id}
-              className="
+                key={screen._id}
+                className="
               bg-[#111]
               
               border
@@ -250,20 +254,24 @@ const ScreenListPage = () => {
                     </Link>
 
                     <button
-                      onClick={() => deleteHandler(screen._id)}
+                      onClick={() => {
+                        setSelectedScreenId(screen._id);
+
+                        setShowDeleteModal(true);
+                      }}
                       className="
                           flex-1
-
+                    
                           px-4
                           py-3
-
+                    
                           rounded-2xl
-
+                    
                           bg-red-600
                           hover:bg-red-700
-
+                    
                           font-semibold
-
+                    
                           transition
                         "
                     >
@@ -276,6 +284,98 @@ const ScreenListPage = () => {
           </div>
         )}
       </div>
+      {showDeleteModal && (
+        <div
+          className="
+      fixed
+      inset-0
+      bg-black/70
+      backdrop-blur-sm
+      flex
+      items-center
+      justify-center
+      z-50
+      px-4
+    "
+        >
+          <div
+            className="
+        bg-[#111]
+
+        border
+        border-white/10
+
+        rounded-3xl
+
+        p-6
+
+        w-full
+        max-w-md
+
+        shadow-2xl
+      "
+          >
+            <h2 className="text-2xl font-bold text-white">Delete Screen</h2>
+
+            <p className="text-white/50 mt-3 leading-relaxed">
+              Are you sure you want to delete this screen? This action cannot be
+              undone.
+            </p>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+
+                  setSelectedScreenId(null);
+                }}
+                className="
+            flex-1
+
+            px-4
+            py-3
+
+            rounded-2xl
+
+            bg-white/10
+            hover:bg-white/20
+
+            transition
+          "
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  await deleteHandler(selectedScreenId);
+
+                  setShowDeleteModal(false);
+
+                  setSelectedScreenId(null);
+                }}
+                className="
+            flex-1
+
+            px-4
+            py-3
+
+            rounded-2xl
+
+            bg-red-600
+            hover:bg-red-700
+
+            font-semibold
+
+            transition
+          "
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

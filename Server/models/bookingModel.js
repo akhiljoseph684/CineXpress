@@ -40,18 +40,23 @@ const bookingSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
+
       ref: "User",
+
       required: true,
     },
 
     show: {
       type: mongoose.Schema.Types.ObjectId,
+
       ref: "Show",
+
       required: true,
     },
 
     seats: {
       type: [bookedSeatSchema],
+
       required: true,
 
       validate: {
@@ -70,7 +75,9 @@ const bookingSchema = new mongoose.Schema(
 
     totalAmount: {
       type: Number,
+
       required: true,
+
       min: 0,
     },
 
@@ -97,6 +104,29 @@ const bookingSchema = new mongoose.Schema(
 
     paymentId: {
       type: String,
+      default: null,
+    },
+
+    // 🎟️ TICKET FIELDS
+
+    ticketId: {
+      type: String,
+      unique: true,
+      default: null,
+    },
+
+    qrCode: {
+      type: String,
+      default: null,
+    },
+
+    isScanned: {
+      type: Boolean,
+      default: false,
+    },
+
+    scannedAt: {
+      type: Date,
       default: null,
     },
 
@@ -127,6 +157,7 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
+
 bookingSchema.index({
   show: 1,
 });
@@ -143,9 +174,17 @@ bookingSchema.index({
   expiresAt: 1,
 });
 
-bookingSchema.pre("save", function () {
-  this.totalSeats = this.seats.length;
+bookingSchema.index({
+  ticketId: 1,
 });
+
+bookingSchema.pre(
+  "save",
+
+  function () {
+    this.totalSeats = this.seats.length;
+  },
+);
 
 const Booking = mongoose.model("Booking", bookingSchema);
 

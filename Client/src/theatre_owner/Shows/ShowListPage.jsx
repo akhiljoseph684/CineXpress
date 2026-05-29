@@ -1,66 +1,34 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
+import React, { useEffect, useState } from "react";
 
-import {
-  FaClock,
-  FaFilm,
-  FaTv,
-  FaMapMarkerAlt,
-} from "react-icons/fa";
+import { FaClock, FaFilm, FaTv, FaMapMarkerAlt } from "react-icons/fa";
 import { getShowsByOwner } from "../../services/showApi";
 
 const ShowListPage = () => {
+  const [loading, setLoading] = useState(true);
 
-  const [loading,
-    setLoading] =
-    useState(true);
+  const [shows, setShows] = useState([]);
 
-  const [shows,
-    setShows] =
-    useState([]);
-
-  const [activeFilter,
-    setActiveFilter] =
-    useState("running");
+  const [activeFilter, setActiveFilter] = useState("running");
 
   useEffect(() => {
-
-    fetchShows(
-      activeFilter
-    );
-
+    fetchShows(activeFilter);
   }, [activeFilter]);
 
-  const fetchShows =
-    async (type) => {
+  const fetchShows = async (type) => {
+    try {
+      setLoading(true);
 
-      try {
+      const res = await getShowsByOwner(`?type=${type}`);
 
-        setLoading(true);
-
-        const res =
-          await getShowsByOwner(
-            `?type=${type}`
-          );
-
-        setShows(
-          res.shows || []
-        );
-
-      } catch (error) {
-
-        console.log(error);
-
-      } finally {
-
-        setLoading(false);
-      }
-    };
+      setShows(res.shows || []);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
-
     return (
       <div
         className="
@@ -75,9 +43,7 @@ const ShowListPage = () => {
           justify-center
         "
       >
-
         Loading...
-
       </div>
     );
   }
@@ -95,15 +61,12 @@ const ShowListPage = () => {
         py-6
       "
     >
-
       <div
         className="
           max-w-7xl
           mx-auto
         "
       >
-
-
         <div
           className="
             flex
@@ -118,9 +81,7 @@ const ShowListPage = () => {
             mb-8
           "
         >
-
           <div>
-
             <h1
               className="
                 text-3xl
@@ -129,9 +90,7 @@ const ShowListPage = () => {
                 font-bold
               "
             >
-
               Shows 🎬
-
             </h1>
 
             <p
@@ -141,15 +100,10 @@ const ShowListPage = () => {
                 mt-2
               "
             >
-
               Manage your movie shows
-
             </p>
-
           </div>
-
         </div>
-
 
         <div
           className="
@@ -163,26 +117,11 @@ const ShowListPage = () => {
             mb-8
           "
         >
-
-          {
-            [
-              "running",
-
-              "upcoming",
-
-              "ended",
-            ].map((item) => (
-
-              <button
-                key={item}
-
-                onClick={() =>
-                  setActiveFilter(
-                    item
-                  )
-                }
-
-                className={`
+          {["running", "upcoming", "ended"].map((item) => (
+            <button
+              key={item}
+              onClick={() => setActiveFilter(item)}
+              className={`
                   px-5
                   py-3
 
@@ -195,14 +134,11 @@ const ShowListPage = () => {
                   transition
 
                   ${
-                    activeFilter ===
-                    item
-
+                    activeFilter === item
                       ? `
                         bg-pink-500
                         border-pink-500
                       `
-
                       : `
                         bg-[#111]
 
@@ -212,22 +148,15 @@ const ShowListPage = () => {
                       `
                   }
                 `}
-              >
-
-                {item}
-
-              </button>
-            ))
-          }
-
+            >
+              {item}
+            </button>
+          ))}
         </div>
 
-
-        {
-          shows.length === 0 ? (
-
-            <div
-              className="
+        {shows.length === 0 ? (
+          <div
+            className="
                 bg-[#111]
 
                 border
@@ -239,37 +168,29 @@ const ShowListPage = () => {
 
                 text-center
               "
-            >
-
-              <h2
-                className="
+          >
+            <h2
+              className="
                   text-2xl
                   font-semibold
                 "
-              >
+            >
+              No Shows Found
+            </h2>
 
-                No Shows Found
-
-              </h2>
-
-              <p
-                className="
+            <p
+              className="
                   text-white/50
 
                   mt-2
                 "
-              >
-
-                No movie shows available
-
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div
-              className="
+            >
+              No movie shows available
+            </p>
+          </div>
+        ) : (
+          <div
+            className="
                 grid
                 grid-cols-1
                 sm:grid-cols-2
@@ -277,16 +198,11 @@ const ShowListPage = () => {
 
                 gap-6
               "
-            >
-
-              {
-                shows.map(
-                  (show) => (
-
-                    <div
-                      key={show._id}
-
-                      className="
+          >
+            {shows.map((show) => (
+              <div
+                key={show._id}
+                className="
                         bg-[#111]
 
                         border
@@ -300,35 +216,25 @@ const ShowListPage = () => {
                         flex-col
                         justify-between
                       "
-                    >
-
-
-                      <div
-                        className="
+              >
+                <div
+                  className="
                           relative
                         "
-                      >
-
-                        <img
-                          src={
-                            show
-                              .movieId
-                              ?.poster
-                              ?.card
-                          }
-
-                          alt=""
-
-                          className="
+                >
+                  <img
+                    src={show.movieId?.poster?.card}
+                    alt=""
+                    className="
                             w-full
                             h-[280px]
 
                             object-cover
                           "
-                        />
+                  />
 
-                        <div
-                          className={`
+                  <div
+                    className={`
                             absolute
                             top-4
                             right-4
@@ -342,81 +248,57 @@ const ShowListPage = () => {
                             font-medium
 
                             ${
-                              activeFilter ===
-                              "running"
-
+                              activeFilter === "running"
                                 ? `
                                   bg-green-500/20
                                   text-green-400
                                 `
-
-                                : activeFilter ===
-                                  "upcoming"
-
+                                : activeFilter === "upcoming"
                                   ? `
                                     bg-yellow-500/20
                                     text-yellow-400
                                   `
-
                                   : `
                                     bg-red-500/20
                                     text-red-400
                                   `
                             }
                           `}
-                        >
+                  >
+                    {activeFilter}
+                  </div>
+                </div>
 
-                          {
-                            activeFilter
-                          }
-
-                        </div>
-
-                      </div>
-
-
-                      <div
-                        className="
+                <div
+                  className="
                           p-6
                         "
-                      >
-
-
-                        <h2
-                          className="
+                >
+                  <h2
+                    className="
                             text-2xl
                             font-bold
                           "
-                        >
+                  >
+                    {show.movieId?.title}
+                  </h2>
 
-                          {
-                            show
-                              .movieId
-                              ?.title
-                          }
-
-                        </h2>
-
-
-                        <div
-                          className="
+                  <div
+                    className="
                             mt-6
 
                             space-y-4
                           "
-                        >
-
-
-                          <div
-                            className="
+                  >
+                    <div
+                      className="
                               flex
                               items-center
                               justify-between
                             "
-                          >
-
-                            <div
-                              className="
+                    >
+                      <div
+                        className="
                                 flex
                                 items-center
 
@@ -424,261 +306,183 @@ const ShowListPage = () => {
 
                                 text-white/50
                               "
-                            >
-
-                              <FaFilm />
-
-                              Theatre
-
-                            </div>
-
-                            <p
-                              className="
-                                font-medium
-                              "
-                            >
-
-                              {
-                                show
-                                  .theatreId
-                                  ?.name
-                              }
-
-                            </p>
-
-                          </div>
-
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                          >
-
-                            <div
-                              className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                            >
-
-                              <FaTv />
-
-                              Screen
-
-                            </div>
-
-                            <p
-                              className="
-                                font-medium
-                              "
-                            >
-
-                              {
-                                show
-                                  .screenId
-                                  ?.name
-                              }
-
-                            </p>
-
-                          </div>
-
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                          >
-
-                            <div
-                              className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                            >
-
-                              <FaMapMarkerAlt />
-
-                              City
-
-                            </div>
-
-                            <p
-                              className="
-                                font-medium
-                              "
-                            >
-
-                              {
-                                show
-                                  .theatreId
-                                  ?.location
-                                  ?.city
-                              }
-
-                            </p>
-
-                          </div>
-
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                          >
-
-                            <div
-                              className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                            >
-
-                              📅
-
-                              Date
-
-                            </div>
-
-                            <p
-                              className="
-                                font-medium
-                              "
-                            >
-
-                              {
-                                new Date(
-                                  show.showDate
-                                ).toLocaleDateString(
-                                  "en-IN",
-
-                                  {
-                                    day:
-                                      "numeric",
-
-                                    month:
-                                      "short",
-
-                                    year:
-                                      "numeric",
-                                  }
-                                )
-                              }
-
-                            </p>
-
-                          </div>
-
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                          >
-
-                            <div
-                              className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                            >
-
-                              <FaClock />
-
-                              Time
-
-                            </div>
-
-                            <p
-                              className="
-                                font-medium
-                              "
-                            >
-
-                              {
-                                new Date(
-                                  `1970-01-01T${show.startTime}`
-                                ).toLocaleTimeString(
-                                  "en-IN",
-
-                                  {
-                                    hour:
-                                      "numeric",
-
-                                    minute:
-                                      "2-digit",
-
-                                    hour12:
-                                      true,
-                                  }
-                                )
-                              }
-
-                              {" - "}
-
-                              {
-                                new Date(
-                                  `1970-01-01T${show.endTime}`
-                                ).toLocaleTimeString(
-                                  "en-IN",
-
-                                  {
-                                    hour:
-                                      "numeric",
-
-                                    minute:
-                                      "2-digit",
-
-                                    hour12:
-                                      true,
-                                  }
-                                )
-                              }
-
-                            </p>
-
-                          </div>
-
-                        </div>
-
+                      >
+                        <FaFilm />
+                        Theatre
                       </div>
 
+                      <p
+                        className="
+                                font-medium
+                              "
+                      >
+                        {show.theatreId?.name}
+                      </p>
                     </div>
-                  )
-                )
-              }
 
-            </div>
-          )
-        }
+                    <div
+                      className="
+                              flex
+                              items-center
+                              justify-between
+                            "
+                    >
+                      <div
+                        className="
+                                flex
+                                items-center
 
+                                gap-2
+
+                                text-white/50
+                              "
+                      >
+                        <FaTv />
+                        Screen
+                      </div>
+
+                      <p
+                        className="
+                                font-medium
+                              "
+                      >
+                        {show.screen?.name}
+                      </p>
+                    </div>
+
+                    <div
+                      className="
+                              flex
+                              items-center
+                              justify-between
+                            "
+                    >
+                      <div
+                        className="
+                                flex
+                                items-center
+
+                                gap-2
+
+                                text-white/50
+                              "
+                      >
+                        <FaMapMarkerAlt />
+                        City
+                      </div>
+
+                      <p
+                        className="
+                                font-medium
+                              "
+                      >
+                        {show.theatreId?.city}
+                      </p>
+                    </div>
+
+                    <div
+                      className="
+                              flex
+                              items-center
+                              justify-between
+                            "
+                    >
+                      <div
+                        className="
+                                flex
+                                items-center
+
+                                gap-2
+
+                                text-white/50
+                              "
+                      >
+                        📅 Date
+                      </div>
+
+                      <p
+                        className="
+                                font-medium
+                              "
+                      >
+                        {new Date(show.showDate).toLocaleDateString(
+                          "en-IN",
+
+                          {
+                            day: "numeric",
+
+                            month: "short",
+
+                            year: "numeric",
+                          },
+                        )}
+                      </p>
+                    </div>
+
+                    <div
+                      className="
+                              flex
+                              items-center
+                              justify-between
+                            "
+                    >
+                      <div
+                        className="
+                                flex
+                                items-center
+
+                                gap-2
+
+                                text-white/50
+                              "
+                      >
+                        <FaClock />
+                        Time
+                      </div>
+
+                      <p
+                        className="
+                                font-medium
+                              "
+                      >
+                        {new Date(
+                          `1970-01-01T${show.startTime}`,
+                        ).toLocaleTimeString(
+                          "en-IN",
+
+                          {
+                            hour: "numeric",
+
+                            minute: "2-digit",
+
+                            hour12: true,
+                          },
+                        )}
+
+                        {" - "}
+
+                        {new Date(
+                          `1970-01-01T${show.endTime}`,
+                        ).toLocaleTimeString(
+                          "en-IN",
+
+                          {
+                            hour: "numeric",
+
+                            minute: "2-digit",
+
+                            hour12: true,
+                          },
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
     </div>
   );
 };

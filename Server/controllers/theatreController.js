@@ -42,6 +42,7 @@ export const createTheatre = async (req, res) => {
 
     const latitude = Number(lat);
 
+
     if (isNaN(longitude) || isNaN(latitude)) {
       return res.status(400).json({
         success: false,
@@ -55,9 +56,8 @@ export const createTheatre = async (req, res) => {
     const secretCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     const geoLocation = {
-      type: "Point",
-
-      coordinates: [longitude, latitude],
+      lat: latitude,
+      lng: longitude
     };
 
     const user = await User.findOne({ email: ownerEmail });

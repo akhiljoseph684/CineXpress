@@ -9,6 +9,10 @@ export const createShow = async (data) => {
     }
 }
 
+export const editShow = async () => {
+    
+}
+
 export const getMovieShows = async (movieId, showDate) => {
     try {
         const res = await API.get(`/shows/movie-shows?movieId=${movieId}&showDate=${showDate}`);
@@ -28,6 +32,7 @@ export const getShowById = async (id) => {
 }
 
 export const getAllShows = async (query) => {
+    console.log(query)
     try {
         const res = await API.get("/shows/all" + query);
         return res.data;

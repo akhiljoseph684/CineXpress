@@ -7,7 +7,6 @@ import { updateUser } from "../features/authSlice";
 import { updateUser as updateUserApi } from "../services/usersAPi";
 import { useDispatch } from "react-redux";
 
-
 function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
   const [cities, setCities] = useState([]);
 
@@ -19,13 +18,11 @@ function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
 
   const [hasMore, setHasMore] = useState(true);
 
-
   useEffect(() => {
     if (!isOpen) return;
 
     fetchCities(1, true);
   }, [isOpen]);
-
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -45,22 +42,18 @@ function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
         `https://countriesnow.space/api/v0.1/countries/population/cities`,
       );
 
-
       let allCities = res.data.data
         ?.map((item) => item.city)
 
         .filter(Boolean);
 
-
       allCities = [...new Set(allCities)];
-
 
       if (search.trim()) {
         allCities = allCities.filter((city) =>
           city.toLowerCase().includes(search.toLowerCase()),
         );
       }
-
 
       const limit = 30;
 
@@ -93,18 +86,18 @@ function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
   };
 
   const handleSelectCity = async (city) => {
-    console.log(city)
+    console.log(city);
     setSelectedCity(city);
 
     await updateUserApi({
-            preferredCity: city,
-          });
-    
-          dispatch(
-            updateUser({
-              preferredCity: city,
-            })
-          );
+      preferredCity: city,
+    });
+
+    dispatch(
+      updateUser({
+        preferredCity: city,
+      }),
+    );
 
     onClose();
   };
@@ -148,7 +141,6 @@ function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
           shadow-2xl
         "
       >
-
         <div
           className="
             flex
@@ -199,7 +191,6 @@ function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
           </button>
         </div>
 
-
         <div className="p-6">
           <div
             className="
@@ -248,7 +239,6 @@ function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
             />
           </div>
         </div>
-
 
         <div
           className="
@@ -349,7 +339,6 @@ function CityPopup({ isOpen, onClose, selectedCity, setSelectedCity }) {
               </button>
             ))}
           </div>
-
 
           {hasMore && (
             <div

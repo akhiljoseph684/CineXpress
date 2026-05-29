@@ -1,6 +1,7 @@
 import Booking from "../models/bookingModel.js";
 import crypto from "crypto";
 import getRazorpayInstance from "../config/razorpay.js";
+import QRCode from "qrcode";
 
 export const createPaymentOrder = async (req, res) => {
   try {
@@ -60,6 +61,7 @@ export const verifyPayment = async (req, res) => {
     } = req.body;
 
     const generatedSignature = crypto
+
       .createHmac("sha256", process.env.RAZORPAY_SECRET)
 
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -83,31 +85,40 @@ export const verifyPayment = async (req, res) => {
       });
     }
 
-    const booking = await Booking.findByIdAndUpdate(
-      bookingId,
+    const booking = await Booking.findById(bookingId);
 
-      {
-        bookingStatus: "CONFIRMED",
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
 
-        paymentStatus: "PAID",
+    const ticketId = `CX-${Date.now()}`;
 
-        paymentId: razorpay_payment_id,
+    const ticketUrl = `theatre-owner/${process.env.FRONTEND_URL}/ticket/${ticketId}`;
 
-        paymentMethod: "RAZORPAY",
+    const qrCode = await QRCode.toDataURL(ticketUrl);
 
-        bookedAt: new Date(),
-      },
+    booking.bookingStatus = "CONFIRMED";
 
-      {
-        new: true,
-      },
-    );
+    booking.paymentStatus = "PAID";
+
+    booking.paymentId = razorpay_payment_id;
+
+    booking.paymentMethod = "RAZORPAY";
+
+    booking.bookedAt = new Date();
+
+    booking.ticketId = ticketId;
+
+    booking.qrCode = qrCode;
+
+    await booking.save();
 
     return res.status(200).json({
       success: true,
-
       message: "Payment successful",
-
       booking,
     });
   } catch (error) {
@@ -115,6 +126,7 @@ export const verifyPayment = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message: error.message,
     });
   }

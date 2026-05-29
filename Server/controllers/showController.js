@@ -11,35 +11,215 @@ import Booking from "../models/bookingModel.js";
 
 export const createShow = async (req, res) => {
   try {
-    const { movieId, theatreId, screenId, showDate, startTime, endTime } =
+    const { movieId, theatreId, screenId, startDate, endDate, showTimes } =
       req.body;
 
-    if (
-      !movieId ||
-      !theatreId ||
-      !screenId ||
-      !showDate ||
-      !startTime ||
-      !endTime
-    ) {
+    if (!movieId) {
       return res.status(400).json({
         success: false,
-
-        message: "All fields are required",
+        message: "Movie is required",
       });
     }
 
-    const movie = await Movie.findById(movieId);
+    if (!theatreId) {
+      return res.status(400).json({
+        success: false,
+        message: "Theatre is required",
+      });
+    }
+
+    if (!screenId) {
+      return res.status(400).json({
+        success: false,
+        message: "Screen is required",
+      });
+    }
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date and end date are required",
+      });
+    }
+
+    if (!showTimes || !showTimes.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Show times required",
+      });
+    }
+
+    const movie = await Movie.findById(movieId).select("duration");
 
     if (!movie) {
       return res.status(404).json({
         success: false,
-
         message: "Movie not found",
       });
     }
 
-    const theatre = await Theatre.findById(theatreId);
+    const duration = movie.duration;
+
+    const now = new Date();
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const startDateObj = new Date(startDate);
+
+    const endDateObj = new Date(endDate);
+
+    if (startDateObj < today) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot create shows for past dates",
+      });
+    }
+
+    if (endDateObj < startDateObj) {
+      return res.status(400).json({
+        success: false,
+        message: "End date must be greater than or equal to start date",
+      });
+    }
+
+    const currentDate = now.toISOString().split("T")[0];
+
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes(),
+    ).padStart(2, "0")}`;
+
+    if (startDate === currentDate) {
+      const hasPastTime = showTimes.some((time) => time <= currentTime);
+
+      if (hasPastTime) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot create shows for past time",
+        });
+      }
+    }
+
+    const sortedTimes = [...showTimes].sort(
+      (a, b) => new Date(`1970-01-01T${a}`) - new Date(`1970-01-01T${b}`),
+    );
+
+    const dates = [];
+
+    for (
+      let date = new Date(startDate);
+      date <= new Date(endDate);
+      date.setDate(date.getDate() + 1)
+    ) {
+      dates.push(new Date(date).toISOString().split("T")[0]);
+    }
+
+    const existingShows = await Show.find({
+      screenId,
+
+      showDate: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    }).select("showDate startTime endTime");
+
+    const showMap = new Map();
+
+    existingShows.forEach((show) => {
+      if (!showMap.has(show.showDate)) {
+        showMap.set(show.showDate, []);
+      }
+
+      showMap.get(show.showDate).push(show);
+    });
+
+    const shows = [];
+
+    for (const showDate of dates) {
+      const dayShows = showMap.get(showDate) || [];
+
+      for (const startTime of sortedTimes) {
+        const start = new Date(`${showDate}T${startTime}`);
+
+        const end = new Date(start.getTime() + (duration + 15) * 60000);
+
+        const hasConflict = dayShows.some((existingShow) => {
+          const existingStart = new Date(
+            `${showDate}T${existingShow.startTime}`,
+          );
+
+          const existingEnd = new Date(`${showDate}T${existingShow.endTime}`);
+
+          return start < existingEnd && end > existingStart;
+        });
+
+        if (hasConflict) {
+          return res.status(400).json({
+            success: false,
+            message: `Time conflict detected on ${showDate} at ${startTime}`,
+          });
+        }
+
+        shows.push({
+          movieId,
+          theatreId,
+          screenId,
+          showDate,
+          startTime,
+
+          endTime: end.toTimeString().slice(0, 5),
+        });
+      }
+    }
+
+    if (!shows.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No shows available to create",
+      });
+    }
+
+    await Show.insertMany(shows);
+
+    return res.status(201).json({
+      success: true,
+      message: "Shows created successfully",
+      totalShows: shows.length,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const cancelShow = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const ownerId = req.user.id;
+
+    // VALIDATE OBJECT ID
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid show ID",
+      });
+    }
+
+    const show = await Show.findById(id);
+
+    if (!show) {
+      return res.status(404).json({
+        success: false,
+        message: "Show not found",
+      });
+    }
+
+    const theatre = await Theatre.findById(show.theatreId);
 
     if (!theatre) {
       return res.status(404).json({
@@ -48,140 +228,44 @@ export const createShow = async (req, res) => {
       });
     }
 
-    const screen = await Screen.findById(screenId);
-
-    if (!screen) {
-      return res.status(404).json({
+    if (theatre.ownerId.toString() !== ownerId.toString()) {
+      return res.status(403).json({
         success: false,
-
-        message: "Screen not found",
+        message: "Unauthorized access",
       });
     }
 
-    if (!screen.theatreId.equals(theatreId)) {
-      return res.status(400).json({
-        success: false,
+    // CHECK BOOKINGS
 
-        message: "Screen does not belong to this theatre",
-      });
-    }
+    const existingBookings = await Booking.findOne({
+      show: show._id,
 
-    const start = new Date(`${showDate}T${startTime}`);
-
-    const end = new Date(`${showDate}T${endTime}`);
-
-    const now = new Date();
-
-    if (start.getTime() < now.getTime()) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot create show for past date or time",
-      });
-    }
-
-    if (end.getTime() <= start.getTime()) {
-      return res.status(400).json({
-        success: false,
-        message: "End time must be after start time",
-      });
-    }
-
-    const overlappingShow = await Show.aggregate([
-      {
-        $match: {
-          screenId: new mongoose.Types.ObjectId(screenId),
-
-          showDate,
-        },
+      bookingStatus: {
+        $in: ["CONFIRMED", "PENDING"],
       },
-
-      {
-        $addFields: {
-          existingStart: {
-            $dateFromString: {
-              dateString: {
-                $concat: ["$showDate", "T", "$startTime"],
-              },
-            },
-          },
-
-          existingEnd: {
-            $dateFromString: {
-              dateString: {
-                $concat: ["$showDate", "T", "$endTime"],
-              },
-            },
-          },
-
-          newStart: {
-            $dateFromString: {
-              dateString: `${showDate}T${startTime}`,
-            },
-          },
-
-          newEnd: {
-            $dateFromString: {
-              dateString: `${showDate}T${endTime}`,
-            },
-          },
-        },
-      },
-
-      {
-        $match: {
-          $expr: {
-            $and: [
-              {
-                $lt: ["$newStart", "$existingEnd"],
-              },
-
-              {
-                $gt: ["$newEnd", "$existingStart"],
-              },
-            ],
-          },
-        },
-      },
-
-      {
-        $limit: 1,
-      },
-    ]);
-    if (overlappingShow.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Show timing overlaps with another show",
-      });
-    }
-
-    const show = await Show.create({
-      movieId,
-
-      theatreId,
-
-      screenId,
-
-      showDate,
-
-      startTime,
-
-      endTime,
     });
 
-    return res.status(201).json({
+    if (existingBookings) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot cancel show with active bookings",
+      });
+    }
+
+    // DELETE SHOW
+
+    await Show.findByIdAndDelete(id);
+
+    return res.status(200).json({
       success: true,
-
-      message: "Show created successfully",
-
-      show,
+      message: "Show cancelled successfully",
     });
   } catch (error) {
     console.log(error);
 
     return res.status(500).json({
       success: false,
-
-      message: "Server error",
+      message: error.message,
     });
   }
 };
@@ -422,15 +506,7 @@ export const getShowById = async (req, res) => {
 
 export const getAllShows = async (req, res) => {
   try {
-    const {
-      search,
-
-      type,
-
-      page = 1,
-
-      limit = 12,
-    } = req.query;
+    const { search, type, page = 1, limit = 12 } = req.query;
 
     let query = {};
 
@@ -449,10 +525,8 @@ export const getAllShows = async (req, res) => {
             $gt: today,
           },
         },
-
         {
           showDate: today,
-
           startTime: {
             $gt: currentTime,
           },
@@ -467,10 +541,8 @@ export const getAllShows = async (req, res) => {
             $lt: today,
           },
         },
-
         {
           showDate: today,
-
           endTime: {
             $lt: currentTime,
           },
@@ -495,23 +567,18 @@ export const getAllShows = async (req, res) => {
         {
           startTime: {
             $regex: search,
-
             $options: "i",
           },
         },
-
         {
           endTime: {
             $regex: search,
-
             $options: "i",
           },
         },
-
         {
           showDate: {
             $regex: search,
-
             $options: "i",
           },
         },
@@ -520,44 +587,42 @@ export const getAllShows = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    const shows = await Show.find(query)
-
+    let shows = await Show.find(query)
       .populate({
         path: "movieId",
-
         select: "title poster",
       })
-
       .populate({
         path: "theatreId",
-
         select: "name city status",
+        match: {
+          isDeleted: false,
+        },
       })
-
       .populate({
         path: "screenId",
-
         select: "name screenType",
+        match: {
+          isDeleted: false,
+        },
       })
-
-      .skip(Number(skip))
-
-      .limit(Number(limit))
-
       .sort({
         showDate: 1,
-
         startTime: 1,
       });
 
-    const totalShows = await Show.countDocuments(query);
+    shows = shows.filter((show) => show.theatreId && show.screenId);
+
+    const totalShows = shows.length;
+
+    const paginatedShows = shows.slice(skip, skip + Number(limit));
 
     const totalPages = Math.ceil(totalShows / limit);
 
     return res.status(200).json({
       success: true,
       message: "Shows fetched successfully",
-      shows,
+      shows: paginatedShows,
       currentPage: Number(page),
       totalPages,
       totalShows,
@@ -567,7 +632,6 @@ export const getAllShows = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-
       message: error.message,
     });
   }
@@ -749,6 +813,40 @@ export const getShowsByOwner = async (req, res) => {
   } catch (error) {
     console.log(error);
 
+    return res.status(500).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+};
+
+export const editShow = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const oldShow = await Show.findById(id);
+
+    if (!oldShow) {
+      return res.status(404).json({
+        success: false,
+
+        message: "Show not found",
+      });
+    }
+
+    await Show.deleteMany({
+      movieId: oldShow.movieId,
+
+      screenId: oldShow.screenId,
+    });
+
+    req.body.theatreId = oldShow.theatreId;
+
+    req.body.screenId = oldShow.screenId;
+
+    return createShow(req, res);
+  } catch (error) {
     return res.status(500).json({
       success: false,
 

@@ -1,13 +1,10 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
+import React, { useEffect, useState } from "react";
 
 import dayjs from "dayjs";
 
 import relativeTime from "dayjs/plugin/relativeTime";
 
-import {useParams, useNavigate} from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import { FaStar, FaPlay, FaArrowLeft } from "react-icons/fa";
 
@@ -16,87 +13,56 @@ import { getMovieById, addReview } from "../services/moviesApi";
 dayjs.extend(relativeTime);
 
 function MovieDetailsPage() {
+  const { id } = useParams();
 
-  const { id } =
-    useParams();
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
+  const [movie, setMovie] = useState(null);
 
-  const [movie,
-    setMovie] =
-    useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [loading,
-    setLoading] =
-    useState(true);
-
-  const [stars,
-    setStars] =
-    useState(5);
+  const [stars, setStars] = useState(5);
 
   const [comments, setComments] = useState("");
 
   useEffect(() => {
-
     window.scrollTo(0, 0);
     const fetchMovie = async () => {
-
-        try {
-
-          const res =
-            await getMovieById(id);
-
-            console.log(res)
-          setMovie(
-            res.movie
-          );
-
-        } catch (error) {
-
-          console.log(error);
-
-        } finally {
-
-          setLoading(false);
-
-        }
-      };
-
-    fetchMovie();
-
-  }, [id]);
-
-  const handleReview =
-    async (e) => {
-
-      e.preventDefault();
-
       try {
+        const res = await getMovieById(id);
 
-        const res =
-          await addReview(id, {
-            stars,
-            comments,
-          });
-
-        setMovie(
-          res.movie
-        );
-
-        setComments("");
-
-        setStars(5);
-
+        console.log(res);
+        setMovie(res.movie);
       } catch (error) {
-
         console.log(error);
-
+      } finally {
+        setLoading(false);
       }
     };
 
-  if (loading) {
+    fetchMovie();
+  }, [id]);
 
+  const handleReview = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await addReview(id, {
+        stars,
+        comments,
+      });
+
+      setMovie(res.movie);
+
+      setComments("");
+
+      setStars(5);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  if (loading) {
     return (
       <div
         className="
@@ -107,24 +73,15 @@ function MovieDetailsPage() {
     );
   }
 
-  const avgRating =
-    movie.reviews?.length
+  const avgRating = movie.reviews?.length
+    ? (
+        movie.reviews.reduce(
+          (acc, item) => acc + item.stars,
 
-      ? (
-          movie.reviews.reduce(
-
-            (acc, item) =>
-              acc + item.stars,
-
-            0
-
-          ) /
-
-          movie.reviews.length
-
-        ).toFixed(1)
-
-      : 0;
+          0,
+        ) / movie.reviews.length
+      ).toFixed(1)
+    : 0;
 
   return (
     <div
@@ -134,19 +91,15 @@ function MovieDetailsPage() {
         text-white
       "
     >
-
       <div
         className="
           relative
           h-[90vh]
         "
       >
-
         <img
           src={movie.poster.banner}
-
           alt={movie.title}
-
           className="
             absolute
             inset-0
@@ -188,13 +141,11 @@ function MovieDetailsPage() {
             pb-20
           "
         >
-
           <div
             className="
               max-w-3xl
             "
           >
-
             <h1
               className="
                 text-5xl
@@ -205,9 +156,7 @@ function MovieDetailsPage() {
                 leading-tight
               "
             >
-
               {movie.title}
-
             </h1>
 
             <div
@@ -219,15 +168,10 @@ function MovieDetailsPage() {
                 mt-6
               "
             >
-
-              {
-                movie.genre?.map(
-                  (item) => (
-
-                    <div
-                      key={item._id}
-
-                      className="
+              {movie.genre?.map((item) => (
+                <div
+                  key={item._id}
+                  className="
                         px-4 py-2
 
                         rounded-full
@@ -238,15 +182,10 @@ function MovieDetailsPage() {
 
                         text-sm
                       "
-                    >
-
-                      {item.name}
-
-                    </div>
-                  )
-                )
-              }
-
+                >
+                  {item.name}
+                </div>
+              ))}
             </div>
 
             <div
@@ -258,15 +197,10 @@ function MovieDetailsPage() {
                 mt-4
               "
             >
-
-              {
-                movie.language?.map(
-                  (item) => (
-
-                    <div
-                      key={item._id}
-
-                      className="
+              {movie.language?.map((item) => (
+                <div
+                  key={item._id}
+                  className="
                         px-4 py-2
 
                         rounded-full
@@ -277,15 +211,10 @@ function MovieDetailsPage() {
 
                         text-sm
                       "
-                    >
-
-                      {item.name}
-
-                    </div>
-                  )
-                )
-              }
-
+                >
+                  {item.name}
+                </div>
+              ))}
             </div>
 
             <div
@@ -296,7 +225,6 @@ function MovieDetailsPage() {
                 mt-6
               "
             >
-
               <FaStar
                 className="
                   text-yellow-400
@@ -309,9 +237,7 @@ function MovieDetailsPage() {
                   font-bold
                 "
               >
-
                 {avgRating}
-
               </span>
 
               <span
@@ -319,11 +245,8 @@ function MovieDetailsPage() {
                   text-gray-400
                 "
               >
-
                 ({movie.reviews.length} reviews)
-
               </span>
-
             </div>
 
             <div
@@ -335,14 +258,8 @@ function MovieDetailsPage() {
                 mt-8
               "
             >
-
               <button
-                onClick={() =>
-                  navigate(
-                    `/shows/movie/${movie._id}`
-                  )
-                }
-
+                onClick={() => navigate(`/shows/movie/${movie._id}`)}
                 className="
                   bg-pink-600
                   hover:bg-pink-700
@@ -356,48 +273,19 @@ function MovieDetailsPage() {
                   font-semibold
                 "
               >
-
                 Book Tickets
-
               </button>
 
-              <a
-                href={movie.trailer}
-
-                target="_blank"
-
-                rel="noreferrer"
-
-                className="
-                  flex items-center
-                  gap-3
-
-                  border border-white/20
-
-                  hover:bg-white/10
-
-                  transition
-
-                  px-8 py-4
-
-                  rounded-2xl
-
-                  font-semibold
-                "
+              <button
+                onClick={() => navigate(`/trailer/${movie._id}`)}
+                className=" flex items-center gap-3 border border-white/20 hover:bg-white/10 transition px-8 py-4 rounded-2xl font-semibold "
               >
-
-                <FaPlay />
-
-                Watch Trailer
-
-              </a>
-
+                {" "}
+                <FaPlay /> Watch Trailer{" "}
+              </button>
             </div>
-
           </div>
-
         </div>
-
       </div>
 
       <div
@@ -410,7 +298,6 @@ function MovieDetailsPage() {
           py-20
         "
       >
-
         <div
           className="
             grid
@@ -419,13 +306,11 @@ function MovieDetailsPage() {
             gap-12
           "
         >
-
           <div
             className="
               lg:col-span-2
             "
           >
-
             <h2
               className="
                 text-4xl
@@ -434,9 +319,7 @@ function MovieDetailsPage() {
                 mb-8
               "
             >
-
               About the Movie
-
             </h2>
 
             <p
@@ -448,9 +331,7 @@ function MovieDetailsPage() {
                 text-lg
               "
             >
-
               {movie.description}
-
             </p>
 
             <div
@@ -463,18 +344,14 @@ function MovieDetailsPage() {
                 mt-12
               "
             >
-
               <div>
-
                 <h3
                   className="
                     text-gray-500
                     mb-2
                   "
                 >
-
                   Director
-
                 </h3>
 
                 <p
@@ -483,24 +360,18 @@ function MovieDetailsPage() {
                     font-semibold
                   "
                 >
-
                   {movie.director}
-
                 </p>
-
               </div>
 
               <div>
-
                 <h3
                   className="
                     text-gray-500
                     mb-2
                   "
                 >
-
                   Producer
-
                 </h3>
 
                 <p
@@ -509,13 +380,9 @@ function MovieDetailsPage() {
                     font-semibold
                   "
                 >
-
                   {movie.producer}
-
                 </p>
-
               </div>
-
             </div>
 
             <div
@@ -523,7 +390,6 @@ function MovieDetailsPage() {
                 mt-16
               "
             >
-
               <h2
                 className="
                   text-4xl
@@ -532,9 +398,7 @@ function MovieDetailsPage() {
                   mb-10
                 "
               >
-            
                 Cast
-
               </h2>
 
               <div
@@ -549,22 +413,19 @@ function MovieDetailsPage() {
                   gap-8
                 "
               >
-            
-                {
-                  movie.cast?.map(
-                    (actor, index) => {
-                    
-                      const existingActor =
-                        actor.actorId;
-                    
-                      const actorName = existingActor?.name || actor.name || "Unknown Actor";
-                    
-                      return (
-                    
-                        <div
-                          key={existingActor?.profileImage || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"}
-                    
-                          className="
+                {movie.cast?.map((actor, index) => {
+                  const existingActor = actor.actorId;
+
+                  const actorName =
+                    existingActor?.name || actor.name || "Unknown Actor";
+
+                  return (
+                    <div
+                      key={
+                        existingActor?.profileImage ||
+                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"
+                      }
+                      className="
                             bg-[#111]
                     
                             border border-white/10
@@ -582,14 +443,14 @@ function MovieDetailsPage() {
                             transition-all
                             duration-300
                           "
-                        >
-                        
-                          <img
-                            src={existingActor?.profileImage || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"}
-                    
-                            alt={actorName}
-                    
-                            className="
+                    >
+                      <img
+                        src={
+                          existingActor?.profileImage ||
+                          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"
+                        }
+                        alt={actorName}
+                        className="
                               w-28 h-28
                     
                               rounded-full
@@ -601,36 +462,27 @@ function MovieDetailsPage() {
                               border-2
                               border-white/10
                             "
-                          />
+                      />
 
-                          <h3
-                            className="
+                      <h3
+                        className="
                               mt-5
                     
                               font-semibold
                     
                               text-lg
                             "
-                          >
-                        
-                            {actorName}
-                    
-                          </h3>
-                        
-                        </div>
-                      );
-                    }
-                  )
-                }
-
+                      >
+                        {actorName}
+                      </h3>
+                    </div>
+                  );
+                })}
               </div>
-            
             </div>
-
           </div>
 
           <div>
-
             <div
               className="
                 bg-[#111]
@@ -645,7 +497,6 @@ function MovieDetailsPage() {
                 top-24
               "
             >
-
               <h2
                 className="
                   text-2xl
@@ -654,9 +505,7 @@ function MovieDetailsPage() {
                   mb-6
                 "
               >
-
                 Add Review
-
               </h2>
 
               <div
@@ -667,52 +516,29 @@ function MovieDetailsPage() {
                   mb-6
                 "
               >
-
-                {
-                  [1,2,3,4,5]
-                    .map((item) => (
-
-                      <FaStar
-                        key={item}
-
-                        onClick={() =>
-                          setStars(item)
-                        }
-
-                        className={`
+                {[1, 2, 3, 4, 5].map((item) => (
+                  <FaStar
+                    key={item}
+                    onClick={() => setStars(item)}
+                    className={`
                           text-2xl
 
                           cursor-pointer
 
                           transition
 
-                          ${
-                            item <= stars
-
-                              ? "text-yellow-400"
-
-                              : "text-gray-600"
-                          }
+                          ${item <= stars ? "text-yellow-400" : "text-gray-600"}
                         `}
-                      />
-                    ))
-                }
-
+                  />
+                ))}
               </div>
 
               <textarea
                 value={comments}
-
-                onChange={(e) =>
-                  setComments(
-                    e.target.value
-                  )
-                }
-
+                onChange={(e) => setComments(e.target.value)}
                 placeholder="
                   Share your thoughts...
                 "
-
                 className="
                   w-full
 
@@ -734,7 +560,6 @@ function MovieDetailsPage() {
 
               <button
                 onClick={handleReview}
-
                 className="
                   w-full
 
@@ -752,17 +577,11 @@ function MovieDetailsPage() {
                   font-semibold
                 "
               >
-
                 Submit Review
-
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
 
       <div
@@ -775,7 +594,6 @@ function MovieDetailsPage() {
           pb-24
         "
       >
-
         <h2
           className="
             text-4xl
@@ -784,9 +602,7 @@ function MovieDetailsPage() {
             mb-12
           "
         >
-
           User Reviews
-
         </h2>
 
         <div
@@ -794,15 +610,10 @@ function MovieDetailsPage() {
             space-y-6
           "
         >
-
-          {
-            movie.reviews?.map(
-              (review) => (
-
-                <div
-                  key={review._id}
-
-                  className="
+          {movie.reviews?.map((review) => (
+            <div
+              key={review._id}
+              className="
                     bg-[#111]
 
                     border border-white/10
@@ -811,119 +622,84 @@ function MovieDetailsPage() {
 
                     p-6
                   "
-                >
-
-                  <div
-                    className="
+            >
+              <div
+                className="
                       flex items-center
                       gap-4
 
                       mb-5
                     "
-                  >
-
-                    <img
-                      src={
-                        review.user?.avatar || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"
-                      }
-
-                      alt=""
-
-                      className="
+              >
+                <img
+                  src={
+                    review.user?.avatar ||
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"
+                  }
+                  alt=""
+                  className="
                         w-14 h-14
 
                         rounded-full
 
                         object-cover
                       "
-                    />
+                />
 
-                    <div>
-
-                      <h3
-                        className="
+                <div>
+                  <h3
+                    className="
                           font-semibold
                           text-lg
                         "
-                      >
+                  >
+                    {review.user?.name}
+                  </h3>
 
-                        {
-                          review.user?.name
-                        }
-
-                      </h3>
-
-                      <p
-                        className="
+                  <p
+                    className="
                           text-gray-500
                           text-sm
                         "
-                      >
+                  >
+                    {dayjs(review.createdAt).fromNow()}
+                  </p>
+                </div>
+              </div>
 
-                        {
-                          dayjs(
-                            review.createdAt
-                          ).fromNow()
-                        }
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  <div
-                    className="
+              <div
+                className="
                       flex items-center
                       gap-2
 
                       mb-4
                     "
-                  >
-
-                    {
-                      [1,2,3,4,5]
-                        .map((star) => (
-
-                          <FaStar
-                            key={star}
-
-                            className={
-                              star <= review.stars
-
-                                ? "text-yellow-400"
-
-                                : "text-gray-700"
-                            }
-                          />
-                        ))
+              >
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FaStar
+                    key={star}
+                    className={
+                      star <= review.stars ? "text-yellow-400" : "text-gray-700"
                     }
+                  />
+                ))}
+              </div>
 
-                  </div>
-
-                  <p
-                    className="
+              <p
+                className="
                       text-gray-300
 
                       leading-relaxed
 
                       text-lg
                     "
-                  >
-
-                    {review.comments}
-
-                  </p>
-
-                </div>
-              )
-            )
-          }
-
+              >
+                {review.comments}
+              </p>
+            </div>
+          ))}
         </div>
-
       </div>
-
     </div>
   );
 }

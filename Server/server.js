@@ -15,7 +15,7 @@ import screenRoutes from "./routes/screenRoutes.js";
 import showsRoutes from "./routes/showsRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-// import theatreOwnerEmailRoutes from "./routes/theatreOwnerEmailRoutes.js";
+import ticketRoutes from "./routes/ticketRoutes.js";
 import languageRoutes from "./routes/languageRoutes.js";
 import genreRoutes from "./routes/genreRoutes.js";
 import cookieParser from "cookie-parser";
@@ -52,7 +52,7 @@ app.use("/api/screens", screenRoutes);
 app.use("/api/shows", showsRoutes);
 app.use("/api/booking", bookingRoutes);
 app.use("/api/payment", paymentRoutes);
-// app.use("/api/admin", theatreOwnerEmailRoutes);
+app.use("/api/ticket", ticketRoutes);
 
 app.listen(port, () => {
   console.log(`server started on port ${port}`);
