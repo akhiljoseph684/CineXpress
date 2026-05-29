@@ -106,9 +106,7 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-
-    // 🎟️ TICKET FIELDS
-
+    
     ticketId: {
       type: String,
       unique: true,

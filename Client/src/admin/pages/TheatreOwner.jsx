@@ -81,7 +81,6 @@ function TheatreOwners() {
 
       if (theatre.location) {
         if (theatre.location) {
-          // NEW FORMAT
 
           if (
             theatre.location.lat !== undefined &&
@@ -90,7 +89,6 @@ function TheatreOwners() {
             setPosition([theatre.location.lat, theatre.location.lng]);
           }
 
-          // OLD GEOJSON FORMAT
           else if (theatre.location.coordinates) {
             setPosition([
               theatre.location.coordinates[1],
@@ -115,7 +113,6 @@ function TheatreOwners() {
     });
   };
 
-  // CLOUDINARY
 
   const uploadToCloudinary = async (file) => {
     const formData = new FormData();
@@ -141,8 +138,6 @@ function TheatreOwners() {
     return await res.json();
   };
 
-  // BANNER
-
   const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
 
@@ -162,8 +157,6 @@ function TheatreOwners() {
       setLoading(false);
     }
   };
-
-  // GALLERY
 
   const handleGalleryUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -194,8 +187,6 @@ function TheatreOwners() {
 
     setGallery(updated);
   };
-
-  // SUBMIT
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -261,7 +252,6 @@ function TheatreOwners() {
 
   return (
     <div className="w-full">
-      {/* HEADER */}
 
       <div
         className="
@@ -289,8 +279,6 @@ function TheatreOwners() {
         </p>
       </div>
 
-      {/* ERROR */}
-
       {error && (
         <div
           ref={errorRef}
@@ -313,7 +301,6 @@ function TheatreOwners() {
         </div>
       )}
 
-      {/* FORM */}
 
       <form
         onSubmit={handleSubmit}
@@ -419,8 +406,6 @@ function TheatreOwners() {
           "
         />
 
-        {/* BANNER */}
-
         <div
           className="
             md:col-span-2
@@ -455,8 +440,6 @@ function TheatreOwners() {
           )}
         </div>
 
-        {/* MAP */}
-
         <div
           className="
             md:col-span-2
@@ -487,8 +470,6 @@ function TheatreOwners() {
 
           <LocationPicker position={position} setPosition={setPosition} />
         </div>
-
-        {/* GALLERY */}
 
         <div
           className="
@@ -564,8 +545,6 @@ function TheatreOwners() {
             ))}
           </div>
         </div>
-
-        {/* BUTTON */}
 
         <button
           type="submit"

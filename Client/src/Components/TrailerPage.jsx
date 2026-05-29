@@ -41,13 +41,9 @@ const TrailerPage = () => {
       if (parsedUrl.hostname === "youtu.be") {
         videoId = parsedUrl.pathname.slice(1);
       }
-
-      // youtube.com/watch?v=xxxxx
       else if (parsedUrl.searchParams.get("v")) {
         videoId = parsedUrl.searchParams.get("v");
       }
-
-      // youtube.com/shorts/xxxxx
       else if (parsedUrl.pathname.includes("/shorts/")) {
         videoId = parsedUrl.pathname.split("/shorts/")[1];
       }
@@ -101,7 +97,6 @@ const TrailerPage = () => {
     mx-auto
   "
     >
-      {/* BACK BUTTON */}
 
       <Link
         to={`/movies/${movie._id}`}
@@ -117,8 +112,6 @@ const TrailerPage = () => {
       >
         ← Back to Movie
       </Link>
-
-      {/* VIDEO PLAYER FIRST */}
 
       <div
         className="
@@ -162,14 +155,12 @@ const TrailerPage = () => {
         </div>
       </div>
 
-      {/* MOVIE DETAILS */}
 
       <div
         className="
       mt-10
     "
       >
-        {/* TRAILER BADGE */}
 
         <div
           className="
@@ -191,8 +182,6 @@ const TrailerPage = () => {
           Official Trailer
         </div>
 
-        {/* TITLE */}
-
         <h1
           className="
         text-4xl
@@ -204,8 +193,6 @@ const TrailerPage = () => {
         >
           {movie.title}
         </h1>
-
-        {/* MOVIE INFO */}
 
         <div
           className="
@@ -251,8 +238,6 @@ const TrailerPage = () => {
             <div>{movie.genre?.map((g) => g.name).join(", ")}</div>
           )}
         </div>
-
-        {/* DESCRIPTION */}
 
         {movie.description && (
           <p

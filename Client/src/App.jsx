@@ -41,6 +41,7 @@ import ShowListPage from "./theatre_owner/Shows/ShowListPage";
 import TrailerPage from "./Components/TrailerPage";
 import BookingSuccessPage from "./user/BookingSuccessPage";
 import TicketPage from "./Components/TicketPage";
+import Dashboard from "./theatre_owner/Dashboard";
 
 function App() {
   const dispatch = useDispatch();
@@ -94,6 +95,7 @@ function App() {
           <TheatreOwnerLayout />
         </TheatreOwnerProtectedRoute>
       }>
+        <Route index element={<Dashboard />} />
         <Route path="theatre" element={<TheatreListPage />} />
         <Route path="screens" element={<ScreenListPage />} />
         <Route path="screens/create/:id" element={<CreateEditScreen />} />

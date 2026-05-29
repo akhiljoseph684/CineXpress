@@ -62,8 +62,6 @@ const theatreSchema = new mongoose.Schema(
       },
     ],
 
-    // NEW LOCATION FORMAT
-
     location: {
       lat: {
         type: Number,

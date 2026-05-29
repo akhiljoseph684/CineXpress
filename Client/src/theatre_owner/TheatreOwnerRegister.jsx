@@ -133,8 +133,6 @@ function TheatreOwnerRegister() {
         "
       >
 
-        {/* HEADER */}
-
         <div
           className="
             text-center
@@ -167,8 +165,6 @@ function TheatreOwnerRegister() {
 
         </div>
 
-        {/* ERROR */}
-
         {
           error && (
 
@@ -196,8 +192,6 @@ function TheatreOwnerRegister() {
           )
         }
 
-        {/* FORM */}
-
         <form
           onSubmit={
             handleSubmit
@@ -207,8 +201,6 @@ function TheatreOwnerRegister() {
             space-y-5
           "
         >
-
-          {/* NAME */}
 
           <div
             className="
@@ -267,8 +259,6 @@ function TheatreOwnerRegister() {
 
           </div>
 
-          {/* EMAIL */}
-
           <div
             className="
               relative
@@ -325,8 +315,6 @@ function TheatreOwnerRegister() {
             />
 
           </div>
-
-          {/* PASSWORD */}
 
           <div
             className="
@@ -385,8 +373,6 @@ function TheatreOwnerRegister() {
 
           </div>
 
-          {/* SECRET CODE */}
-
           <div
             className="
               relative
@@ -444,8 +430,6 @@ function TheatreOwnerRegister() {
 
           </div>
 
-          {/* BUTTON */}
-
           <button
             type="submit"
 
@@ -481,8 +465,6 @@ function TheatreOwnerRegister() {
           </button>
 
         </form>
-
-        {/* LOGIN */}
 
         <div
           className="

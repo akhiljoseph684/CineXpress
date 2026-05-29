@@ -2,6 +2,7 @@ import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { verifyTheatreOwner } from "../middleware/verifyTheatreOwner.js";
 import {
+  cancelShow,
   createShow,
   getAllShows,
   getMovieShows,
@@ -17,5 +18,6 @@ router.get("/all", authMiddleware, verifyAdmin, getAllShows);
 router.get("/movie-shows", authMiddleware, getMovieShows);
 router.get("/owner", authMiddleware, verifyTheatreOwner, getShowsByOwner);
 router.get("/:showId", authMiddleware, getShowById);
+router.patch("/cancel/:id", authMiddleware, verifyTheatreOwner, cancelShow);
 
 export default router;

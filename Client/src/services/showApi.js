@@ -49,3 +49,12 @@ export const getShowsByOwner = async (query) => {
         throw error.response?.data;
     }
 }
+
+export const cancelShow = async (id) => {
+    try {
+        const res = await API.patch("/shows/cancel/" + id);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data;
+    }
+}

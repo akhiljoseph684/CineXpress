@@ -192,8 +192,6 @@ function Theatres() {
 
     <div className="w-full">
 
-      {/* HEADER */}
-
       <div
         className="
           flex
@@ -279,8 +277,6 @@ function Theatres() {
 
       </div>
 
-      {/* ERROR */}
-
       {
         error && (
 
@@ -348,8 +344,6 @@ function Theatres() {
         )
       }
 
-      {/* SEARCH */}
-
       <div className="mb-8">
 
         <input
@@ -390,8 +384,6 @@ function Theatres() {
         />
 
       </div>
-
-      {/* FILTERS */}
 
       <div
         className="
@@ -491,8 +483,6 @@ function Theatres() {
 
       </div>
 
-      {/* GRID */}
-
       <div
         className={`
           w-full
@@ -549,15 +539,11 @@ function Theatres() {
                     "
                   >
 
-                    {/* IMAGE */}
-
                     <div
                       className="
                         relative
                       "
                     >
-
-                      {/* STATUS */}
 
                       <div
                         className={`
@@ -621,8 +607,6 @@ function Theatres() {
                         "
                       >
                                             
-                        {/* EDIT */}
-                                            
                         <button
                           onClick={() =>
                           
@@ -653,8 +637,6 @@ function Theatres() {
                           ✏️
                         
                         </button>
-                        
-                        {/* DELETE */}
                         
                         <button
                           onClick={() => {
@@ -711,8 +693,6 @@ function Theatres() {
 
                     </div>
 
-                    {/* CONTENT */}
-
                     <div className="p-5">
 
                       <h2
@@ -740,8 +720,6 @@ function Theatres() {
                           text-gray-400
                         "
                       >
-
-                        {/* OWNER */}
 
                         <div
                           className="
@@ -809,8 +787,6 @@ function Theatres() {
 
                         </div>
 
-                        {/* SECRET */}
-
                         {
                           theatre.secretCode && (
 
@@ -855,8 +831,6 @@ function Theatres() {
                           )
                         }
 
-                        {/* CITY */}
-
                         <div
                           className="
                             flex
@@ -894,8 +868,6 @@ function Theatres() {
                           </span>
 
                         </div>
-
-                        {/* STATUS */}
 
                         <div
                           className="
@@ -999,8 +971,6 @@ function Theatres() {
         }
 
       </div>
-
-      {/* DELETE MODAL */}
 
       {
         showDeleteModal && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { FaClock, FaFilm, FaTv, FaMapMarkerAlt } from "react-icons/fa";
-import { getShowsByOwner } from "../../services/showApi";
+import { cancelShow, getShowsByOwner } from "../../services/showApi";
 
 const ShowListPage = () => {
   const [loading, setLoading] = useState(true);
@@ -9,6 +9,10 @@ const ShowListPage = () => {
   const [shows, setShows] = useState([]);
 
   const [activeFilter, setActiveFilter] = useState("running");
+
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
+  const [selectedShowId, setSelectedShowId] = useState(null);
 
   useEffect(() => {
     fetchShows(activeFilter);
@@ -25,6 +29,22 @@ const ShowListPage = () => {
       console.log(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelShow = async () => {
+    try {
+      const res = await cancelShow(selectedShowId);
+
+      if (res.success) {
+        setShowCancelModal(false);
+
+        setSelectedShowId(null);
+
+        fetchShows(activeFilter);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -476,6 +496,36 @@ const ShowListPage = () => {
                         )}
                       </p>
                     </div>
+                    <div
+                        className="
+                          mt-6
+                        "
+                      >
+                        <button
+                          onClick={() => {
+                            setSelectedShowId(show._id);
+
+                            setShowCancelModal(true);
+                          }}
+                          className="
+                            w-full
+                        
+                            py-3
+                        
+                            rounded-2xl
+                        
+                            bg-red-600
+                        
+                            hover:bg-red-500
+                        
+                            font-semibold
+                        
+                            transition
+                          "
+                        >
+                          Cancel Show
+                        </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -483,6 +533,119 @@ const ShowListPage = () => {
           </div>
         )}
       </div>
+      {showCancelModal && (
+        <div
+          className="
+        fixed
+        inset-0
+
+        bg-black/70
+
+        backdrop-blur-sm
+
+        flex
+        items-center
+        justify-center
+
+        z-50
+
+        p-4
+      "
+        >
+          <div
+            className="
+          w-full
+          max-w-md
+
+          bg-[#111]
+
+          border
+          border-red-500/20
+
+          rounded-3xl
+
+          p-8
+
+          text-center
+        "
+          >
+            <div
+              className="
+            text-6xl
+          "
+            >
+              🎬
+            </div>
+
+            <h2
+              className="
+            text-3xl
+
+            font-bold
+
+            mt-4
+          "
+            >
+              Cancel Show?
+            </h2>
+
+            <p
+              className="
+            text-white/50
+
+            mt-3
+          "
+            >
+              This show will be cancelled and users will no longer be able to
+              book tickets.
+            </p>
+
+            <div
+              className="
+            flex
+
+            gap-4
+
+            mt-8
+          "
+            >
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="
+              flex-1
+
+              py-3
+
+              rounded-2xl
+
+              bg-white/10
+
+              hover:bg-white/20
+            "
+              >
+                Close
+              </button>
+
+              <button
+                onClick={handleCancelShow}
+                className="
+              flex-1
+
+              py-3
+
+              rounded-2xl
+
+              bg-red-600
+
+              hover:bg-red-500
+            "
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

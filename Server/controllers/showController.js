@@ -99,15 +99,13 @@ export const createShow = async (req, res) => {
       }
     }
 
-    const sortedTimes = [...showTimes].sort(
-      (a, b) => new Date(`1970-01-01T${a}`) - new Date(`1970-01-01T${b}`),
-    );
-
     const dates = [];
+
+    const lastDate = new Date(endDate);
 
     for (
       let date = new Date(startDate);
-      date <= new Date(endDate);
+      date <= lastDate;
       date.setDate(date.getDate() + 1)
     ) {
       dates.push(new Date(date).toISOString().split("T")[0]);
@@ -137,7 +135,7 @@ export const createShow = async (req, res) => {
     for (const showDate of dates) {
       const dayShows = showMap.get(showDate) || [];
 
-      for (const startTime of sortedTimes) {
+      for (const startTime of showTimes) {
         const start = new Date(`${showDate}T${startTime}`);
 
         const end = new Date(start.getTime() + (duration + 15) * 60000);
@@ -201,8 +199,6 @@ export const cancelShow = async (req, res) => {
 
     const ownerId = req.user.id;
 
-    // VALIDATE OBJECT ID
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -235,8 +231,6 @@ export const cancelShow = async (req, res) => {
       });
     }
 
-    // CHECK BOOKINGS
-
     const existingBookings = await Booking.findOne({
       show: show._id,
 
@@ -251,8 +245,6 @@ export const cancelShow = async (req, res) => {
         message: "Cannot cancel show with active bookings",
       });
     }
-
-    // DELETE SHOW
 
     await Show.findByIdAndDelete(id);
 

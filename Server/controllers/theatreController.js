@@ -51,8 +51,6 @@ export const createTheatre = async (req, res) => {
       });
     }
 
-    // SECRET CODE
-
     const secretCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     const geoLocation = {
@@ -641,9 +639,6 @@ export const updateTheatreStatus = async (req, res) => {
     }
 
     theatre.status = status;
-
-    // REMOVE SECRET CODE
-    // AFTER APPROVAL
 
     if (theatre.ownerId && status === "approved") {
       theatre.secretCode = null;

@@ -118,8 +118,6 @@ function CreateShowPage() {
     }
   };
 
-  // GENERATED PREVIEW
-
   const generatedShows = useMemo(() => {
     if (!selectedMovie) {
       return [];
@@ -163,8 +161,6 @@ function CreateShowPage() {
       }, 100);
       return;
     }
-
-    // already exists
     if (formData.showTimes.includes(formData.timeInput)) {
       setTimeout(() => {
         errorRef.current?.scrollIntoView({
@@ -179,7 +175,6 @@ function CreateShowPage() {
     const duration = selectedMovie.duration;
     const breakTime = 15;
 
-    // helper
     const toMinutes = (time) => {
       const [h, m] = time.split(":").map(Number);
 
@@ -227,8 +222,6 @@ function CreateShowPage() {
       showTimes: formData.showTimes.filter((_, i) => i !== index),
     });
   };
-
-  // SUBMIT
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -299,7 +292,6 @@ function CreateShowPage() {
           space-y-8
         "
       >
-        {/* HEADER */}
 
         <div>
           <h1
@@ -322,8 +314,6 @@ function CreateShowPage() {
           </p>
         </div>
 
-        {/* ERROR */}
-
         {error && (
           <div
             ref={errorRef}
@@ -343,8 +333,6 @@ function CreateShowPage() {
             {error}
           </div>
         )}
-
-        {/* SCREEN */}
 
         {screen && (
           <div
@@ -456,8 +444,6 @@ function CreateShowPage() {
             </div>
           </div>
         )}
-
-        {/* MOVIE SEARCH */}
 
         <div
           className="
@@ -603,8 +589,6 @@ function CreateShowPage() {
           )}
         </div>
 
-        {/* SELECTED MOVIE */}
-
         {selectedMovie && (
           <div
             className="
@@ -708,8 +692,6 @@ function CreateShowPage() {
           </div>
         )}
 
-        {/* DATE */}
-
         <div
           className="
             grid
@@ -796,8 +778,6 @@ function CreateShowPage() {
           </div>
         </div>
 
-        {/* ADD TIMES */}
-
         <div
           className="
             bg-[#111]
@@ -831,8 +811,6 @@ function CreateShowPage() {
               Show Timings
             </h2>
           </div>
-
-          {/* INPUT */}
 
           <div
             className="
@@ -887,8 +865,6 @@ function CreateShowPage() {
             </button>
           </div>
 
-          {/* TIMES */}
-
           <div
             className="
               flex
@@ -940,8 +916,6 @@ function CreateShowPage() {
             ))}
           </div>
         </div>
-
-        {/* GENERATED */}
 
         {generatedShows.length > 0 && (
           <div
@@ -1024,8 +998,6 @@ function CreateShowPage() {
             </div>
           </div>
         )}
-
-        {/* BUTTON */}
 
         <button
           type="submit"

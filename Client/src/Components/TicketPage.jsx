@@ -23,7 +23,6 @@ const TicketPage = () => {
     try {
       const res = await scanTicket(ticketId);
 
-      console.log(res);
       setBooking(res.booking);
     } catch (error) {
       console.log(error);
