@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaFilm,
   FaUsers,
@@ -14,16 +14,33 @@ import {
 } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { getUnreadNotificationCount } from "../services/notificationApi";
 
 function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const location = useLocation();
 
   const currentPage = location.pathname.split("/")[2] || "theatre";
   const { user } = useSelector((state) => state.auth);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchNotificationCount();
+  }, []);
+
+  const fetchNotificationCount = async () => {
+    try {
+      const res = await getUnreadNotificationCount();
+
+      setNotificationCount(res.count || 0);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const menu = [
     {
@@ -162,24 +179,45 @@ function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-4 md:gap-6">
-            <div className="relative cursor-pointer">
+            <div
+              className="relative cursor-pointer"
+              onClick={() => navigate("notification")}
+            >
               <FaBell className="text-gray-300 text-lg hover:text-white transition" />
 
-              <span
-                className="
-                  absolute -top-2 -right-2
-                  bg-[#8b5c76]
-                  text-[10px]
-                  w-5 h-5
-                  rounded-full
-                  flex items-center justify-center
-                "
-              >
-                3
-              </span>
+              {notificationCount > 0 && (
+                <span
+                  className="
+                      absolute
+                
+                      -top-2
+                      -right-2
+                
+                      bg-[#8b5c76]
+                
+                      text-[10px]
+                
+                      min-w-[20px]
+                      h-5
+                
+                      px-1
+                
+                      rounded-full
+                
+                      flex
+                      items-center
+                      justify-center
+                    "
+                >
+                  {notificationCount}
+                </span>
+              )}
             </div>
 
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/profile')}>
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => navigate("/profile")}
+            >
               <img
                 src={
                   user?.avatar ||

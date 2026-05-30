@@ -5,6 +5,7 @@ import Theatre from "../models/theatreModel.js";
 import Screen from "../models/screenModel.js";
 import Show from "../models/showModel.js";
 import User from "../models/userModel.js";
+import Notification from "../models/notificationModel.js";
 
 import { geocodeCity } from "../utils/geocodeCity.js";
 import Booking from "../models/bookingModel.js";
@@ -49,7 +50,7 @@ export const createShow = async (req, res) => {
       });
     }
 
-    const movie = await Movie.findById(movieId).select("duration");
+    const movie = await Movie.findById(movieId).select("title duration");
 
     if (!movie) {
       return res.status(404).json({
@@ -177,6 +178,16 @@ export const createShow = async (req, res) => {
     }
 
     await Show.insertMany(shows);
+
+    const owner = await User.findById(req.user.id);
+
+    await Notification.create({
+      title: "Shows Added",
+
+      message: `${owner.name} created ${shows.length} shows for "${movie.title}"`,
+
+      type: "SHOW_CREATED",
+    });
 
     return res.status(201).json({
       success: true,

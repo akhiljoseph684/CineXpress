@@ -35,3 +35,12 @@ export const getBookingById = async (id) => {
     throw error.response?.data;
   }
 };
+
+export const getMyBookings = async () => {
+  try {
+    const res = await  API.get("/booking/my-bookings");
+    return res.data;
+  } catch (error) {
+    throw error.response?.data;
+  }
+};

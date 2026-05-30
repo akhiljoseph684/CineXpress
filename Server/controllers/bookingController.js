@@ -262,6 +262,21 @@ export const getBookingsByOwner = async (req, res) => {
       {
         $unwind: "$movie",
       },
+      {
+        $lookup: {
+          from: "screens",
+
+          localField: "show.screenId",
+
+          foreignField: "_id",
+
+          as: "screen",
+        },
+      },
+
+      {
+        $unwind: "$screen",
+      },
 
       {
         $project: {
@@ -275,44 +290,54 @@ export const getBookingsByOwner = async (req, res) => {
 
           paymentStatus: 1,
 
+          isScanned: 1,
+
           bookedAt: 1,
 
           createdAt: 1,
 
           user: {
-            _id: 1,
+            _id: "$user._id",
 
-            name: 1,
+            name: "$user.name",
 
-            email: 1,
+            email: "$user.email",
 
-            avatar: 1,
+            avatar: "$user.avatar",
           },
 
           movie: {
-            _id: 1,
+            _id: "$movie._id",
 
-            title: 1,
+            title: "$movie.title",
 
-            poster: 1,
+            poster: "$movie.poster",
           },
 
           theatre: {
-            _id: 1,
+            _id: "$theatre._id",
 
-            name: 1,
+            name: "$theatre.name",
 
-            city: 1,
+            city: "$theatre.city",
+          },
+
+          screen: {
+            _id: "$screen._id",
+
+            name: "$screen.name",
+
+            screenType: "$screen.screenType",
           },
 
           show: {
-            _id: 1,
+            _id: "$show._id",
 
-            showDate: 1,
+            showDate: "$show.showDate",
 
-            startTime: 1,
+            startTime: "$show.startTime",
 
-            endTime: 1,
+            endTime: "$show.endTime",
           },
         },
       },
@@ -377,6 +402,62 @@ export const getBookingById = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getMyBookings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const bookings = await Booking.find({
+      user: userId,
+
+      bookingStatus: "CONFIRMED",
+    })
+
+      .populate({
+        path: "show",
+
+        populate: [
+          {
+            path: "movieId",
+
+            select: "title poster duration language",
+          },
+
+          {
+            path: "theatreId",
+
+            select: "name city address",
+          },
+
+          {
+            path: "screenId",
+
+            select: "name screenType",
+          },
+        ],
+      })
+
+      .sort({
+        createdAt: -1,
+      });
+
+    return res.status(200).json({
+      success: true,
+
+      count: bookings.length,
+
+      bookings,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+
       message: error.message,
     });
   }

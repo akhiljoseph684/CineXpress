@@ -17,6 +17,7 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import languageRoutes from "./routes/languageRoutes.js";
 import genreRoutes from "./routes/genreRoutes.js";
 import cookieParser from "cookie-parser";
@@ -55,6 +56,7 @@ app.use("/api/booking", bookingRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/ticket", ticketRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/notification", notificationRoutes);
 
 app.listen(port, () => {
   console.log(`server started on port ${port}`);

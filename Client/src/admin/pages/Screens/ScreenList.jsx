@@ -57,8 +57,7 @@ console.log(res)
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-6 sm:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className=" text-white px-4 py-6 sm:p-8">
 
         <div
           className="
@@ -293,7 +292,6 @@ console.log(res)
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 };

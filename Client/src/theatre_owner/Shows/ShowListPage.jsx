@@ -25,6 +25,7 @@ const ShowListPage = () => {
       const res = await getShowsByOwner(`?type=${type}`);
 
       setShows(res.shows || []);
+      console.log(res.shows);
     } catch (error) {
       console.log(error);
     } finally {
@@ -211,321 +212,184 @@ const ShowListPage = () => {
         ) : (
           <div
             className="
-                grid
-                grid-cols-1
-                sm:grid-cols-2
-                xl:grid-cols-3
+    flex
+    flex-col
 
-                gap-6
-              "
+    gap-4
+  "
           >
             {shows.map((show) => (
               <div
                 key={show._id}
                 className="
-                        bg-[#111]
+        bg-[#111]
 
-                        border
-                        border-white/10
+        border
+        border-white/10
 
-                        rounded-3xl
+        hover:border-pink-500/50
 
-                        overflow-hidden
+        rounded-2xl
 
-                        flex
-                        flex-col
-                        justify-between
-                      "
+        p-4
+
+        transition-all
+      "
               >
                 <div
                   className="
-                          relative
-                        "
+          flex
+
+          flex-col
+          lg:flex-row
+
+          items-start
+          lg:items-center
+
+          gap-5
+        "
                 >
                   <img
                     src={show.movieId?.poster?.card}
                     alt=""
                     className="
-                            w-full
-                            h-[280px]
+            w-full
+            lg:w-28
 
-                            object-cover
-                          "
+            h-44
+            lg:h-28
+
+            rounded-xl
+
+            object-cover
+          "
                   />
 
                   <div
-                    className={`
-                            absolute
-                            top-4
-                            right-4
-
-                            px-3
-                            py-1
-
-                            rounded-full
-
-                            text-sm
-                            font-medium
-
-                            ${
-                              activeFilter === "running"
-                                ? `
-                                  bg-green-500/20
-                                  text-green-400
-                                `
-                                : activeFilter === "upcoming"
-                                  ? `
-                                    bg-yellow-500/20
-                                    text-yellow-400
-                                  `
-                                  : `
-                                    bg-red-500/20
-                                    text-red-400
-                                  `
-                            }
-                          `}
-                  >
-                    {activeFilter}
-                  </div>
-                </div>
-
-                <div
-                  className="
-                          p-6
-                        "
-                >
-                  <h2
                     className="
-                            text-2xl
-                            font-bold
-                          "
+            flex-1
+
+            grid
+
+            md:grid-cols-2
+            xl:grid-cols-6
+
+            gap-4
+          "
                   >
-                    {show.movieId?.title}
-                  </h2>
+                    <div>
+                      <p className="text-xs text-white/40">Movie</p>
+
+                      <h3 className="font-semibold mt-1">
+                        {show.movieId?.title}
+                      </h3>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-white/40">Theatre</p>
+
+                      <h3 className="mt-1">{show.theatreId?.name}</h3>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-white/40">Screen</p>
+
+                      <h3 className="mt-1">{show.screen?.name}</h3>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-white/40">City</p>
+
+                      <h3 className="mt-1">{show.theatreId?.city}</h3>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-white/40">Date</p>
+
+                      <h3 className="mt-1">
+                        {new Date(show.showDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </h3>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-white/40">Time</p>
+
+                      <h3 className="mt-1">
+                        {show.startTime}
+                        {" - "}
+                        {show.endTime}
+                      </h3>
+                    </div>
+                  </div>
 
                   <div
                     className="
-                            mt-6
+            flex
 
-                            space-y-4
-                          "
+            flex-col
+
+            gap-3
+
+            min-w-[170px]
+          "
                   >
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
+                    <span
+                      className={`
+              text-center
+
+              px-4
+              py-2
+
+              rounded-xl
+
+              text-sm
+
+              ${
+                activeFilter === "running"
+                  ? `
+                    bg-green-500/20
+                    text-green-400
+                  `
+                  : activeFilter === "upcoming"
+                    ? `
+                    bg-yellow-500/20
+                    text-yellow-400
+                  `
+                    : `
+                    bg-red-500/20
+                    text-red-400
+                  `
+              }
+            `}
                     >
-                      <div
-                        className="
-                                flex
-                                items-center
+                      {activeFilter}
+                    </span>
 
-                                gap-2
+                    <button
+                      onClick={() => {
+                        setSelectedShowId(show._id);
 
-                                text-white/50
-                              "
-                      >
-                        <FaFilm />
-                        Theatre
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {show.theatreId?.name}
-                      </p>
-                    </div>
-
-                    <div
+                        setShowCancelModal(true);
+                      }}
                       className="
-                              flex
-                              items-center
-                              justify-between
-                            "
+                        px-5
+                        py-2
+
+                        rounded-xl
+
+                        bg-red-600
+
+                        hover:bg-red-500
+
+                        transition
+                      "
                     >
-                      <div
-                        className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                      >
-                        <FaTv />
-                        Screen
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {show.screen?.name}
-                      </p>
-                    </div>
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                      >
-                        <FaMapMarkerAlt />
-                        City
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {show.theatreId?.city}
-                      </p>
-                    </div>
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                      >
-                        📅 Date
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {new Date(show.showDate).toLocaleDateString(
-                          "en-IN",
-
-                          {
-                            day: "numeric",
-
-                            month: "short",
-
-                            year: "numeric",
-                          },
-                        )}
-                      </p>
-                    </div>
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                      >
-                        <FaClock />
-                        Time
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {new Date(
-                          `1970-01-01T${show.startTime}`,
-                        ).toLocaleTimeString(
-                          "en-IN",
-
-                          {
-                            hour: "numeric",
-
-                            minute: "2-digit",
-
-                            hour12: true,
-                          },
-                        )}
-
-                        {" - "}
-
-                        {new Date(
-                          `1970-01-01T${show.endTime}`,
-                        ).toLocaleTimeString(
-                          "en-IN",
-
-                          {
-                            hour: "numeric",
-
-                            minute: "2-digit",
-
-                            hour12: true,
-                          },
-                        )}
-                      </p>
-                    </div>
-                    <div
-                        className="
-                          mt-6
-                        "
-                      >
-                        <button
-                          onClick={() => {
-                            setSelectedShowId(show._id);
-
-                            setShowCancelModal(true);
-                          }}
-                          className="
-                            w-full
-                        
-                            py-3
-                        
-                            rounded-2xl
-                        
-                            bg-red-600
-                        
-                            hover:bg-red-500
-                        
-                            font-semibold
-                        
-                            transition
-                          "
-                        >
-                          Cancel Show
-                        </button>
-                    </div>
+                      Cancel Show
+                    </button>
                   </div>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
 import Theatre from "../models/theatreModel.js";
+import Notification from "../models/notificationModel.js";
 
 export const register = async (req, res) => {
   const {
@@ -61,15 +62,14 @@ export const register = async (req, res) => {
     });
 
     if (theatre) {
-      
       userRole = "theatre_owner";
     }
 
-    if(theatre && (theatre?.secretCode !== secretCode)){
-        return res.status(400).json({
-            success: false,
-            message: "Does not Create Account With This Email"
-        })
+    if (theatre && theatre?.secretCode !== secretCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Does not Create Account With This Email",
+      });
     }
 
     let status = "active";
@@ -85,13 +85,19 @@ export const register = async (req, res) => {
       provider,
     });
 
-    if(theatre){
-        theatre.status = "approved";
-        theatre.ownerId = user._id
-        await theatre.save()
+    if (theatre) {
+      theatre.status = "approved";
+      theatre.ownerId = user._id;
+      await theatre.save();
+
+      await Notification.create({
+        title: "New Theatre Registered",
+
+        message: `${user.name} registered theatre "${theatre.name}" in ${theatre.city}`,
+
+        type: "THEATRE_CREATED",
+      });
     }
-
-
 
     const accessToken = generateAccessToken({ id: user._id, role: user.role });
     const refreshToken = generateRefreshToken({

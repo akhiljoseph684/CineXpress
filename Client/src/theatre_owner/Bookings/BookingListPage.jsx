@@ -15,13 +15,15 @@ const BookingListPage = () => {
 
   const [bookings, setBookings] = useState([]);
 
+  
   useEffect(() => {
     fetchBookings();
   }, []);
-
+  
   const fetchBookings = async () => {
     try {
       const res = await getBookingsByOwner();
+      console.log(res.bookings)
 
       setBookings(res.bookings || []);
     } catch (error) {
@@ -70,7 +72,6 @@ const BookingListPage = () => {
           mx-auto
         "
       >
-
         <div
           className="
             mb-8
@@ -97,7 +98,6 @@ const BookingListPage = () => {
             Manage your theatre bookings
           </p>
         </div>
-
 
         {bookings.length === 0 ? (
           <div
@@ -136,333 +136,186 @@ const BookingListPage = () => {
         ) : (
           <div
             className="
-                grid
-                grid-cols-1
-                sm:grid-cols-2
-                xl:grid-cols-3
+    flex
+    flex-col
 
-                gap-6
-              "
+    gap-4
+  "
           >
             {bookings.map((booking) => (
               <div
                 key={booking._id}
                 className="
-                        bg-[#111]
+        bg-[#111]
 
-                        border
-                        border-white/10
+        border
+        border-white/10
 
-                        rounded-3xl
+        hover:border-pink-500/50
 
-                        overflow-hidden
+        rounded-2xl
 
-                        flex
-                        flex-col
-                        justify-between
-                      "
+        p-4
+
+        transition-all
+      "
               >
-
                 <div
                   className="
-                          relative
-                        "
+          flex
+
+          flex-col
+          lg:flex-row
+
+          items-start
+          lg:items-center
+
+          gap-5
+        "
                 >
                   <img
                     src={booking.movie?.poster?.card}
                     alt=""
                     className="
-                            w-full
-                            h-[260px]
+            w-full
+            lg:w-28
 
-                            object-cover
-                          "
+            h-44
+            lg:h-28
+
+            rounded-xl
+
+            object-cover
+          "
                   />
 
                   <div
-                    className={`
-                            absolute
-                            top-4
-                            right-4
-
-                            px-3
-                            py-1
-
-                            rounded-full
-
-                            text-sm
-                            font-medium
-
-                            ${
-                              booking.bookingStatus === "CONFIRMED"
-                                ? `
-                                  bg-green-500/20
-                                  text-green-400
-                                `
-                                : booking.bookingStatus === "PENDING"
-                                  ? `
-                                    bg-yellow-500/20
-                                    text-yellow-400
-                                  `
-                                  : `
-                                    bg-red-500/20
-                                    text-red-400
-                                  `
-                            }
-                          `}
-                  >
-                    {booking.bookingStatus}
-                  </div>
-                </div>
-
-
-                <div
-                  className="
-                          p-6
-                        "
-                >
-
-                  <h2
                     className="
-                            text-2xl
-                            font-bold
-                          "
+            flex-1
+
+            grid
+
+            md:grid-cols-2
+            xl:grid-cols-8
+
+            gap-4
+          "
                   >
-                    {booking.movie?.title}
-                  </h2>
-
-
-                  <div
-                    className="
-                            mt-5
-
-                            flex
-                            items-center
-
-                            gap-3
-                          "
-                  >
-                    <img
-                      src={
-                        booking.user?.avatar ||
-                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThZwd0Ar5WsR1Z-ylhArKLTDqEhKPlMqWvZw&s"
-                      }
-                      alt=""
-                      className="
-                              w-12
-                              h-12
-
-                              rounded-full
-
-                              object-cover
-                            "
-                    />
-
                     <div>
+                      <p className="text-xs text-white/40">Movie</p>
+
                       <h3
                         className="
-                                font-semibold
-                              "
+                          font-semibold
+                          mt-1
+
+                          line-clamp-2
+
+                          overflow-hidden
+                        "
                       >
-                        {booking.user?.name}
+                        {booking.movie?.title}
                       </h3>
-
-                      <p
-                        className="
-                                text-sm
-                                text-white/50
-                              "
-                      >
-                        {booking.user?.email}
-                      </p>
-                    </div>
-                  </div>
-
-
-                  <div
-                    className="
-                            mt-6
-
-                            space-y-4
-                          "
-                  >
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                      >
-                        <FaFilm />
-                        Theatre
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {booking.theatre?.name}
-                      </p>
                     </div>
 
+                    <div>
+                      <p className="text-xs text-white/40">Customer</p>
 
-                    <div
-                      className="
-    flex
-    items-center
-    justify-between
-  "
-                    >
-                      <div
-                        className="
-      flex
-      items-center
+                      <h3 className="mt-1">{booking.user?.name}</h3>
+                    </div>
 
-      gap-2
+                    <div>
+                      <p className="text-xs text-white/40">Screen</p>
 
-      text-white/50
-    "
-                      >
-                        📅 Date
-                      </div>
+                      <h3 className="mt-1">{booking.screen?.name}</h3>
+                    </div>
 
-                      <p
-                        className="
-      font-medium
-    "
-                      >
+                    <div>
+                      <p className="text-xs text-white/40">Date</p>
+
+                      <h3 className="mt-1">
                         {new Date(booking.show?.showDate).toLocaleDateString(
                           "en-IN",
-
                           {
                             day: "numeric",
-
                             month: "short",
-
                             year: "numeric",
                           },
                         )}
-                      </p>
+                      </h3>
                     </div>
 
+                    <div>
+                      <p className="text-xs text-white/40">Time</p>
 
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                      >
-                        <FaClock />
-                        Show Time
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {new Date(
-                          `1970-01-01T${booking.show?.startTime}`,
-                        ).toLocaleTimeString(
-                          "en-IN",
-
-                          {
-                            hour: "numeric",
-
-                            minute: "2-digit",
-
-                            hour12: true,
-                          },
-                        )}
-                      </p>
+                      <h3 className="mt-1">{booking.show?.startTime}</h3>
                     </div>
 
+                    <div>
+                      <p className="text-xs text-white/40">Seats</p>
 
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-
-                                gap-2
-
-                                text-white/50
-                              "
-                      >
-                        <FaTicketAlt />
-                        Seats
-                      </div>
-
-                      <p
-                        className="
-                                font-medium
-                              "
-                      >
-                        {booking.totalSeats}
-                      </p>
+                      <h3 className="mt-1">{booking.totalSeats}</h3>
                     </div>
 
+                    <div>
+                      <p className="text-xs text-white/40">Amount</p>
 
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
+                      <h3
                         className="
-                                flex
-                                items-center
+                mt-1
 
-                                gap-2
+                text-green-400
 
-                                text-white/50
-                              "
-                      >
-                        <FaMoneyBillWave />
-                        Amount
-                      </div>
-
-                      <p
-                        className="
-                                font-semibold
-
-                                text-green-400
-                              "
+                font-semibold
+              "
                       >
                         ₹{booking.totalAmount}
-                      </p>
+                      </h3>
                     </div>
+                  </div>
+
+                  <div
+                    className="
+            min-w-[140px]
+          "
+                  >
+                    <span
+                      className={`
+                        block
+                      
+                        text-center
+                      
+                        px-4
+                        py-2
+                      
+                        rounded-xl
+                      
+                        text-sm
+                      
+                        ${
+                          booking.bookingStatus === "CONFIRMED"
+                            ? booking.isScanned
+                              ? `
+                                bg-blue-500/20
+                                text-blue-400
+                              `
+                              : `
+                                bg-green-500/20
+                                text-green-400
+                              `
+                            : `
+                              bg-red-500/20
+                              text-red-400
+                            `
+                        }
+                      `}
+                    >
+                      {booking.bookingStatus === "CONFIRMED"
+                        ? booking.isScanned
+                          ? "USED"
+                          : "CONFIRMED"
+                        : booking.bookingStatus}
+                    </span>
                   </div>
                 </div>
               </div>

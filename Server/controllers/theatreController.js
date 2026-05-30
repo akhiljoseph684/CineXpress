@@ -42,7 +42,6 @@ export const createTheatre = async (req, res) => {
 
     const latitude = Number(lat);
 
-
     if (isNaN(longitude) || isNaN(latitude)) {
       return res.status(400).json({
         success: false,
@@ -55,7 +54,7 @@ export const createTheatre = async (req, res) => {
 
     const geoLocation = {
       lat: latitude,
-      lng: longitude
+      lng: longitude,
     };
 
     const user = await User.findOne({ email: ownerEmail });
@@ -380,7 +379,6 @@ export const getAllTheatre = async (req, res) => {
 
 export const editTheatre = async (req, res) => {
   try {
-
     if (req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
@@ -406,7 +404,6 @@ export const editTheatre = async (req, res) => {
 
       ownerEmail,
     } = req.body;
-
 
     const theatre = await Theatre.findOne({
       _id: id,
@@ -584,10 +581,13 @@ export const deleteTheatre = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Theatre deleted Successfully",
+    await User.findOneAndUpdate({email: theatre.ownerEmail} , { role: "user" });
+
+    return res.status(200).json({ 
+      success: true, 
+      message: "Theatre deleted successfully" 
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,

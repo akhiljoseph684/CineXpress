@@ -42,6 +42,8 @@ import TrailerPage from "./Components/TrailerPage";
 import BookingSuccessPage from "./user/BookingSuccessPage";
 import TicketPage from "./Components/TicketPage";
 import Dashboard from "./theatre_owner/Dashboard";
+import NotificationPage from "./admin/pages/NotificationPage";
+import MyBookingsPage from "./user/MyBookingsPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -88,6 +90,7 @@ function App() {
         <Route path="booking/movie/:showId" element={<SeatBookingPage />} />
         <Route path="booking-success/:bookingId" element={<BookingSuccessPage />} />
         <Route path="trailer/:id" element={<TrailerPage />} />
+        <Route path="my-bookings" element={<MyBookingsPage />} />
       </Route>
 
       <Route path="/theatre-owner" element={
@@ -141,6 +144,7 @@ function App() {
         <Route path="theatres/edit/:id" element={<TheatreOwners />} />
 
         <Route path="categories" element={<LanguageGenre />} />
+        <Route path="notification" element={<NotificationPage />} />
       </Route>
     </Routes>
   );

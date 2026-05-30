@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 import Screen from "../models/screenModel.js";
 import Theatre from "../models/theatreModel.js";
+import User from "../models/userModel.js";
+import Notification from "../models/notificationModel.js";
 
 export const createScreen = async (req, res) => {
   try {
@@ -36,6 +38,16 @@ export const createScreen = async (req, res) => {
       screenType,
       seatLayout,
       prices,
+    });
+
+    const owner = await User.findById(req.user.id);
+
+    await Notification.create({
+      title: "New Screen Added",
+
+      message: `${owner.name} added screen "${screen.name}" in theatre "${theatre.name}"`,
+
+      type: "SCREEN_CREATED",
     });
 
     return res.status(201).json({

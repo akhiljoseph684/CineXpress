@@ -11,17 +11,25 @@ function Shows() {
 
   const [activeFilter, setActiveFilter] = useState("running");
 
-  useEffect(() => {
-    fetchShows(activeFilter);
-  }, [activeFilter]);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchShows = async (type) => {
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    fetchShows(activeFilter, currentPage);
+  }, [activeFilter, currentPage]);
+
+  const fetchShows = async (type, page = 1) => {
     try {
       setLoading(true);
 
-      const res = await getAllShows(`?type=${type}`);
+      const res = await getAllShows(`?type=${type}&page=${page}&limit=12`);
 
       setShows(res.shows || []);
+
+      setCurrentPage(res.currentPage);
+
+      setTotalPages(res.totalPages);
     } catch (error) {
       console.log(error);
     } finally {
@@ -35,7 +43,6 @@ function Shows() {
         w-full
       "
     >
-
       <div
         className="
           flex
@@ -71,7 +78,6 @@ function Shows() {
         </div>
       </div>
 
-
       <div
         className="
           flex
@@ -105,7 +111,11 @@ function Shows() {
         ].map((item) => (
           <button
             key={item.value}
-            onClick={() => setActiveFilter(item.value)}
+            onClick={() => {
+              setActiveFilter(item.value);
+
+              setCurrentPage(1);
+            }}
             className={`
                 px-5 py-3
 
@@ -139,7 +149,6 @@ function Shows() {
         ))}
       </div>
 
-
       {loading ? (
         <div
           className="
@@ -155,309 +164,242 @@ function Shows() {
       ) : (
         <div
           className="
-              grid
-              grid-cols-1
-              md:grid-cols-2
-              xl:grid-cols-3
+    flex
+    flex-col
 
-              gap-6
-            "
+    gap-4
+  "
         >
-          {shows.length ? (
-            shows.map((show) => (
-              <div
-                key={show._id}
-                className="
-                        bg-[#1a1a1a]
-
-                        rounded-2xl
-
-                        overflow-hidden
-
-                        border
-                        border-white/10
-
-                        hover:border-[#8b5c76]
-
-                        transition
-                      "
-              >
-
-                <div
-                  className="
-                          relative
-                        "
-                >
-                  <img
-                    src={show.movieId?.poster?.card}
-                    alt=""
-                    className="
-                            w-full
-                            h-[320px]
-
-                            object-cover
-                          "
-                  />
-
-                  <div
-                    className={`
-                            absolute
-                            top-4
-                            left-4
-
-                            px-3
-                            py-2
-
-                            rounded-xl
-
-                            text-xs
-                            font-semibold
-
-                            ${
-                              activeFilter === "running"
-                                ? `
-                                  bg-green-500
-                                  text-black
-                                `
-                                : activeFilter === "upcoming"
-                                  ? `
-                                    bg-yellow-500
-                                    text-black
-                                  `
-                                  : `
-                                    bg-red-500
-                                    text-white
-                                  `
-                            }
-                          `}
-                  >
-                    {activeFilter}
-                  </div>
-                </div>
-
-
-                <div
-                  className="
-                          p-5
-                        "
-                >
-                  <h2
-                    className="
-                            text-xl
-                            font-bold
-
-                            line-clamp-1
-                          "
-                  >
-                    {show.movieId?.title}
-                  </h2>
-
-                  <div
-                    className="
-                            mt-5
-
-                            space-y-4
-
-                            text-sm
-                            text-gray-400
-                          "
-                  >
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-                                gap-2
-                              "
-                      >
-                        <FaFilm />
-                        Theatre
-                      </div>
-
-                      <span
-                        className="
-                                text-white
-                              "
-                      >
-                        {show.theatreId?.name}
-                      </span>
-                    </div>
-
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-                                gap-2
-                              "
-                      >
-                        <FaTv />
-                        Screen
-                      </div>
-
-                      <span
-                        className="
-                                text-white
-                              "
-                      >
-                        {show.screenId?.name}
-                      </span>
-                    </div>
-
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-                                gap-2
-                              "
-                      >
-                        <FaMapMarkerAlt />
-                        City
-                      </div>
-
-                      <span
-                        className="
-                                text-white
-                              "
-                      >
-                        {show.theatreId?.city}
-                      </span>
-                    </div>
-
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <div
-                        className="
-                                flex
-                                items-center
-                                gap-2
-                              "
-                      >
-                        <FaClock />
-                        Timing
-                      </div>
-
-                      <span
-                        className="
-                                text-white
-                              "
-                      >
-                        {new Date(
-                          `1970-01-01T${show.startTime}`,
-                        ).toLocaleTimeString(
-                          "en-IN",
-
-                          {
-                            hour: "numeric",
-
-                            minute: "2-digit",
-
-                            hour12: true,
-                          },
-                        )}
-
-                        {" - "}
-
-                        {new Date(
-                          `1970-01-01T${show.endTime}`,
-                        ).toLocaleTimeString(
-                          "en-IN",
-
-                          {
-                            hour: "numeric",
-
-                            minute: "2-digit",
-
-                            hour12: true,
-                          },
-                        )}
-                      </span>
-                    </div>
-
-
-                    <div
-                      className="
-                              flex
-                              items-center
-                              justify-between
-                            "
-                    >
-                      <span>Date</span>
-
-                      <span
-                        className="
-                                text-white
-                              "
-                      >
-                        {show.showDate}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
+          {shows.map((show) => (
             <div
+              key={show._id}
               className="
-                    col-span-full
+        bg-[#1a1a1a]
 
-                    flex
-                    flex-col
+        border
+        border-white/10
 
-                    items-center
-                    justify-center
+        hover:border-[#8b5c76]
 
-                    py-20
-                  "
+        rounded-2xl
+
+        p-4
+
+        transition
+      "
             >
               <div
                 className="
-                      text-7xl
-                    "
+          flex
+
+          flex-col
+          xl:flex-row
+
+          items-start
+          xl:items-center
+
+          gap-5
+        "
               >
-                🎬
+                <img
+                  src={show.movieId?.poster?.card}
+                  alt=""
+                  className="
+            w-full
+            xl:w-28
+
+            h-40
+            xl:h-28
+
+            rounded-xl
+
+            object-cover
+          "
+                />
+
+                <div
+                  className="
+            flex-1
+
+            grid
+
+            md:grid-cols-2
+            xl:grid-cols-5
+
+            gap-4
+          "
+                >
+                  <div>
+                    <p
+                      className="
+                text-gray-500
+                text-xs
+              "
+                    >
+                      Movie
+                    </p>
+
+                    <h3
+                      className="
+                font-bold
+
+                mt-1
+              "
+                    >
+                      {show.movieId?.title}
+                    </h3>
+                  </div>
+
+                  <div>
+                    <p
+                      className="
+                text-gray-500
+                text-xs
+              "
+                    >
+                      Theatre
+                    </p>
+
+                    <h3
+                      className="
+                mt-1
+              "
+                    >
+                      {show.theatreId?.name}
+                    </h3>
+                  </div>
+
+                  <div>
+                    <p
+                      className="
+                text-gray-500
+                text-xs
+              "
+                    >
+                      Screen
+                    </p>
+
+                    <h3
+                      className="
+                mt-1
+              "
+                    >
+                      {show.screenId?.name}
+                    </h3>
+                  </div>
+
+                  <div>
+                    <p
+                      className="
+                text-gray-500
+                text-xs
+              "
+                    >
+                      Date
+                    </p>
+
+                    <h3
+                      className="
+                mt-1
+              "
+                    >
+                      {show.showDate}
+                    </h3>
+                  </div>
+
+                  <div>
+                    <p
+                      className="
+                text-gray-500
+                text-xs
+              "
+                    >
+                      Timing
+                    </p>
+
+                    <h3
+                      className="
+                mt-1
+              "
+                    >
+                      {show.startTime}
+                      {" - "}
+                      {show.endTime}
+                    </h3>
+                  </div>
+                </div>
               </div>
-
-              <h2
-                className="
-                      text-2xl
-                      font-bold
-
-                      mt-5
-                    "
-              >
-                No Shows Found
-              </h2>
             </div>
-          )}
+          ))}
+        </div>
+      )}
+      {!loading && totalPages > 1 && (
+        <div
+          className="
+        flex
+
+        items-center
+        justify-center
+
+        gap-3
+
+        mt-10
+      "
+        >
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => prev - 1)}
+            className="
+          px-4
+          py-2
+
+          rounded-xl
+
+          bg-[#1a1a1a]
+
+          border
+          border-white/10
+
+          disabled:opacity-40
+        "
+          >
+            Previous
+          </button>
+
+          <span
+            className="
+          px-5
+          py-2
+
+          rounded-xl
+
+          bg-[#8b5c76]
+        "
+          >
+            {currentPage}
+            {" / "}
+            {totalPages}
+          </span>
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            className="
+          px-4
+          py-2
+
+          rounded-xl
+
+          bg-[#1a1a1a]
+
+          border
+          border-white/10
+
+          disabled:opacity-40
+        "
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
