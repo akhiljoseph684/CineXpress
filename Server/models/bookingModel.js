@@ -106,10 +106,9 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    
+
     ticketId: {
       type: String,
-      unique: true,
       default: null,
     },
 
@@ -155,7 +154,6 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
-
 bookingSchema.index({
   show: 1,
 });
@@ -172,9 +170,13 @@ bookingSchema.index({
   expiresAt: 1,
 });
 
-bookingSchema.index({
-  ticketId: 1,
-});
+bookingSchema.index(
+  { ticketId: 1 },
+  {
+    unique: true,
+    sparse: true,
+  },
+);
 
 bookingSchema.pre(
   "save",

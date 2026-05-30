@@ -43,7 +43,7 @@ export const createShow = async (req, res) => {
       });
     }
 
-    if (!showTimes || !showTimes.length) {
+    if (!showTimes?.length) {
       return res.status(400).json({
         success: false,
         message: "Show times required",
@@ -83,7 +83,9 @@ export const createShow = async (req, res) => {
       });
     }
 
-    const currentDate = now.toISOString().split("T")[0];
+    const currentDate = `${now.getFullYear()}-${String(
+      now.getMonth() + 1,
+    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
       now.getMinutes(),
@@ -114,12 +116,7 @@ export const createShow = async (req, res) => {
 
     const existingShows = await Show.find({
       screenId,
-
-      showDate: {
-        $gte: startDate,
-        $lte: endDate,
-      },
-    }).select("showDate startTime endTime");
+    }).select("startDateTime endDateTime");
 
     const showMap = new Map();
 
@@ -137,19 +134,33 @@ export const createShow = async (req, res) => {
       const dayShows = showMap.get(showDate) || [];
 
       for (const startTime of showTimes) {
-        const start = new Date(`${showDate}T${startTime}`);
+        const startDateTime = new Date(`${showDate}T${startTime}`);
 
-        const end = new Date(start.getTime() + (duration + 15) * 60000);
+        const endDateTime = new Date(
+          startDateTime.getTime() + (duration + 15) * 60000,
+        );
 
-        const hasConflict = dayShows.some((existingShow) => {
-          const existingStart = new Date(
-            `${showDate}T${existingShow.startTime}`,
+        const hasConflict = existingShows.some((existingShow) => {
+          return (
+            startDateTime < existingShow.endDateTime &&
+            endDateTime > existingShow.startDateTime
           );
-
-          const existingEnd = new Date(`${showDate}T${existingShow.endTime}`);
-
-          return start < existingEnd && end > existingStart;
         });
+
+        const hasNewConflict = shows.some((newShow) => {
+          return (
+            startDateTime < newShow.endDateTime &&
+            endDateTime > newShow.startDateTime
+          );
+        });
+
+        if (hasConflict || hasNewConflict) {
+          return res.status(400).json({
+            success: false,
+
+            message: `Time conflict detected on ${showDate} at ${startTime}`,
+          });
+        }
 
         if (hasConflict) {
           return res.status(400).json({
@@ -162,10 +173,16 @@ export const createShow = async (req, res) => {
           movieId,
           theatreId,
           screenId,
+
           showDate,
+
           startTime,
 
-          endTime: end.toTimeString().slice(0, 5),
+          endTime: endDateTime.toTimeString().slice(0, 5),
+
+          startDateTime,
+
+          endDateTime,
         });
       }
     }
@@ -522,46 +539,24 @@ export const getAllShows = async (req, res) => {
     ).padStart(2, "0")}`;
 
     if (type === "upcoming") {
-      query.$or = [
-        {
-          showDate: {
-            $gt: today,
-          },
-        },
-        {
-          showDate: today,
-          startTime: {
-            $gt: currentTime,
-          },
-        },
-      ];
-    }
-
-    if (type === "ended") {
-      query.$or = [
-        {
-          showDate: {
-            $lt: today,
-          },
-        },
-        {
-          showDate: today,
-          endTime: {
-            $lt: currentTime,
-          },
-        },
-      ];
+      query.startDateTime = {
+        $gt: now,
+      };
     }
 
     if (type === "running") {
-      query.showDate = today;
-
-      query.startTime = {
-        $lte: currentTime,
+      query.startDateTime = {
+        $lte: now,
       };
 
-      query.endTime = {
-        $gte: currentTime,
+      query.endDateTime = {
+        $gte: now,
+      };
+    }
+
+    if (type === "ended") {
+      query.endDateTime = {
+        $lt: now,
       };
     }
 
@@ -654,7 +649,10 @@ export const getShowsByOwner = async (req, res) => {
 
     const now = new Date();
 
-    const today = now.toISOString().split("T")[0];
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(now.getDate()).padStart(2, "0")}`;
 
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
       now.getMinutes(),
@@ -670,52 +668,27 @@ export const getShowsByOwner = async (req, res) => {
       },
     };
 
+
     if (type === "upcoming") {
-      query.$or = [
-        {
-          showDate: {
-            $gt: today,
-          },
-        },
-
-        {
-          showDate: today,
-
-          startTime: {
-            $gt: currentTime,
-          },
-        },
-      ];
+      query.startDateTime = {
+        $gt: now,
+      };
     }
 
     if (type === "running") {
-      query.showDate = today;
-
-      query.startTime = {
-        $lte: currentTime,
+      query.startDateTime = {
+        $lte: now,
       };
 
-      query.endTime = {
-        $gte: currentTime,
+      query.endDateTime = {
+        $gte: now,
       };
     }
 
     if (type === "ended") {
-      query.$or = [
-        {
-          showDate: {
-            $lt: today,
-          },
-        },
-
-        {
-          showDate: today,
-
-          endTime: {
-            $lt: currentTime,
-          },
-        },
-      ];
+      query.endDateTime = {
+        $lt: now,
+      };
     }
 
     const skip = (page - 1) * limit;

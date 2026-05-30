@@ -155,46 +155,6 @@ const BookingSuccessPage = () => {
 
         </p>
 
-        <div
-          className="
-            mt-8
-
-            bg-pink-500/10
-
-            border
-            border-pink-500/20
-
-            rounded-3xl
-
-            p-5
-          "
-        >
-
-          <p
-            className="
-              text-white/40
-            "
-          >
-
-            Booking Reference
-
-          </p>
-
-          <h2
-            className="
-              text-pink-400
-              text-2xl
-              font-black
-              mt-2
-            "
-          >
-
-            {bookingId}
-
-          </h2>
-
-        </div>
-
         {booking?.qrCode && (
 
           <div
@@ -302,20 +262,8 @@ const BookingSuccessPage = () => {
               </li>
 
               <li>
-                Do not scan this
-                QR before theatre
-                entry.
-              </li>
-
-              <li>
                 Theatre staff will
                 scan this QR code.
-              </li>
-
-              <li>
-                Once scanned, the
-                ticket may become
-                invalid.
               </li>
 
             </ul>

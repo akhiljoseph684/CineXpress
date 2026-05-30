@@ -96,7 +96,7 @@ export const verifyPayment = async (req, res) => {
 
     const ticketId = `CX-${Date.now()}`;
 
-    const ticketUrl = `theatre-owner/${process.env.FRONTEND_URL}/ticket/${ticketId}`;
+    const ticketUrl = `${process.env.FRONTEND_URL}/theatre-owner/ticket/${ticketId}`;
 
     const qrCode = await QRCode.toDataURL(ticketUrl);
 

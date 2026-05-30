@@ -181,7 +181,10 @@ function AdminLayout() {
           <div className="flex items-center gap-4 md:gap-6">
             <div
               className="relative cursor-pointer"
-              onClick={() => navigate("notification")}
+              onClick={() => {
+                setNotificationCount(0);
+                navigate("notification");
+              }}
             >
               <FaBell className="text-gray-300 text-lg hover:text-white transition" />
 
