@@ -1,22 +1,12 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
+import React, { useEffect, useState } from "react";
 
-import {
-  FaPlay,
-  FaClock,
-  FaStar,
-} from "react-icons/fa";
+import { FaPlay, FaClock, FaStar } from "react-icons/fa";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { bannerFetch } from "../../services/moviesApi";
 
 function Banner() {
-
   const navigate = useNavigate();
 
   const [movies, setMovies] = useState([]);
@@ -26,57 +16,32 @@ function Banner() {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
+    const fetchBanner = async () => {
+      try {
+        const res = await bannerFetch();
 
-    const fetchBanner =
-      async () => {
-
-        try {
-
-          const res =
-            await bannerFetch();
-
-          setMovies(
-            res.movies || []
-          );
-
-        } catch (error) {
-
-          console.log(error);
-
-        } finally {
-
-          setLoading(false);
-        }
-      };
+        setMovies(res.movies || []);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchBanner();
-
   }, []);
 
   useEffect(() => {
+    if (!movies.length) return;
 
-    if (!movies.length)
-      return;
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev === movies.length - 1 ? 0 : prev + 1));
+    }, 5000);
 
-    const interval =
-      setInterval(() => {
-
-        setCurrent((prev) =>
-          prev ===
-          movies.length - 1
-            ? 0
-            : prev + 1
-        );
-
-      }, 5000);
-
-    return () =>
-      clearInterval(interval);
-
+    return () => clearInterval(interval);
   }, [movies]);
 
   if (loading) {
-
     return (
       <div
         className="
@@ -99,14 +64,10 @@ function Banner() {
         overflow-hidden
       "
     >
-
-      {
-        movies.map(
-          (movie, index) => (
-
-            <div
-              key={movie._id}
-              className={`
+      {movies.map((movie, index) => (
+        <div
+          key={movie._id}
+          className={`
                 absolute inset-0
                 transition-all duration-1000 ease-in-out
               
@@ -116,22 +77,19 @@ function Banner() {
                     : "opacity-0 scale-105 pointer-events-none"
                 }
               `}
-            >
-
-              <img
-                src={
-                  movie.poster?.banner
-                }
-                alt=""
-                className="
+        >
+          <img
+            src={movie.poster?.banner}
+            alt=""
+            className="
                   absolute inset-0
                   w-full h-full
                   object-cover
                 "
-              />
+          />
 
-              <div
-                className="
+          <div
+            className="
                   absolute inset-0
 
                   bg-gradient-to-t
@@ -144,10 +102,10 @@ function Banner() {
                   md:via-black/70
                   md:to-transparent
                 "
-              />
+          />
 
-              <div
-                className="
+          <div
+            className="
                   relative z-10
                   h-full
                   flex items-end md:items-center
@@ -159,17 +117,15 @@ function Banner() {
                   pb-16
                   md:pb-0
                 "
-              >
-
-                <div
-                  className="
+          >
+            <div
+              className="
                     w-full
                     max-w-3xl
                   "
-                >
-
-                  <div
-                    className="
+            >
+              <div
+                className="
                       inline-flex items-center
 
                       px-3 py-1.5
@@ -187,14 +143,12 @@ function Banner() {
 
                       mb-4 md:mb-5
                     "
-                  >
+              >
+                Now Showing
+              </div>
 
-                    Now Showing
-
-                  </div>
-
-                  <h1
-                    className="
+              <h1
+                className="
                       text-3xl
                       sm:text-5xl
                       md:text-7xl
@@ -203,14 +157,12 @@ function Banner() {
                       leading-tight
                       text-white
                     "
-                  >
+              >
+                {movie.title}
+              </h1>
 
-                    {movie.title}
-
-                  </h1>
-
-                  <div
-                    className="
+              <div
+                className="
                       flex flex-wrap
                       items-center
 
@@ -224,75 +176,51 @@ function Banner() {
                       text-sm
                       sm:text-base
                     "
-                  >
-
-                    <div
-                      className="
+              >
+                <div
+                  className="
                         flex items-center gap-2
                       "
-                    >
+                >
+                  <FaClock />
+                  {Math.floor(movie.duration / 60)}h{" "}
+                  {movie.duration % 60 ? `${movie.duration % 60}m` : ""}
+                </div>
 
-                      <FaClock />
-
-                      {Math.floor(movie.duration / 60)}h{" "}
-                          {movie.duration % 60 ? `${movie.duration % 60}m` : ""}
-
-
-                    </div>
-
-                    <div
-                      className="
+                <div
+                  className="
                         flex items-center gap-2
                       "
-                    >
-
-                      <FaStar
-                        className="
+                >
+                  <FaStar
+                    className="
                           text-yellow-400
                         "
-                      />
+                  />
 
-                      {
-                        movie.ratings.toFixed(1) ||
-                        "3.5"
-                      }
+                  {movie.ratings?.toFixed(1) || "3.5"}
+                </div>
 
-                    </div>
-
-                    <div
-                      className="
+                <div
+                  className="
                         truncate
                       "
-                    >
+                >
+                  {movie.language?.map((lang) => lang.name).join(", ")}
+                </div>
+              </div>
 
-                      {
-                        movie.language
-                          ?.map(
-                            (lang) =>
-                              lang.name
-                          )
-                          .join(", ")
-                      }
-
-                    </div>
-
-                  </div>
-
-                  <div
-                    className="
+              <div
+                className="
                       flex flex-wrap
                       gap-2 sm:gap-3
                       mt-4 md:mt-5
                     "
-                  >
-
-                    {
-                      movie.genre?.map(
-                        (genre) => (
-
-                          <span
-                            key={genre._id}
-                            className="
+              >
+                {movie.genre?.map((genre) => (
+                  <span
+                    key={genre._id}
+                    className="
                               px-3 py-1.5
                               sm:px-4 sm:py-2
 
@@ -306,19 +234,14 @@ function Banner() {
 
                               text-white
                             "
-                          >
+                  >
+                    {genre.name}
+                  </span>
+                ))}
+              </div>
 
-                            {genre.name}
-
-                          </span>
-                        )
-                      )
-                    }
-
-                  </div>
-
-                  <p
-                    className="
+              <p
+                className="
                       mt-4 md:mt-6
 
                       text-gray-300
@@ -334,16 +257,12 @@ function Banner() {
 
                       max-w-2xl
                     "
-                  >
+              >
+                {movie.description}
+              </p>
 
-                    {
-                      movie.description
-                    }
-
-                  </p>
-
-                  <div
-                    className="
+              <div
+                className="
                       flex flex-col
                       sm:flex-row
 
@@ -354,15 +273,10 @@ function Banner() {
 
                       mt-6 md:mt-8
                     "
-                  >
-
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/shows/movie/${movie._id}`
-                        )
-                      }
-                      className="
+              >
+                <button
+                  onClick={() => navigate(`/shows/movie/${movie._id}`)}
+                  className="
                         w-full sm:w-auto
 
                         px-6 py-3
@@ -383,20 +297,13 @@ function Banner() {
                         text-sm
                         sm:text-base
                       "
-                    >
+                >
+                  Book Tickets
+                </button>
 
-                      Book Tickets
-
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        window.open(
-                          movie.trailer,
-                          "_blank"
-                        )
-                      }
-                      className="
+                <button
+                  onClick={() => window.open(movie.trailer, "_blank")}
+                  className="
                         w-full sm:w-auto
 
                         flex items-center
@@ -420,24 +327,15 @@ function Banner() {
                         text-sm
                         sm:text-base
                       "
-                    >
-
-                      <FaPlay />
-
-                      Watch Trailer
-
-                    </button>
-
-                  </div>
-
-                </div>
-
+                >
+                  <FaPlay />
+                  Watch Trailer
+                </button>
               </div>
-
             </div>
-          )
-        )
-      }
+          </div>
+        </div>
+      ))}
 
       <div
         className="
@@ -455,17 +353,11 @@ function Banner() {
           z-20
         "
       >
-
-        {
-          movies.map(
-            (_, index) => (
-
-              <button
-                key={index}
-                onClick={() =>
-                  setCurrent(index)
-                }
-                className={`
+        {movies.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`
                   h-2.5 md:h-3
                   rounded-full
                   transition-all duration-300
@@ -476,13 +368,9 @@ function Banner() {
                       : "w-2.5 md:w-3 bg-white/40"
                   }
                 `}
-              />
-            )
-          )
-        }
-
+          />
+        ))}
       </div>
-
     </section>
   );
 }

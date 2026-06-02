@@ -12,20 +12,29 @@ const ShowListPage = () => {
 
   const [showCancelModal, setShowCancelModal] = useState(false);
 
+  const [page, setPage] = useState(1);
+
+  const [totalPages, setTotalPages] = useState(1);
+
   const [selectedShowId, setSelectedShowId] = useState(null);
 
   useEffect(() => {
-    fetchShows(activeFilter);
-  }, [activeFilter]);
+    fetchShows(activeFilter, page);
+  }, [activeFilter, page]);
 
-  const fetchShows = async (type) => {
+  const fetchShows = async (type, pageNo = 1) => {
     try {
       setLoading(true);
 
-      const res = await getShowsByOwner(`?type=${type}`);
+      const res = await getShowsByOwner(
+        `?type=${type}&page=${pageNo}&limit=12`,
+      );
 
       setShows(res.shows || []);
-      console.log(res.shows);
+
+      setPage(res.currentPage);
+
+      setTotalPages(res.totalPages);
     } catch (error) {
       console.log(error);
     } finally {
@@ -141,7 +150,10 @@ const ShowListPage = () => {
           {["running", "upcoming", "ended"].map((item) => (
             <button
               key={item}
-              onClick={() => setActiveFilter(item)}
+              onClick={() => {
+                setActiveFilter(item);
+                setPage(1);
+              }}
               className={`
                   px-5
                   py-3
@@ -396,6 +408,20 @@ const ShowListPage = () => {
             ))}
           </div>
         )}
+        <div className="flex justify-center gap-2 mt-8">
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setPage(index + 1)}
+              className={`
+        w-10 h-10 rounded-lg
+        ${page === index + 1 ? "bg-pink-600" : "bg-[#111]"}
+      `}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
       </div>
       {showCancelModal && (
         <div

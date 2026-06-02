@@ -331,7 +331,7 @@ function RegisterLogin({ status }) {
             <button
               type="button"
               onClick={() =>
-                (window.location.href = "http://localhost:5000/api/auth/google")
+                (window.location.href = `${import.meta.env.VITE_BACKEND_API_URL}/auth/google`)
               }
               className="w-full flex items-center justify-center gap-3 border border-gray-600 rounded-lg py-3 hover:bg-[#252525] transition mt-5"
             >

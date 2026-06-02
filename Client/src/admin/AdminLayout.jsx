@@ -148,7 +148,7 @@ function AdminLayout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group
                 ${
-                  isActive
+                  isActive || (item.path === "/admin/theatre" && currentPage === "theatre")
                     ? "bg-[#8b5c76]/20 text-[#8b5c76]"
                     : "hover:bg-[#252525] text-gray-300"
                 }`

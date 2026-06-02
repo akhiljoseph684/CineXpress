@@ -5,6 +5,8 @@ dotenv.config({
 });
 import passport from "passport";
 import "./utils/expireBookings.js";
+import { movieStatusCron } from "./utils/movieStatusCron.js";
+
 import { connectDB } from "./config/connectDB.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -25,6 +27,7 @@ import cors from "cors";
 import "./config/passport.js";
 
 connectDB();
+movieStatusCron();
 const app = express();
 
 app.use(

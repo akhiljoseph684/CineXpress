@@ -261,7 +261,6 @@ export const cancelShow = async (req, res) => {
 
     const existingBookings = await Booking.findOne({
       show: show._id,
-
       bookingStatus: {
         $in: ["CONFIRMED", "PENDING"],
       },
@@ -274,7 +273,10 @@ export const cancelShow = async (req, res) => {
       });
     }
 
-    await Show.findByIdAndDelete(id);
+    show.isCancelled = true;
+    show.cancelledAt = new Date();
+
+    await show.save()
 
     return res.status(200).json({
       success: true,
@@ -408,6 +410,11 @@ export const getMovieShows = async (req, res) => {
 
       {
         $unwind: "$screen",
+      },
+      {
+        $match: {
+          "screen.isDeleted": false,
+        },
       },
 
       {
@@ -667,7 +674,6 @@ export const getShowsByOwner = async (req, res) => {
         }).distinct("_id"),
       },
     };
-
 
     if (type === "upcoming") {
       query.startDateTime = {

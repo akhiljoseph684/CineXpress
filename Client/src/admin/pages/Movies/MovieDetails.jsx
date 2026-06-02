@@ -616,7 +616,7 @@ function MovieDetails() {
             movie.trailer && (
 
               <a
-                href={movie.trailer}
+                href={`/trailer/${movie._id}`}
                 target="_blank"
                 rel="noreferrer"
                 className="

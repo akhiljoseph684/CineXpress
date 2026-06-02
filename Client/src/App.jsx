@@ -44,6 +44,7 @@ import TicketPage from "./Components/TicketPage";
 import Dashboard from "./theatre_owner/Dashboard";
 import NotificationPage from "./admin/pages/NotificationPage";
 import MyBookingsPage from "./user/MyBookingsPage";
+import NotFound from "./Components/NotFound";
 
 function App() {
   const dispatch = useDispatch();
@@ -74,6 +75,8 @@ function App() {
       <Route path="/login" element={<RegisterLogin status="login" />} />
       <Route path="/signup" element={<RegisterLogin status="signup" />} />
       <Route path="profile" element={<ProfilePage />}></Route>
+      <Route path="trailer/:id" element={<TrailerPage />} />
+      <Route path="*" element={<NotFound />} />
 
       <Route
         path="/"
@@ -89,7 +92,6 @@ function App() {
         <Route path="shows/movie/:movieId" element={<MovieShowsPage />} />
         <Route path="booking/movie/:showId" element={<SeatBookingPage />} />
         <Route path="booking-success/:bookingId" element={<BookingSuccessPage />} />
-        <Route path="trailer/:id" element={<TrailerPage />} />
         <Route path="my-bookings" element={<MyBookingsPage />} />
       </Route>
 
