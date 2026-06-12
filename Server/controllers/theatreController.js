@@ -1,5 +1,5 @@
 import Theatre from "../models/theatreModel.js";
-import apiInstance from "../config/mailConfig.js";
+import transporter from "../config/mailConfig.js";
 import User from "../models/userModel.js";
 
 export const createTheatre = async (req, res) => {
@@ -90,20 +90,12 @@ export const createTheatre = async (req, res) => {
 
     const registerLink = `${process.env.FRONTEND_URL}/signup?email=${ownerEmail}&code=${secretCode}`;
 
-    await apiInstance.sendTransacEmail({
-      sender: {
-        name: "CineXpress",
-        email: "yourverifiedemail@example.com",
-      },
-      to: [
-        {
-          email: ownerEmail,
-        },
-      ],
-      subject: "CineXpress Theatre Owner Invitation 🎬",
-      htmlContent: `
+    await transporter.sendMail({
+      from: process.env.BREVO_EMAIL,
+      to: ownerEmail,
+      subject: "CineXpress Theatre Owner Invitation",
+      html: `
     <h1>Welcome to CineXpress</h1>
-    <p>Create your account using the link below.</p>
     <a href="${registerLink}">Create Account</a>
   `,
     });
