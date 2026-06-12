@@ -1,5 +1,5 @@
 import Theatre from "../models/theatreModel.js";
-import transporter from "../config/mailConfig.js";
+import apiInstance from "../config/mailConfig.js";
 import User from "../models/userModel.js";
 
 export const createTheatre = async (req, res) => {
