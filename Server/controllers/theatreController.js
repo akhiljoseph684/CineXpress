@@ -66,207 +66,6 @@ export const createTheatre = async (req, res) => {
       });
     }
 
-    const registerLink = `${process.env.FRONTEND_URL}/signup?email=${ownerEmail}&code=${secretCode}`;
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-
-      to: ownerEmail,
-
-      subject: "CineXpress Theatre Owner Invitation 🎬",
-
-      html: `
-
-    <div
-      style="
-        font-family: Arial;
-        background: #0f0f0f;
-        padding: 40px;
-        color: white;
-      "
-    >
-
-      <div
-        style="
-          max-width: 600px;
-          margin: auto;
-          background: #1a1a1a;
-          border-radius: 20px;
-          overflow: hidden;
-          border: 1px solid #2a2a2a;
-        "
-      >
-
-        <div
-          style="
-            padding: 40px;
-            text-align: center;
-          "
-        >
-
-          <h1
-            style="
-              color: #d6a7c1;
-              margin-bottom: 10px;
-            "
-          >
-
-            CineXpress 🎭
-
-          </h1>
-
-          <p
-            style="
-              color: #aaa;
-              font-size: 15px;
-            "
-          >
-
-            Theatre Owner Invitation
-
-          </p>
-
-        </div>
-
-        <div
-          style="
-            padding: 0 40px 40px;
-          "
-        >
-
-          <h2
-            style="
-              margin-bottom: 20px;
-            "
-          >
-
-            Hello 👋
-          </h2>
-
-          <p
-            style="
-              color: #ccc;
-              line-height: 1.8;
-            "
-          >
-
-            You have been invited
-            as a theatre owner on
-            CineXpress.
-
-          </p>
-
-          <p
-            style="
-              color: #ccc;
-              line-height: 1.8;
-            "
-          >
-
-            Click the button below
-            to create your account.
-
-          </p>
-
-          <div
-            style="
-              text-align: center;
-              margin: 35px 0;
-            "
-          >
-
-            <a
-              href="${registerLink}"
-
-              style="
-                display: inline-block;
-                padding: 14px 28px;
-                background: linear-gradient(
-                  to right,
-                  #8b5c76,
-                  #6f4660
-                );
-                color: white;
-                text-decoration: none;
-                border-radius: 12px;
-                font-weight: bold;
-              "
-            >
-
-              Create Account
-
-            </a>
-
-          </div>
-
-          <div
-            style="
-              background: #111;
-              border-radius: 14px;
-              padding: 20px;
-              margin-top: 30px;
-            "
-          >
-
-            <p
-              style="
-                margin: 0 0 10px;
-                color: #888;
-              "
-            >
-
-              Secret Code
-
-            </p>
-
-            <h2
-              style="
-                margin: 0;
-                color: #facc15;
-                letter-spacing: 5px;
-              "
-            >
-
-              ${secretCode}
-
-            </h2>
-
-          </div>
-
-          <p
-            style="
-              margin-top: 30px;
-              color: #777;
-              font-size: 14px;
-              line-height: 1.8;
-            "
-          >
-
-            If the button does not work,
-            copy and paste this link:
-
-          </p>
-
-          <p
-            style="
-              word-break: break-all;
-              color: #d6a7c1;
-              font-size: 13px;
-            "
-          >
-
-            ${registerLink}
-
-          </p>
-
-        </div>
-
-      </div>
-
-    </div>
-  `,
-    });
-
     const theatre = await Theatre.create({
       name,
 
@@ -287,6 +86,26 @@ export const createTheatre = async (req, res) => {
       status: "pending",
 
       isDeleted: false,
+    });
+
+    const registerLink = `${process.env.FRONTEND_URL}/signup?email=${ownerEmail}&code=${secretCode}`;
+
+    await apiInstance.sendTransacEmail({
+      sender: {
+        name: "CineXpress",
+        email: "yourverifiedemail@example.com",
+      },
+      to: [
+        {
+          email: ownerEmail,
+        },
+      ],
+      subject: "CineXpress Theatre Owner Invitation 🎬",
+      htmlContent: `
+    <h1>Welcome to CineXpress</h1>
+    <p>Create your account using the link below.</p>
+    <a href="${registerLink}">Create Account</a>
+  `,
     });
 
     return res.status(201).json({
@@ -581,13 +400,15 @@ export const deleteTheatre = async (req, res) => {
       });
     }
 
-    await User.findOneAndUpdate({email: theatre.ownerEmail} , { role: "user" });
+    await User.findOneAndUpdate(
+      { email: theatre.ownerEmail },
+      { role: "user" },
+    );
 
-    return res.status(200).json({ 
-      success: true, 
-      message: "Theatre deleted successfully" 
+    return res.status(200).json({
+      success: true,
+      message: "Theatre deleted successfully",
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
