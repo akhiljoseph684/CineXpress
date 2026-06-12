@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
 import { Navigate, Outlet } from "react-router-dom";
-import Navbar from "../Components/Navbar/navbar";
+import Navbar from "../Components/Navbar/Navbar";
 import Footer from "../Components/Footer/Footer";
 import { useSelector } from "react-redux";
-import CityPopup from "../Components/cityPopup";
+import CityPopup from "../Components/CityPopup";
 
 function UserLayout() {
   const { user } = useSelector((state) => state.auth);
