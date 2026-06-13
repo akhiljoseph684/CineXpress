@@ -222,16 +222,12 @@ function Navbar() {
               text-xl
               sm:text-2xl
               md:text-3xl
-
               font-black
-
               tracking-wider
-
               cursor-pointer
-
               text-white
-
               shrink-0
+              select-none
             "
           >
 

@@ -302,7 +302,7 @@ function Banner() {
                 </button>
 
                 <button
-                  onClick={() => window.open(movie.trailer, "_blank")}
+                  onClick={() => navigate(`/trailer/${movie._id}`)}
                   className="
                         w-full sm:w-auto
 

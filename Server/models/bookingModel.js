@@ -170,14 +170,6 @@ bookingSchema.index({
   expiresAt: 1,
 });
 
-bookingSchema.index(
-  { ticketId: 1 },
-  {
-    unique: true,
-    sparse: true,
-  },
-);
-
 bookingSchema.pre(
   "save",
 
