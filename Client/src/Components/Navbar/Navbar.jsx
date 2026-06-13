@@ -33,7 +33,7 @@ import {
 } from "../../services/moviesApi";
 
 import CityPopup
-from "../cityPopup";
+from "../CityPopup";
 
 function Navbar() {
 
