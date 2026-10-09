@@ -99,19 +99,22 @@ export const register = async (req, res) => {
       });
     }
 
-    const accessToken = generateAccessToken({ id: user._id, role: user.role });
+    const accessToken = generateAccessToken({ id: user._id, role: user.role, type: "access" });
     const refreshToken = generateRefreshToken({
       id: user._id,
       role: user.role,
+      type: "refresh",
     });
 
     user.refreshToken = refreshToken;
     await user.save();
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -174,19 +177,22 @@ export const login = async (req, res) => {
       });
     }
 
-    const accessToken = generateAccessToken({ id: user._id, role: user.role });
+    const accessToken = generateAccessToken({ id: user._id, role: user.role, type: "access", });
     const refreshToken = generateRefreshToken({
       id: user._id,
       role: user.role,
+      type: "refresh",
     });
 
     user.refreshToken = refreshToken;
     await user.save();
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -231,17 +237,24 @@ export const logout = async (req, res) => {
 };
 
 export const refresh = async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
     return res.status(401).json({
       success: false,
-      message: "No refresh token",
+      message: "Refresh token missing",
     });
   }
 
   try {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    if (decoded.type !== "refresh") {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid token type",
+      });
+    }
 
     const user = await User.findById(decoded.id);
 
@@ -252,14 +265,15 @@ export const refresh = async (req, res) => {
       });
     }
 
-    const newAccessToken = generateAccessToken({
+    const accessToken = generateAccessToken({
       id: user._id,
       role: user.role,
+      type: "access",
     });
 
     return res.status(200).json({
       success: true,
-      accessToken: newAccessToken,
+      accessToken,
       user: {
         _id: user._id,
         name: user.name,
@@ -272,9 +286,11 @@ export const refresh = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(403).json({
+    const expired = error.name === "TokenExpiredError";
+
+    return res.status(expired ? 401 : 403).json({
       success: false,
-      message: error.message,
+      message: expired ? "Refresh token expired" : "Invalid refresh token",
     });
   }
 };

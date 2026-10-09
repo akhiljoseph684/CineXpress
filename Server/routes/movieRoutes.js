@@ -6,9 +6,9 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.post("/", authMiddleware, verifyAdmin, createMovie);
-router.get("/", authMiddleware, getAllMovies);
-router.get("/banners", authMiddleware, bannerFetch);
-router.get("/:id", authMiddleware, getMovieById);
+router.get("/", getAllMovies);
+router.get("/banners", bannerFetch);
+router.get("/:id", getMovieById);
 router.put("/:id", authMiddleware, verifyAdmin, editMovie);
 router.delete("/:id", authMiddleware, verifyAdmin, deleteMovie);
 router.patch("/status/:id", authMiddleware, verifyAdmin, updateMovieStatus);
