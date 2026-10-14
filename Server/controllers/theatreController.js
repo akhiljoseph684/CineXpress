@@ -91,7 +91,7 @@ export const createTheatre = async (req, res) => {
     const registerLink = `${process.env.FRONTEND_URL}/signup?email=${ownerEmail}&code=${secretCode}`;
 
     await transporter.sendMail({
-      from: process.env.BREVO_EMAIL,
+      from: process.env.EMAIL_USER,
       to: ownerEmail,
       subject: "CineXpress Theatre Owner Invitation",
       html: `

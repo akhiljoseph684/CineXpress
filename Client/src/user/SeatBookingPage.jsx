@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-
 import { useNavigate, useParams } from "react-router-dom";
-
+import {
+  FaArrowLeft,
+  FaCheckCircle,
+  FaCreditCard,
+  FaTicketAlt,
+} from "react-icons/fa";
 import { getShowById } from "../services/showApi";
 import { reserveSeats } from "../services/bookingApi";
 import Legend from "../Components/Legend";
@@ -13,61 +17,54 @@ import {
 
 const SeatBookingPage = () => {
   const { showId } = useParams();
-  
-  const [toast, setToast] = useState(null);
-
-  const [show, setShow] = useState(null);
-
-  const [seatLayout, setSeatLayout] = useState([]);
-
-  const [bookedSeats, setBookedSeats] = useState([]);
-
-  const [selectedSeats, setSelectedSeats] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
 
-  const showToast = (
-  message,
-  type = "success"
-) => {
-
-  setToast({
-    message,
-    type,
-  });
-
-  setTimeout(() => {
-    setToast(null);
-  }, 3000);
-};
+  const [toast, setToast] = useState(null);
+  const [show, setShow] = useState(null);
+  const [seatLayout, setSeatLayout] = useState([]);
+  const [bookedSeats, setBookedSeats] = useState([]);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   useEffect(() => {
-    fetchShow();
+    if (showId) {
+      fetchShow();
+    }
   }, [showId]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+  };
 
   const fetchShow = async () => {
     try {
       setLoading(true);
 
       const res = await getShowById(showId);
+      const currentShow = res.show;
 
-      setShow(res.show);
-
-      setSeatLayout(res.show.screenId?.seatLayout);
-
+      setShow(currentShow);
+      setSeatLayout(currentShow?.screenId?.seatLayout || []);
       setBookedSeats(res.bookedSeats || []);
+      setSelectedSeats([]);
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      showToast(
+        error?.response?.data?.message || "Failed to load show details.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -75,44 +72,43 @@ const SeatBookingPage = () => {
 
   const isBooked = (rowIndex, colIndex) => {
     return bookedSeats.some(
-      (seat) => seat.row === rowIndex && seat.col === colIndex,
+      (seat) => seat.row === rowIndex && seat.col === colIndex
     );
   };
 
   const isSelected = (rowIndex, colIndex) => {
     return selectedSeats.some(
-      (seat) => seat.row === rowIndex && seat.col === colIndex,
+      (seat) => seat.row === rowIndex && seat.col === colIndex
     );
   };
 
   const handleSeatClick = (seat, rowIndex, colIndex) => {
-    if (isBooked(rowIndex, colIndex)) return;
+    if (isBooked(rowIndex, colIndex) || paymentLoading) return;
 
-    const exists = isSelected(rowIndex, colIndex);
-
-    if (exists) {
+    if (isSelected(rowIndex, colIndex)) {
       setSelectedSeats((prev) =>
         prev.filter(
-          (item) => !(item.row === rowIndex && item.col === colIndex),
-        ),
+          (item) => !(item.row === rowIndex && item.col === colIndex)
+        )
       );
+      return;
+    }
 
+    const price = show?.screenId?.prices?.[seat.type];
+
+    if (price == null) {
+      showToast("Price is unavailable for this seat type.", "error");
       return;
     }
 
     setSelectedSeats((prev) => [
       ...prev,
-
       {
         seatNumber: seat.seatNumber,
-
         row: rowIndex,
-
         col: colIndex,
-
         type: seat.type,
-
-        price: show.screenId.prices[seat.type],
+        price,
       },
     ]);
   };
@@ -122,335 +118,262 @@ const SeatBookingPage = () => {
   }, [selectedSeats]);
 
   const handleReserveSeats = async () => {
+    if (selectedSeats.length === 0 || paymentLoading) return;
+
+    if (!window.Razorpay) {
+      showToast("Payment service is unavailable. Please try again.", "error");
+      return;
+    }
+
+    let bookingId = null;
+    let paymentWindowOpened = false;
+
     try {
-      const res = await reserveSeats({
+      setPaymentLoading(true);
+
+      const bookingRes = await reserveSeats({
         showId,
-
         seats: selectedSeats,
-
         totalAmount,
       });
 
-      const booking = res.booking;
+      const booking = bookingRes.booking;
 
-      const orderRes = await createPaymentOrder({
-        bookingId: booking._id,
-      });
+      if (!booking?._id) {
+        throw new Error("Unable to create booking.");
+      }
 
+      bookingId = booking._id;
+
+      const orderRes = await createPaymentOrder({ bookingId });
       const order = orderRes.order;
+
+      if (!order?.id) {
+        throw new Error("Unable to create payment order.");
+      }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-
         amount: order.amount,
-
         currency: order.currency,
-
         name: "CineXpress",
-
         description: "Movie Ticket Booking",
-
         order_id: order.id,
-
         theme: {
-          color: "#ed64a6",
+          color: "#dc2626",
         },
-
-        handler: async function (response) {
-          await verifyPayment({
-            bookingId: booking._id,
-
-            razorpay_order_id: response.razorpay_order_id,
-
-            razorpay_payment_id: response.razorpay_payment_id,
-
-            razorpay_signature: response.razorpay_signature,
-          });
-
-          showToast(
-            "Payment Successful 🎉"
-          );
-
-          navigate(`/booking-success/${booking._id}`);
-        },
-
-        modal: {
-          ondismiss: async function () {
-            await paymentFailed({
+        handler: async (response) => {
+          try {
+            await verifyPayment({
               bookingId: booking._id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
             });
 
-            showToast("Payment Cancelled");
-            navigate(`/shows/movie/${show.movieId._id}`);
+            showToast("Payment successful!");
+            navigate(`/booking-success/${booking._id}`);
+          } catch (error) {
+            console.error(error);
+            showToast(
+              error?.response?.data?.message ||
+                "Payment verification failed. Please contact support.",
+              "error"
+            );
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: async () => {
+            try {
+              await paymentFailed({ bookingId: booking._id });
+            } catch (error) {
+              console.error(error);
+            } finally {
+              setPaymentLoading(false);
+              showToast("Payment cancelled.", "error");
+              navigate(`/shows/movie/${show?.movieId?._id}`);
+            }
           },
         },
       };
 
       const razorpay = new window.Razorpay(options);
 
+      razorpay.on("payment.failed", async (response) => {
+        try {
+          await paymentFailed({ bookingId: booking._id });
+        } catch (error) {
+          console.error(error);
+        }
+
+        setPaymentLoading(false);
+        showToast(
+          response?.error?.description || "Payment failed.",
+          "error"
+        );
+      });
+
       razorpay.open();
+      paymentWindowOpened = true;
     } catch (error) {
-      showToast(error?.message);
+      console.error(error);
+
+      showToast(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to start payment.",
+        "error"
+      );
+
+      setPaymentLoading(false);
+    } finally {
+      if (!paymentWindowOpened) {
+        setPaymentLoading(false);
+      }
     }
   };
 
   const getSeatStyles = (seat, rowIndex, colIndex) => {
     if (isBooked(rowIndex, colIndex)) {
-      return `
-        bg-gray-400
-        border-gray-400
-        text-white
-        opacity-20
-        cursor-not-allowed
-      `;
+      return "cursor-not-allowed border-gray-400 bg-gray-400/40 text-gray-500 opacity-30";
     }
 
-    if (isSelected(rowIndex, colIndex)) {
-      switch (seat.type?.toLowerCase()) {
+    const type = seat.type?.toLowerCase();
+    const selected = isSelected(rowIndex, colIndex);
+
+    if (selected) {
+      switch (type) {
         case "recliner":
-          return `
-          bg-yellow-500
-          border-yellow-500
-          text-white
-        `;
-
+          return "border-yellow-500 bg-yellow-500 text-black";
         case "vip":
-          return `
-          bg-green-500
-          border-green-500
-          text-white
-        `;
+          return "border-green-500 bg-green-500 text-black";
         case "couple":
-          return `
-          bg-cyan-500
-          border-cyan-500
-          text-white
-        `;
-
+          return "border-cyan-500 bg-cyan-500 text-black";
         default:
-          return `
-          bg-pink-500
-          border-pink-500
-          text-white
-        `;
+          return "border-red-500 bg-red-600 text-white shadow-lg shadow-red-600/30";
       }
     }
 
-    switch (seat.type?.toLowerCase()) {
+    switch (type) {
       case "recliner":
-        return `
-          border-yellow-500
-          text-yellow-400
-          hover:bg-yellow-500/10
-        `;
-
+        return "border-yellow-500/70 text-yellow-400 hover:bg-yellow-500/15";
       case "vip":
-        return `
-          border-green-500
-          text-green-400
-          hover:bg-green-500/10
-        `;
+        return "border-green-500/70 text-green-400 hover:bg-green-500/15";
       case "couple":
-        return `
-          border-cyan-500
-          text-cyan-400
-          hover:bg-cyan-500/10
-        `;
-
+        return "border-cyan-500/70 text-cyan-400 hover:bg-cyan-500/15";
       default:
-        return `
-          border-pink-500
-          text-pink-400
-          hover:bg-pink-500/10
-        `;
+        return "border-red-500/60 text-red-400 hover:bg-red-600/15 hover:border-red-500";
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-48">
-        <div className="h-12 w-12 rounded-full border-4 border-pink-500 border-t-transparent animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-800 border-t-red-600" />
+          <p className="text-sm text-gray-400">Loading seat layout...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!show) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-black px-4 text-center text-white">
+        <FaTicketAlt className="text-5xl text-red-500" />
+        <h2 className="text-2xl font-bold">Show not found</h2>
+        <button
+          onClick={() => navigate(-1)}
+          className="rounded-xl bg-red-600 px-6 py-3 font-semibold transition hover:bg-red-700"
+        >
+          Go Back
+        </button>
       </div>
     );
   }
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-black
-        text-white
-      "
-    >
-
-      <div
-        className="
-          border-b
-          border-white/10
-          bg-[#0f0f0f]
-        "
-      >
-        <div
-          className="
-            max-w-7xl
-            mx-auto
-            px-4
-            py-6
-          "
-        >
-          <h1
-            className="
-              text-3xl
-              font-black
-            "
+    <div className="min-h-screen bg-black text-white">
+      <div className="border-b border-gray-800 bg-[#0f0f0f]">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="mb-5 flex items-center gap-2 text-sm text-gray-400 transition hover:text-red-500"
           >
-            Select Your Seats
+            <FaArrowLeft />
+            Back
+          </button>
+
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[3px] text-red-500">
+            CineXpress Booking
+          </p>
+
+          <h1 className="text-3xl font-black sm:text-4xl">
+            Select Your <span className="text-red-500">Seats</span>
           </h1>
 
-          <p
-            className="
-              text-white/50
-              mt-2
-            "
-          >
-            {show?.movie?.title}
+          <p className="mt-2 text-gray-400">
+            {show.movie?.title || show.movieId?.title || "Movie"}
           </p>
         </div>
       </div>
 
-
-      <div
-        className="
-          max-w-7xl
-          mx-auto
-          px-4
-          py-10
-        "
-      >
-        <div
-          className="
-    flex
-    flex-wrap
-    items-center
-    justify-center
-    gap-6
-
-    mt-10
-    mb-14
-  "
-        >
-
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <div className="mb-10 flex flex-wrap items-center justify-center gap-5 sm:gap-6">
           <Legend
-            border="border-pink-500"
+            border="border-red-500"
             text="Regular"
-            textColor="text-pink-400"
+            textColor="text-red-400"
           />
-
-
           <Legend
             border="border-green-500"
             text="VIP"
             textColor="text-green-400"
           />
-
-
           <Legend
             border="border-yellow-500"
             text="Recliner"
             textColor="text-yellow-400"
           />
-
-
           <Legend
             border="border-cyan-500"
             text="Couple"
             textColor="text-cyan-400"
           />
-
-
           <Legend
-            bg="bg-gray-400 opacity-30"
+            bg="bg-gray-400 opacity-50"
             text="Booked"
             textColor="text-gray-500"
           />
-
-
-          <Legend bg="bg-pink-600" text="Selected" textColor="text-pink-300" />
+          <Legend
+            bg="bg-red-600"
+            text="Selected"
+            textColor="text-red-300"
+          />
         </div>
 
-        <div
-          className="
-            mb-16
-          "
-        >
-          <div
-            className="
-              w-full
-              h-3
-
-              rounded-full
-
-              bg-gradient-to-r
-              from-pink-500
-              to-pink-300
-
-              shadow-[0_0_80px_rgba(236,72,153,0.6)]
-            "
-          />
-
-          <p
-            className="
-              text-center
-              text-white/40
-              mt-4
-              tracking-[8px]
-              text-sm
-            "
-          >
+        <div className="mb-14">
+          <div className="h-2 w-full rounded-full bg-gradient-to-r from-red-700 via-red-500 to-red-700 shadow-[0_0_45px_rgba(220,38,38,0.25)]" />
+          <p className="mt-4 text-center text-xs tracking-[8px] text-gray-500 sm:text-sm">
             SCREEN
           </p>
         </div>
 
-
-        <div
-          className="
-            overflow-x-auto
-            scrollbar-hide
-            pb-4
-          "
-        >
-          <div
-            className="
-              flex
-              flex-col
-              gap-1.5
-
-              min-w-max
-              mx-auto
-              w-fit
-            "
-          >
+        <div className="scrollbar-hide overflow-x-auto pb-5">
+          <div className="mx-auto flex w-fit min-w-max flex-col gap-2">
             {seatLayout.map((row, rowIndex) => (
               <div
                 key={rowIndex}
-                className="
-                  flex
-                  items-center
-                  gap-1.5
-                "
+                className="flex items-center justify-center gap-1.5 sm:gap-2"
               >
                 {row.map((seat, colIndex) => {
                   if (seat === null) {
                     return (
                       <div
                         key={colIndex}
-                        className="
-                          w-7
-                          h-7
-                    
-                          sm:w-8
-                          sm:h-8
-                        "
+                        className="h-7 w-7 sm:h-8 sm:w-8"
                       />
                     );
                   }
@@ -458,32 +381,24 @@ const SeatBookingPage = () => {
                   return (
                     <button
                       key={colIndex}
-                      onClick={() => handleSeatClick(seat, rowIndex, colIndex)}
-                      className={`
-                        w-7
-                        h-7
-                    
-                        sm:w-8
-                        sm:h-8
-                    
-                        rounded-md
-                    
-                        border
-                    
-                        flex
-                        items-center
-                        justify-center
-                    
-                        text-[7px]
-                        sm:text-[9px]
-                    
-                        font-semibold
-                    
-                        transition-all
-                        duration-200
-                    
-                        ${getSeatStyles(seat, rowIndex, colIndex)}
-                      `}
+                      type="button"
+                      disabled={isBooked(rowIndex, colIndex) || paymentLoading}
+                      aria-label={`Seat ${seat.seatNumber}${
+                        isBooked(rowIndex, colIndex)
+                          ? ", booked"
+                          : isSelected(rowIndex, colIndex)
+                            ? ", selected"
+                            : ""
+                      }`}
+                      aria-pressed={isSelected(rowIndex, colIndex)}
+                      onClick={() =>
+                        handleSeatClick(seat, rowIndex, colIndex)
+                      }
+                      className={`flex h-7 w-7 items-center justify-center rounded-md border text-[7px] font-semibold transition duration-200 sm:h-8 sm:w-8 sm:text-[9px] ${getSeatStyles(
+                        seat,
+                        rowIndex,
+                        colIndex
+                      )}`}
                     >
                       {seat.seatNumber}
                     </button>
@@ -494,164 +409,68 @@ const SeatBookingPage = () => {
           </div>
         </div>
 
-        <div
-          className="
-            mt-14
-
-            bg-[#111]
-
-            border
-            border-white/10
-
-            rounded-3xl
-
-            p-6
-          "
-        >
-          <div
-            className="
-              flex
-              flex-col
-              md:flex-row
-
-              md:items-center
-              md:justify-between
-
-              gap-6
-            "
-          >
+        <div className="mt-14 rounded-3xl border border-gray-800 bg-[#111111] p-5 sm:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2
-                className="
-                  text-2xl
-                  font-bold
-                "
-              >
-                Selected Seats
-              </h2>
+              <h2 className="text-2xl font-bold">Selected Seats</h2>
 
-              <div
-                className="
-                  flex
-                  flex-wrap
-                  gap-2
-                  mt-4
-                "
-              >
+              <div className="mt-4 flex flex-wrap gap-2">
                 {selectedSeats.length === 0 ? (
-                  <p className="text-white/40">No seats selected</p>
+                  <p className="text-gray-500">No seats selected</p>
                 ) : (
                   selectedSeats.map((seat) => (
-                    <div
+                    <span
                       key={seat.seatNumber}
-                      className="
-                        px-4
-                        py-2
-
-                        rounded-full
-
-                        bg-pink-500/10
-
-                        border
-                        border-pink-500/30
-
-                        text-pink-400
-                      "
+                      className="rounded-full border border-red-500/30 bg-red-600/10 px-4 py-2 text-sm font-medium text-red-400"
                     >
                       {seat.seatNumber}
-                    </div>
+                    </span>
                   ))
                 )}
               </div>
+
+              {selectedSeats.length > 0 && (
+                <p className="mt-4 text-sm text-gray-500">
+                  {selectedSeats.length} seat
+                  {selectedSeats.length !== 1 ? "s" : ""} selected
+                </p>
+              )}
             </div>
 
-            <div
-              className="
-                flex
-                flex-col
-                items-start
-                md:items-end
-              "
-            >
-              <h2
-                className="
-                  text-4xl
-                  font-black
-                  text-pink-400
-                "
-              >
-                ₹{totalAmount}
+            <div className="flex flex-col items-start md:items-end">
+              <p className="text-sm text-gray-400">Total Amount</p>
+              <h2 className="mt-1 text-4xl font-black text-red-500">
+                ₹{totalAmount.toLocaleString("en-IN")}
               </h2>
 
               <button
                 onClick={handleReserveSeats}
-                disabled={selectedSeats.length === 0}
-                className="
-                  mt-4
-
-                  bg-pink-600
-
-                  hover:bg-pink-500
-
-                  disabled:opacity-50
-                  disabled:cursor-not-allowed
-
-                  px-8
-                  py-4
-
-                  rounded-2xl
-
-                  font-bold
-
-                  transition-all
-                "
+                disabled={selectedSeats.length === 0 || paymentLoading}
+                className="mt-4 flex items-center justify-center gap-3 rounded-2xl bg-red-600 px-8 py-4 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Pay Now
+                <FaCreditCard />
+                {paymentLoading ? "Processing..." : "Pay Now"}
               </button>
             </div>
           </div>
         </div>
       </div>
+
       {toast && (
         <div
-          className={`
-            fixed
-            top-6
-            right-6
-          
-            z-[9999]
-          
-            px-6
-            py-4
-          
-            rounded-2xl
-          
-            shadow-2xl
-            backdrop-blur-xl
-          
-            border
-          
-            text-white
-            font-semibold
-          
-            animate-[slideIn_.3s_ease]
-          
-            ${
-              toast.type === "error"
-                ? `
-                  bg-red-500/20
-                  border-red-500/40
-                  text-red-300
-                `
-                : `
-                  bg-pink-500/20
-                  border-pink-500/40
-                  text-pink-200
-                `
-            }
-          `}
+          role="status"
+          className={`fixed right-4 top-5 z-[9999] flex max-w-[calc(100%-2rem)] items-center gap-3 rounded-2xl border px-5 py-4 font-semibold shadow-2xl sm:right-6 sm:top-6 ${
+            toast.type === "error"
+              ? "border-red-500/40 bg-[#260b0b] text-red-300"
+              : "border-green-500/30 bg-[#0b2115] text-green-300"
+          }`}
         >
-          {toast.message}
+          {toast.type === "error" ? (
+            <FaTicketAlt className="shrink-0" />
+          ) : (
+            <FaCheckCircle className="shrink-0" />
+          )}
+          <span>{toast.message}</span>
         </div>
       )}
     </div>

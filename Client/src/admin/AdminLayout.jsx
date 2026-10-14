@@ -2,10 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   FaFilm,
   FaUsers,
-  FaCog,
   FaTicketAlt,
   FaTv,
-  FaThLarge,
   FaUserTie,
   FaBell,
   FaBars,
@@ -18,207 +16,183 @@ import { getUnreadNotificationCount } from "../services/notificationApi";
 
 function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const [notificationCount, setNotificationCount] = useState(0);
 
   const location = useLocation();
-
+  const navigate = useNavigate();
   const currentPage = location.pathname.split("/")[2] || "theatre";
   const { user } = useSelector((state) => state.auth);
 
-  const navigate = useNavigate();
-
   useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const res = await getUnreadNotificationCount();
+        setNotificationCount(res.count || 0);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
     fetchNotificationCount();
   }, []);
 
-  const fetchNotificationCount = async () => {
-    try {
-      const res = await getUnreadNotificationCount();
-
-      setNotificationCount(res.count || 0);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   const menu = [
     {
       name: "Theatres",
-
       path: "/admin/theatre",
-
       icon: <FaFilm />,
     },
-
     {
       name: "Screens",
-
       path: "/admin/screens",
-
       icon: <FaTv />,
     },
-
     {
       name: "Shows",
-
       path: "/admin/shows",
-
       icon: <FaTicketAlt />,
     },
-
     {
       name: "Movies",
-
       path: "/admin/movies",
-
       icon: <FaFilm />,
     },
-
     {
       name: "Actors",
-
       path: "/admin/actors",
-
       icon: <FaUserTie />,
     },
-
     {
       name: "Users",
-
       path: "/admin/users",
-
       icon: <FaUsers />,
     },
-
     {
       name: "Bookings",
-
       path: "/admin/bookings",
-
       icon: <FaTicketAlt />,
     },
-
     {
       name: "Languages / Genre",
-
       path: "/admin/categories",
-
       icon: <FaTags />,
     },
   ];
 
+  const pageTitles = {
+    theatre: "Theatres",
+    screens: "Screens",
+    shows: "Shows",
+    movies: "Movies",
+    actors: "Actors",
+    users: "Users",
+    bookings: "Bookings",
+    categories: "Languages / Genre",
+    notification: "Notifications",
+  };
+
   return (
-    <div className="flex h-screen bg-[#0f0f0f] text-white font-[Poppins] overflow-hidden">
+    <div className="flex h-dvh w-full overflow-hidden bg-[#080808] font-[Poppins] text-white">
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
-        className={`
-          fixed md:static top-0 left-0 z-50
-          h-screen w-[260px]
-          bg-[#1a1a1a]
-          p-6
-          flex flex-col
-          shadow-2xl
-          transform transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-        `}
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-[260px] shrink-0 flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-r border-white/[0.06] bg-[#111111] p-5 shadow-2xl transition-transform duration-300 md:static md:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <div className="flex items-center justify-between mb-10">
-          <h1 className="text-xl font-bold text-[#8b5c76]">🎬 Admin Panel</h1>
+        <div className="mb-10 flex min-h-12 items-center justify-between gap-3 px-1">
+          <h1 className="whitespace-nowrap text-xl font-bold text-red-500">
+            🎬 Admin Panel
+          </h1>
 
-          <button className="md:hidden" onClick={() => setSidebarOpen(false)}>
-            <FaTimes className="text-xl" />
+          <button
+            type="button"
+            aria-label="Close sidebar"
+            className="rounded-lg p-2 text-gray-400 transition hover:bg-white/5 hover:text-white md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <FaTimes className="text-lg" />
           </button>
         </div>
 
-        <nav className="space-y-3">
-          {menu.map((item, index) => (
+        <nav className="flex flex-col gap-2">
+          {menu.map((item) => (
             <NavLink
-              key={index}
+              key={item.path}
               to={item.path}
-              end={item.path === "/admin"}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group
-                ${
-                  isActive || (item.path === "/admin/theatre" && currentPage === "theatre")
-                    ? "bg-[#8b5c76]/20 text-[#8b5c76]"
-                    : "hover:bg-[#252525] text-gray-300"
+                `group flex min-h-12 items-center gap-3 rounded-xl border px-4 py-3 transition-all duration-200 ${
+                  isActive
+                    ? "border-red-500/15 bg-red-500/10 text-red-400"
+                    : "border-transparent text-gray-400 hover:bg-white/[0.04] hover:text-white"
                 }`
               }
             >
-              <span className="group-hover:scale-110 transition">
+              <span className="shrink-0 text-lg transition-transform group-hover:scale-110">
                 {item.icon}
               </span>
 
-              <span className="text-sm">{item.name}</span>
+              <span className="truncate text-sm font-medium">
+                {item.name}
+              </span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="mt-auto text-xs text-gray-500">© 2026 Admin Panel</div>
+        <div className="mt-auto shrink-0 border-t border-white/[0.06] pt-5 text-xs text-gray-600">
+          © 2026 CineXpress Admin
+        </div>
       </aside>
 
-      <div className="flex-1 flex flex-col w-full overflow-hidden">
-        <header className="h-[70px] bg-[#1a1a1a] flex items-center justify-between px-4 md:px-6 shadow-md">
-          <div className="flex items-center gap-4">
-            <button className="md:hidden" onClick={() => setSidebarOpen(true)}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="relative z-30 flex h-[70px] min-h-[70px] w-full items-center justify-between gap-3 border-b border-white/[0.06] bg-[#111111] px-4 shadow-md sm:px-6">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              aria-label="Open sidebar"
+              className="shrink-0 rounded-lg p-2 text-gray-300 transition hover:bg-white/5 hover:text-red-400 md:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
               <FaBars className="text-xl" />
             </button>
 
-            <h2 className="text-lg md:text-xl font-semibold capitalize">
-              {currentPage}
+            <h2 className="truncate text-lg font-bold capitalize sm:text-xl">
+              {pageTitles[currentPage] ||
+                currentPage.replace(/-/g, " ")}
             </h2>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-6">
-            <div
-              className="relative cursor-pointer"
-              onClick={() => {
-                setNotificationCount(0);
-                navigate("notification");
-              }}
+          <div className="flex shrink-0 items-center gap-3 sm:gap-6">
+            <button
+              type="button"
+              aria-label="View notifications"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl text-gray-400 transition hover:bg-red-500/10 hover:text-red-400"
+              onClick={() => {setNotificationCount(0);navigate("/admin/notification")}}
             >
-              <FaBell className="text-gray-300 text-lg hover:text-white transition" />
+              <FaBell className="text-lg" />
 
               {notificationCount > 0 && (
-                <span
-                  className="
-                      absolute
-                
-                      -top-2
-                      -right-2
-                
-                      bg-[#8b5c76]
-                
-                      text-[10px]
-                
-                      min-w-[20px]
-                      h-5
-                
-                      px-1
-                
-                      rounded-full
-                
-                      flex
-                      items-center
-                      justify-center
-                    "
-                >
-                  {notificationCount}
+                <span className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                  {notificationCount > 99 ? "99+" : notificationCount}
                 </span>
               )}
-            </div>
+            </button>
 
-            <div
-              className="flex items-center gap-3 cursor-pointer"
+            <button
+              type="button"
+              className="flex min-w-0 items-center gap-2 rounded-xl p-1.5 transition hover:bg-white/[0.04] sm:gap-3 sm:px-2"
               onClick={() => navigate("/profile")}
             >
               <img
@@ -226,18 +200,21 @@ function AdminLayout() {
                   user?.avatar ||
                   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjtHioeP3798yMa6QIJsA3piLZlDdOMuA17Q&s"
                 }
-                className="w-9 h-9 rounded-full border border-gray-600 object-cover"
+                alt={user?.name || "User"}
+                className="h-9 w-9 shrink-0 rounded-full border border-red-500/30 object-cover"
               />
 
-              <span className="hidden sm:block text-sm text-gray-300">
-                {user.name}
+              <span className="hidden max-w-[150px] truncate text-sm font-medium text-gray-300 sm:block">
+                {user?.name || "Admin"}
               </span>
-            </div>
+            </button>
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-          <Outlet />
+        <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-[#080808] p-4 sm:p-5 lg:p-7">
+          <div className="w-full min-w-0 max-w-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

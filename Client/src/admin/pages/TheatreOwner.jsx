@@ -1,46 +1,34 @@
 import React, { useEffect, useRef, useState } from "react";
-
-import { FaPlus, FaTrash, FaPen } from "react-icons/fa";
-
+import { FaPlus, FaTrash, FaPen, FaSpinner, FaImage } from "react-icons/fa";
 import {
   createTheatre,
   editTheatre,
   getTheatreById,
 } from "../../services/theatreApi";
-
 import LocationPicker from "../../Components/Map/LocationPicker";
-
 import { useNavigate, useParams } from "react-router-dom";
 
 function TheatreOwners() {
   const navigate = useNavigate();
-
   const { id } = useParams();
-
   const isEdit = Boolean(id);
 
   const [formData, setFormData] = useState({
     name: "",
-
     ownerEmail: "",
-
     city: "",
-
     address: "",
   });
 
   const [position, setPosition] = useState(null);
-
   const errorRef = useRef(null);
-
   const [bannerImage, setBannerImage] = useState("");
-
   const [bannerPreview, setBannerPreview] = useState("");
-
   const [gallery, setGallery] = useState([]);
-
   const [loading, setLoading] = useState(false);
-
+  const [fetching, setFetching] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -51,13 +39,13 @@ function TheatreOwners() {
 
   const fetchTheatre = async () => {
     try {
-      setLoading(true);
+      setFetching(true);
+      setError("");
 
       const res = await getTheatreById(id);
 
       if (!res.success) {
-        setError(res.message);
-
+        setError(res.message || "Failed to fetch theatre");
         return;
       }
 
@@ -65,152 +53,206 @@ function TheatreOwners() {
 
       setFormData({
         name: theatre.name || "",
-
         ownerEmail: theatre.ownerEmail || "",
-
         city: theatre.city || "",
-
         address: theatre.address || "",
       });
 
-      setBannerImage(theatre.bannerImage);
-
-      setBannerPreview(theatre.bannerImage);
-
+      setBannerImage(theatre.bannerImage || "");
+      setBannerPreview(theatre.bannerImage || "");
       setGallery(theatre.gallery || []);
 
       if (theatre.location) {
-        if (theatre.location) {
-
-          if (
-            theatre.location.lat !== undefined &&
-            theatre.location.lng !== undefined
-          ) {
-            setPosition([theatre.location.lat, theatre.location.lng]);
-          }
-
-          else if (theatre.location.coordinates) {
-            setPosition([
-              theatre.location.coordinates[1],
-
-              theatre.location.coordinates[0],
-            ]);
-          }
+        if (
+          theatre.location.lat !== undefined &&
+          theatre.location.lng !== undefined
+        ) {
+          setPosition([theatre.location.lat, theatre.location.lng]);
+        } else if (theatre.location.coordinates) {
+          setPosition([
+            theatre.location.coordinates[1],
+            theatre.location.coordinates[0],
+          ]);
         }
       }
     } catch (error) {
       setError(error?.message || "Failed to fetch theatre");
     } finally {
-      setLoading(false);
+      setFetching(false);
     }
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    const { name, value } = e.target;
 
-      [e.target.name]: e.target.value,
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setError("");
   };
 
-
   const uploadToCloudinary = async (file) => {
-    const formData = new FormData();
+    const data = new FormData();
 
-    formData.append("file", file);
-
-    formData.append(
+    data.append("file", file);
+    data.append(
       "upload_preset",
-
-      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET_THEATRES_NAME,
+      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET_THEATRES_NAME
     );
 
-    const res = await fetch(
-      import.meta.env.VITE_CLOUDINARY_URL,
+    const response = await fetch(import.meta.env.VITE_CLOUDINARY_URL, {
+      method: "POST",
+      body: data,
+    });
 
-      {
-        method: "POST",
+    const result = await response.json();
 
-        body: formData,
-      },
-    );
+    if (!response.ok || !result.secure_url) {
+      throw new Error(result.error?.message || "Image upload failed");
+    }
 
-    return await res.json();
+    return result;
+  };
+
+  const validateImage = (file) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/avif",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError("Please select a JPG, PNG, WEBP, or AVIF image.");
+      return false;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Each image must be smaller than 5MB.");
+      return false;
+    }
+
+    return true;
   };
 
   const handleBannerUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
 
     if (!file) return;
 
-    try {
-      setLoading(true);
+    setError("");
 
-      setBannerPreview(URL.createObjectURL(file));
+    if (!validateImage(file)) {
+      e.target.value = "";
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+
+    try {
+      setUploadingBanner(true);
+      setBannerPreview(previewUrl);
 
       const data = await uploadToCloudinary(file);
-
       setBannerImage(data.secure_url);
     } catch (error) {
-      console.log(error);
+      setError(error?.message || "Banner upload failed");
+      setBannerPreview(bannerImage || "");
+      URL.revokeObjectURL(previewUrl);
     } finally {
-      setLoading(false);
+      setUploadingBanner(false);
+      e.target.value = "";
     }
   };
 
   const handleGalleryUpload = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
 
     if (!files.length) return;
 
+    setError("");
+
+    const validFiles = files.filter((file) => validateImage(file));
+
+    if (validFiles.length !== files.length) {
+      e.target.value = "";
+      return;
+    }
+
     try {
-      setLoading(true);
+      setUploadingGallery(true);
 
       const uploaded = [];
 
-      for (let file of files) {
+      for (const file of validFiles) {
         const data = await uploadToCloudinary(file);
-
         uploaded.push(data.secure_url);
       }
 
       setGallery((prev) => [...prev, ...uploaded]);
     } catch (error) {
-      console.log(error);
+      setError(error?.message || "Gallery image upload failed");
     } finally {
-      setLoading(false);
+      setUploadingGallery(false);
+      e.target.value = "";
     }
   };
 
   const removeGalleryImage = (index) => {
-    const updated = gallery.filter((_, i) => i !== index);
-
-    setGallery(updated);
+    setGallery((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading || uploadingBanner || uploadingGallery) return;
+
     try {
+      setLoading(true);
       setError("");
 
+      if (!formData.name.trim()) {
+        setError("Theatre name is required.");
+        return;
+      }
+
+      if (!formData.ownerEmail.trim()) {
+        setError("Owner email is required.");
+        return;
+      }
+
+      if (!formData.city.trim()) {
+        setError("City is required.");
+        return;
+      }
+
+      if (!formData.address.trim()) {
+        setError("Address is required.");
+        return;
+      }
+
+      if (!bannerImage) {
+        setError("Please upload a theatre banner image.");
+        return;
+      }
+
+      if (!position) {
+        setError("Please select the theatre location on the map.");
+        return;
+      }
+
       const payload = {
-        name: formData.name,
-
-        ownerEmail: formData.ownerEmail,
-
-        city: formData.city,
-
-        address: formData.address,
-
+        name: formData.name.trim(),
+        ownerEmail: formData.ownerEmail.trim(),
+        city: formData.city.trim(),
+        address: formData.address.trim(),
         bannerImage,
-
         gallery,
-
         location: {
-          lat: position?.[0],
-
-          lng: position?.[1],
+          lat: position[0],
+          lng: position[1],
         },
       };
 
@@ -219,12 +261,11 @@ function TheatreOwners() {
         : await createTheatre(payload);
 
       if (!res.success) {
-        setError(res.message);
+        setError(res.message || `Failed to ${isEdit ? "update" : "create"} theatre`);
 
         setTimeout(() => {
           errorRef.current?.scrollIntoView({
             behavior: "smooth",
-
             block: "center",
           });
         }, 100);
@@ -237,346 +278,273 @@ function TheatreOwners() {
       setError(
         error?.response?.data?.message ||
           error?.message ||
-          `Failed to ${isEdit ? "update" : "create"} theatre`,
+          `Failed to ${isEdit ? "update" : "create"} theatre`
       );
 
       setTimeout(() => {
         errorRef.current?.scrollIntoView({
           behavior: "smooth",
-
           block: "center",
         });
       }, 100);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const inputClass =
+    "w-full rounded-xl border border-white/10 bg-[#080808] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/10";
+
+  const labelClass = "mb-2 block text-sm font-medium text-gray-300";
+
+  if (fetching) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 bg-[#080808] text-white">
+        <FaSpinner className="animate-spin text-3xl text-red-500" />
+        <p className="text-sm text-gray-400">Loading theatre details...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full min-w-0 max-w-7xl text-white">
+      <div className="mb-8 flex items-center gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-2xl">
+          🎭
+        </div>
 
-      <div
-        className="
-          mb-10
-        "
-      >
-        <h1
-          className="
-            text-3xl
-            font-bold
-          "
-        >
-          {isEdit ? "Edit Theatre 🎭" : "Create Theatre 🎭"}
-        </h1>
-
-        <p
-          className="
-            text-gray-400
-            mt-2
-          "
-        >
-          {isEdit
-            ? "Update theatre details"
-            : "Create theatres and invite owners"}
-        </p>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {isEdit ? "Edit Theatre" : "Create Theatre"}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {isEdit
+              ? "Update theatre details and images"
+              : "Create a theatre and invite its owner"}
+          </p>
+        </div>
       </div>
 
       {error && (
         <div
           ref={errorRef}
-          className="
-              mb-6
-
-              bg-red-500/10
-
-              border
-              border-red-500/30
-
-              rounded-2xl
-
-              p-5
-
-              text-red-400
-            "
+          className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400"
         >
-          {error}
+          <span className="font-bold">!</span>
+          <p>{error}</p>
         </div>
       )}
 
-
       <form
         onSubmit={handleSubmit}
-        className="
-          grid
-          grid-cols-1
-          md:grid-cols-2
-
-          gap-4
-
-          mb-10
-        "
+        className="space-y-8 rounded-2xl border border-white/[0.07] bg-[#111111] p-4 shadow-2xl sm:p-6 lg:p-8"
       >
-        <input
-          type="text"
-          name="name"
-          placeholder="
-            Theatre Name
-          "
-          value={formData.name}
-          onChange={handleChange}
-          className="
-            bg-[#1a1a1a]
-
-            border
-            border-gray-800
-
-            rounded-2xl
-
-            px-5
-            py-4
-
-            outline-none
-          "
-        />
-
-        <input
-          type="email"
-          name="ownerEmail"
-          placeholder="
-            Owner Email
-          "
-          value={formData.ownerEmail}
-          onChange={handleChange}
-          className="
-            bg-[#1a1a1a]
-
-            border
-            border-gray-800
-
-            rounded-2xl
-
-            px-5
-            py-4
-
-            outline-none
-          "
-        />
-
-        <input
-          type="text"
-          name="city"
-          placeholder="
-            City
-          "
-          value={formData.city}
-          onChange={handleChange}
-          className="
-            bg-[#1a1a1a]
-
-            border
-            border-gray-800
-
-            rounded-2xl
-
-            px-5
-            py-4
-
-            outline-none
-          "
-        />
-
-        <input
-          type="text"
-          name="address"
-          placeholder="
-            Address
-          "
-          value={formData.address}
-          onChange={handleChange}
-          className="
-            bg-[#1a1a1a]
-
-            border
-            border-gray-800
-
-            rounded-2xl
-
-            px-5
-            py-4
-
-            outline-none
-          "
-        />
-
-        <div
-          className="
-            md:col-span-2
-
-            space-y-4
-          "
-        >
-          <h2
-            className="
-              text-xl
-              font-semibold
-            "
-          >
-            Banner Image
-          </h2>
-
-          <input type="file" accept="image/*" onChange={handleBannerUpload} />
-
-          {bannerPreview && (
-            <img
-              src={bannerPreview}
-              alt=""
-              className="
-                  w-full
-                  h-72
-
-                  object-cover
-
-                  rounded-2xl
-                "
-            />
-          )}
-        </div>
-
-        <div
-          className="
-            md:col-span-2
-
-            space-y-4
-          "
-        >
-          <div>
-            <h2
-              className="
-                text-xl
-                font-semibold
-              "
-            >
-              Theatre Location
-            </h2>
-
-            <p
-              className="
-                text-gray-400
-                text-sm
-                mt-2
-              "
-            >
-              Select theatre location from map
+        <section className="space-y-5">
+          <div className="border-b border-white/[0.06] pb-3">
+            <h2 className="text-base font-semibold">Theatre Information</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Enter the theatre and owner details.
             </p>
           </div>
 
-          <LocationPicker position={position} setPosition={setPosition} />
-        </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div>
+              <label className={labelClass}>Theatre Name</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter theatre name"
+                value={formData.name}
+                onChange={handleChange}
+                className={inputClass}
+                required
+              />
+            </div>
 
-        <div
-          className="
-            md:col-span-2
+            <div>
+              <label className={labelClass}>Owner Email</label>
+              <input
+                type="email"
+                name="ownerEmail"
+                placeholder="owner@example.com"
+                value={formData.ownerEmail}
+                onChange={handleChange}
+                className={inputClass}
+                required
+              />
+            </div>
 
-            space-y-4
-          "
-        >
-          <h2
-            className="
-              text-xl
-              font-semibold
-            "
-          >
-            Theatre Gallery
-          </h2>
+            <div>
+              <label className={labelClass}>City</label>
+              <input
+                type="text"
+                name="city"
+                placeholder="Enter city"
+                value={formData.city}
+                onChange={handleChange}
+                className={inputClass}
+                required
+              />
+            </div>
 
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleGalleryUpload}
-          />
-
-          <div
-            className="
-              grid
-              grid-cols-2
-              md:grid-cols-4
-
-              gap-4
-            "
-          >
-            {gallery.map((img, index) => (
-              <div
-                key={index}
-                className="
-                      relative
-                    "
-              >
-                <img
-                  src={img}
-                  alt=""
-                  className="
-                        h-40
-                        w-full
-
-                        object-cover
-
-                        rounded-2xl
-                      "
-                />
-
-                <button
-                  type="button"
-                  onClick={() => removeGalleryImage(index)}
-                  className="
-                        absolute
-                        top-2
-                        right-2
-
-                        w-8
-                        h-8
-
-                        rounded-full
-
-                        bg-red-500
-                      "
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+            <div>
+              <label className={labelClass}>Address</label>
+              <input
+                type="text"
+                name="address"
+                placeholder="Enter full address"
+                value={formData.address}
+                onChange={handleChange}
+                className={inputClass}
+                required
+              />
+            </div>
           </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="border-b border-white/[0.06] pb-3">
+            <h2 className="text-base font-semibold">Banner Image</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Upload a theatre banner image. Maximum size: 5MB.
+            </p>
+          </div>
+
+          <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-white/10 bg-[#080808] p-6 text-center transition hover:border-red-500/60">
+            {uploadingBanner ? (
+              <>
+                <FaSpinner className="animate-spin text-2xl text-red-500" />
+                <span className="text-sm text-gray-400">Uploading banner...</span>
+              </>
+            ) : (
+              <>
+                <FaImage className="text-3xl text-red-500" />
+                <span className="text-sm font-medium text-gray-300">
+                  Click to upload banner
+                </span>
+                <span className="text-xs text-gray-600">
+                  JPG, PNG, WEBP, AVIF
+                </span>
+              </>
+            )}
+
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              onChange={handleBannerUpload}
+              disabled={uploadingBanner || loading}
+              className="hidden"
+            />
+          </label>
+
+          {bannerPreview && (
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-[#080808]">
+              <img
+                src={bannerPreview}
+                alt="Theatre banner preview"
+                className="h-56 w-full object-cover sm:h-72"
+              />
+              <div className="border-t border-white/[0.06] px-4 py-3 text-xs text-gray-500">
+                {bannerImage ? "Banner uploaded successfully" : "Banner preview"}
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div className="border-b border-white/[0.06] pb-3">
+            <h2 className="text-base font-semibold">Theatre Location</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Select the theatre location on the map.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-[#080808] p-2 sm:p-4">
+            <LocationPicker position={position} setPosition={setPosition} />
+          </div>
+
+          {position && (
+            <p className="text-xs text-gray-500">
+              Selected coordinates: {position[0]}, {position[1]}
+            </p>
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div className="border-b border-white/[0.06] pb-3">
+            <h2 className="text-base font-semibold">Theatre Gallery</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Upload multiple images. Each image must be smaller than 5MB.
+            </p>
+          </div>
+
+          <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border border-white/10 bg-[#080808] px-4 py-4 text-sm text-gray-300 transition hover:border-red-500/50 hover:text-red-400">
+            {uploadingGallery ? (
+              <FaSpinner className="animate-spin text-red-500" />
+            ) : (
+              <FaPlus className="text-red-500" />
+            )}
+            {uploadingGallery ? "Uploading gallery images..." : "Add Gallery Images"}
+            <input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              onChange={handleGalleryUpload}
+              disabled={uploadingGallery || loading}
+              className="hidden"
+            />
+          </label>
+
+          {gallery.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {gallery.map((img, index) => (
+                <div
+                  key={`${img}-${index}`}
+                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#080808]"
+                >
+                  <img
+                    src={img}
+                    alt={`Theatre gallery ${index + 1}`}
+                    className="h-36 w-full object-cover sm:h-40"
+                  />
+
+                  <button
+                    type="button"
+                    aria-label={`Remove gallery image ${index + 1}`}
+                    onClick={() => removeGalleryImage(index)}
+                    className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white shadow-lg transition hover:bg-red-700"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-white/10 bg-[#080808] px-4 py-8 text-center text-sm text-gray-600">
+              No gallery images added yet.
+            </div>
+          )}
+        </section>
+
+        <div className="border-t border-white/[0.06] pt-6">
+          <button
+            type="submit"
+            disabled={loading || uploadingBanner || uploadingGallery}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          >
+            {loading ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                {isEdit ? "Updating Theatre..." : "Creating Theatre..."}
+              </>
+            ) : (
+              <>
+                {isEdit ? <FaPen /> : <FaPlus />}
+                {isEdit ? "Update Theatre" : "Create Theatre"}
+              </>
+            )}
+          </button>
         </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="
-            md:col-span-2
-
-            flex
-            items-center
-            justify-center
-            gap-2
-
-            bg-gradient-to-r
-            from-[#8b5c76]
-            to-[#6f4660]
-
-            px-6
-            py-4
-
-            rounded-2xl
-
-            font-medium
-          "
-        >
-          {isEdit ? <FaPen /> : <FaPlus />}
-
-          {loading
-            ? "Please wait..."
-            : isEdit
-              ? "Update Theatre"
-              : "Create Theatre"}
-        </button>
       </form>
     </div>
   );

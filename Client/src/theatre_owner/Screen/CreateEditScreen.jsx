@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from "react";
-
 import { useNavigate, useParams } from "react-router-dom";
-
+import {
+  FaArrowLeft,
+  FaPlus,
+  FaMinus,
+  FaTrash,
+  FaCouch,
+  FaTicketAlt,
+  FaCheck,
+  FaSpinner,
+  FaExclamationCircle,
+  FaEraser,
+  FaMousePointer,
+  FaUndo,
+  FaRedo,
+} from "react-icons/fa";
 import {
   createScreen,
   getScreenById,
@@ -9,27 +22,77 @@ import {
 } from "../../services/screensApi";
 
 const seatTypes = [
-  "regular",
-  "vip",
-  "recliner",
-  "couple",
+  {
+    value: "regular",
+    label: "Regular",
+    short: "R",
+    price: 150,
+    color: "border-emerald-500 bg-emerald-500/15 text-emerald-400",
+    active: "border-emerald-500 bg-emerald-500/20 text-emerald-300",
+  },
+  {
+    value: "vip",
+    label: "VIP",
+    short: "V",
+    price: 300,
+    color: "border-yellow-500 bg-yellow-500/15 text-yellow-400",
+    active: "border-yellow-400 bg-yellow-500/25 text-yellow-300",
+  },
+  {
+    value: "recliner",
+    label: "Recliner",
+    short: "RL",
+    price: 500,
+    color: "border-blue-500 bg-blue-500/15 text-blue-400",
+    active: "border-blue-400 bg-blue-500/25 text-blue-300",
+  },
+  {
+    value: "couple",
+    label: "Couple",
+    short: "C",
+    price: 700,
+    color: "border-pink-500 bg-pink-500/15 text-pink-400",
+    active: "border-pink-400 bg-pink-500/25 text-pink-300",
+  },
 ];
 
-const CreateEditScreen = () => {
-  const { screenId, id } = useParams();
+const createSeat = (rowIndex, colIndex, type = "regular") => ({
+  seatNumber: `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`,
+  type,
+  status: "available",
+});
 
-  const [toast, setToast] = useState("");
+const generateLayout = (rows, cols) =>
+  Array.from({ length: rows }, (_, rowIndex) =>
+    Array.from({ length: cols }, (_, colIndex) =>
+      createSeat(rowIndex, colIndex)
+    )
+  );
+
+const regenerateSeatNumbers = (layout) =>
+  layout.map((row, rowIndex) =>
+    row.map((seat, colIndex) =>
+      seat
+        ? {
+            ...seat,
+            seatNumber: `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`,
+          }
+        : null
+    )
+  );
+
+function CreateEditScreen() {
+  const { screenId, id } = useParams();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
     screenType: "2D",
   });
 
-  const [rows] = useState(6);
-
-  const [cols] = useState(12);
-
-  const [seatLayout, setSeatLayout] = useState([]);
+  const [seatLayout, setSeatLayout] = useState(() =>
+    generateLayout(6, 12)
+  );
 
   const [prices, setPrices] = useState({
     regular: 150,
@@ -38,707 +101,828 @@ const CreateEditScreen = () => {
     couple: 700,
   });
 
-  const navigate = useNavigate();
+  const [activeTool, setActiveTool] = useState("regular");
+  const [loading, setLoading] = useState(Boolean(screenId));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const [dragVisited, setDragVisited] = useState(new Set());
 
-  useEffect(() => {
-    generateLayout(rows, cols);
-  }, []);
+  const isEditMode = Boolean(screenId);
 
   useEffect(() => {
     if (!screenId) return;
 
+    let cancelled = false;
+
     const fetchScreen = async () => {
       try {
-        const res = await getScreenById(screenId);
+        setLoading(true);
+        setError("");
 
+        const res = await getScreenById(screenId);
         const screen = res.screen;
 
+        if (cancelled) return;
+
         setFormData({
-          name: screen.name,
-          screenType: screen.screenType,
+          name: screen.name || "",
+          screenType: screen.screenType || "2D",
         });
 
-        setPrices(screen.prices);
+        setPrices((previous) => ({
+          ...previous,
+          ...(screen.prices || {}),
+        }));
 
-        setSeatLayout(screen.seatLayout);
-      } catch (error) {
-        console.log(error);
+        setSeatLayout(
+          screen.seatLayout?.length
+            ? screen.seatLayout
+            : generateLayout(6, 12)
+        );
+      } catch (err) {
+        if (!cancelled) {
+          setError(err?.message || "Failed to load screen details.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchScreen();
+
+    return () => {
+      cancelled = true;
+    };
   }, [screenId]);
 
-  const generateLayout = (totalRows, totalCols) => {
-    const layout = [];
+  useEffect(() => {
+    if (!dragging) return;
 
-    for (let i = 0; i < totalRows; i++) {
-      const row = [];
+    const stopDragging = () => setDragging(false);
 
-      for (let j = 0; j < totalCols; j++) {
-        row.push({
-          seatNumber: `${String.fromCharCode(65 + i)}${j + 1}`,
-          type: "regular",
-          status: "available",
-        });
+    window.addEventListener("pointerup", stopDragging);
+    window.addEventListener("pointercancel", stopDragging);
+
+    return () => {
+      window.removeEventListener("pointerup", stopDragging);
+      window.removeEventListener("pointercancel", stopDragging);
+    };
+  }, [dragging]);
+
+  const showToast = (message) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 2200);
+  };
+
+  const updateSeat = (rowIndex, colIndex, tool = activeTool) => {
+    setSeatLayout((previous) => {
+      const updated = previous.map((row) => [...row]);
+      const seat = updated[rowIndex]?.[colIndex];
+
+      if (tool === "gap") {
+        if (seat) {
+          updated[rowIndex][colIndex] = null;
+        } else {
+          updated[rowIndex][colIndex] = createSeat(rowIndex, colIndex);
+        }
+      } else if (seat) {
+        updated[rowIndex][colIndex] = {
+          ...seat,
+          type: tool,
+        };
       }
 
-      layout.push(row);
-    }
-
-    setSeatLayout(layout);
+      return updated;
+    });
   };
 
-  const regenerateSeatNumbers = (layout) => {
-    return layout.map((row, rowIndex) =>
-      row.map((seat, colIndex) => {
-        if (seat === null) return null;
+  const handleSeatPointerDown = (event, rowIndex, colIndex) => {
+    if (event.button !== 0) return;
 
-        return {
-          ...seat,
-
-          seatNumber: `${String.fromCharCode(
-            65 + rowIndex,
-          )}${colIndex + 1}`,
-        };
-      }),
-    );
+    event.preventDefault();
+    setDragging(true);
+    setDragVisited(new Set([`${rowIndex}-${colIndex}`]));
+    updateSeat(rowIndex, colIndex);
   };
 
-  const toggleGap = (rowIndex, colIndex) => {
-    const updated = [...seatLayout];
+  const handleSeatPointerEnter = (rowIndex, colIndex) => {
+    if (!dragging) return;
 
-    if (updated[rowIndex][colIndex] === null) {
-      updated[rowIndex][colIndex] = {
-        seatNumber: `${String.fromCharCode(
-          65 + rowIndex,
-        )}${colIndex + 1}`,
-        type: "regular",
-        status: "available",
-      };
-    } else {
-      updated[rowIndex][colIndex] = null;
-    }
+    const key = `${rowIndex}-${colIndex}`;
 
-    setSeatLayout(updated);
+    if (dragVisited.has(key)) return;
+
+    setDragVisited((previous) => new Set([...previous, key]));
+    updateSeat(rowIndex, colIndex);
   };
 
-  const changeSeatType = (rowIndex, colIndex) => {
-    const updated = [...seatLayout];
+  const handleSeatClick = (rowIndex, colIndex) => {
+    if (dragging) return;
+    updateSeat(rowIndex, colIndex);
+  };
 
-    const seat = updated[rowIndex][colIndex];
-
-    if (!seat) return;
-
-    const currentIndex = seatTypes.indexOf(seat.type);
-
-    const nextType =
-      seatTypes[(currentIndex + 1) % seatTypes.length];
-
-    seat.type = nextType;
-
-    setSeatLayout(updated);
-
-    setToast(
-      `${seat.seatNumber} changed to ${nextType.toUpperCase()}`,
+  const addRow = (afterIndex = seatLayout.length - 1) => {
+    const columnCount = seatLayout[0]?.length || 12;
+    const newRow = Array.from({ length: columnCount }, (_, colIndex) =>
+      createSeat(0, colIndex)
     );
 
-    setTimeout(() => {
-      setToast("");
-    }, 2000);
-  };
+    setSeatLayout((previous) => {
+      const updated = [...previous];
+      updated.splice(afterIndex + 1, 0, newRow);
+      return regenerateSeatNumbers(updated);
+    });
 
-  const insertRowBelow = (rowIndex) => {
-    const newRow = seatLayout[0].map(() => ({
-      seatNumber: "",
-      type: "regular",
-      status: "available",
-    }));
-
-    const updated = [...seatLayout];
-
-    updated.splice(rowIndex + 1, 0, newRow);
-
-    setSeatLayout(regenerateSeatNumbers(updated));
+    showToast("Row added");
   };
 
   const deleteRow = (rowIndex) => {
-    const updated = [...seatLayout];
+    if (seatLayout.length <= 1) {
+      setError("At least one row must remain.");
+      return;
+    }
 
-    updated.splice(rowIndex, 1);
+    setSeatLayout((previous) =>
+      regenerateSeatNumbers(
+        previous.filter((_, index) => index !== rowIndex)
+      )
+    );
 
-    setSeatLayout(regenerateSeatNumbers(updated));
+    setError("");
+    showToast("Row removed");
   };
 
-  const insertColumnRight = (colIndex) => {
-    const updated = seatLayout.map((row) => {
-      const newRow = [...row];
-
-      newRow.splice(colIndex + 1, 0, {
-        seatNumber: "",
-        type: "regular",
-        status: "available",
+  const addColumn = (afterIndex = (seatLayout[0]?.length || 1) - 1) => {
+    setSeatLayout((previous) => {
+      const updated = previous.map((row) => {
+        const newRow = [...row];
+        newRow.splice(afterIndex + 1, 0, createSeat(0, 0));
+        return newRow;
       });
 
-      return newRow;
+      return regenerateSeatNumbers(updated);
     });
 
-    setSeatLayout(regenerateSeatNumbers(updated));
+    showToast("Column added");
   };
 
   const deleteColumn = (colIndex) => {
-    const updated = seatLayout.map((row) => {
-      const newRow = [...row];
+    if ((seatLayout[0]?.length || 0) <= 1) {
+      setError("At least one column must remain.");
+      return;
+    }
 
-      newRow.splice(colIndex, 1);
+    setSeatLayout((previous) =>
+      regenerateSeatNumbers(
+        previous.map((row) =>
+          row.filter((_, index) => index !== colIndex)
+        )
+      )
+    );
 
-      return newRow;
-    });
-
-    setSeatLayout(regenerateSeatNumbers(updated));
+    setError("");
+    showToast("Column removed");
   };
 
   const toggleEntireRowGap = (rowIndex) => {
-    const updated = [...seatLayout];
+    setSeatLayout((previous) => {
+      const updated = previous.map((row) => [...row]);
+      const rowIsEmpty = updated[rowIndex].every((seat) => seat === null);
 
-    const isGap = updated[rowIndex].every(
-      (seat) => seat === null,
-    );
+      updated[rowIndex] = updated[rowIndex].map((seat, colIndex) =>
+        rowIsEmpty
+          ? createSeat(rowIndex, colIndex)
+          : null
+      );
 
-    updated[rowIndex] = updated[rowIndex].map(
-      (_, colIndex) => {
-        if (isGap) {
-          return {
-            seatNumber: `${String.fromCharCode(
-              65 + rowIndex,
-            )}${colIndex + 1}`,
-            type: "regular",
-            status: "available",
-          };
-        }
+      return updated;
+    });
 
-        return null;
-      },
-    );
-
-    setSeatLayout(updated);
+    showToast("Row layout updated");
   };
 
   const toggleEntireColumnGap = (colIndex) => {
-    const updated = [...seatLayout];
+    setSeatLayout((previous) => {
+      const updated = previous.map((row) => [...row]);
+      const columnIsEmpty = updated.every((row) => row[colIndex] === null);
 
-    const isGap = updated.every(
-      (row) => row[colIndex] === null,
-    );
+      updated.forEach((row, rowIndex) => {
+        row[colIndex] = columnIsEmpty
+          ? createSeat(rowIndex, colIndex)
+          : null;
+      });
 
-    updated.forEach((row, rowIndex) => {
-      if (isGap) {
-        row[colIndex] = {
-          seatNumber: `${String.fromCharCode(
-            65 + rowIndex,
-          )}${colIndex + 1}`,
-          type: "regular",
-          status: "available",
-        };
-      } else {
-        row[colIndex] = null;
-      }
+      return updated;
     });
 
-    setSeatLayout(updated);
+    showToast("Column layout updated");
   };
 
-  const getSeatClasses = (seat) => {
-    if (!seat) {
-      return `
-        border-dashed
-        border-white/20
-        text-white/20
-      `;
-    }
+  const clearAllGaps = () => {
+    setSeatLayout((previous) =>
+      previous.map((row, rowIndex) =>
+        row.map((seat, colIndex) =>
+          seat || createSeat(rowIndex, colIndex)
+        )
+      )
+    );
 
-    switch (seat.type) {
-      case "vip":
-        return `
-          border-yellow-400
-          text-yellow-400
-        `;
-
-      case "recliner":
-        return `
-          border-blue-400
-          text-blue-400
-        `;
-
-      case "couple":
-        return `
-          border-pink-300
-          text-pink-300
-        `;
-
-      default:
-        return `
-          border-green-500
-          text-green-400
-          hover:bg-green-500/10
-        `;
-    }
+    showToast("All seats restored");
   };
 
-  const submitHandler = async (e) => {
-    e.preventDefault();
+  const getSeatType = (type) =>
+    seatTypes.find((seatType) => seatType.value === type) || seatTypes[0];
+
+  const getSeatCounts = () => {
+    const counts = {
+      total: 0,
+      regular: 0,
+      vip: 0,
+      recliner: 0,
+      couple: 0,
+      gaps: 0,
+    };
+
+    seatLayout.forEach((row) => {
+      row.forEach((seat) => {
+        if (!seat) {
+          counts.gaps += 1;
+          return;
+        }
+
+        counts.total += 1;
+        counts[seat.type] = (counts[seat.type] || 0) + 1;
+      });
+    });
+
+    return counts;
+  };
+
+  const submitHandler = async (event) => {
+    event.preventDefault();
+    setError("");
+
+    if (!formData.name.trim()) {
+      setError("Please enter a screen name.");
+      return;
+    }
+
+    if (seatLayout.length === 0 || !seatLayout[0]?.length) {
+      setError("Please create a valid seat layout.");
+      return;
+    }
+
+    const invalidPrice = seatTypes.find(
+      (type) =>
+        prices[type.value] === "" ||
+        !Number.isFinite(Number(prices[type.value])) ||
+        Number(prices[type.value]) < 0
+    );
+
+    if (invalidPrice) {
+      setError(`Enter a valid price for ${invalidPrice.label}.`);
+      return;
+    }
+
+    setSaving(true);
 
     try {
-      let res;
+      const payload = {
+        ...formData,
+        name: formData.name.trim(),
+        prices: Object.fromEntries(
+          seatTypes.map((type) => [
+            type.value,
+            Number(prices[type.value]),
+          ])
+        ),
+        seatLayout,
+      };
 
       if (screenId) {
-        res = await updateScreen(screenId, {
-          ...formData,
-          prices,
-          seatLayout,
-        });
+        await updateScreen(screenId, payload);
       } else {
-        res = await createScreen({
-          ...formData,
+        await createScreen({
+          ...payload,
           theatreId: id,
-          prices,
-          seatLayout,
         });
       }
 
       navigate("/theatre-owner/screens");
-
-      setToast("Screen Saved Successfully");
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      setError(err?.message || "Failed to save screen. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
+  const counts = getSeatCounts();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#080808] text-gray-400">
+        <div className="flex flex-col items-center gap-4">
+          <FaSpinner className="animate-spin text-3xl text-red-500" />
+          <p>Loading screen details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-6 sm:p-8">
+    <div className="min-h-screen bg-[#080808] px-4 py-6 text-white sm:px-6 sm:py-8 lg:px-8">
       <form
         onSubmit={submitHandler}
-        className="max-w-7xl mx-auto space-y-8"
+        className="mx-auto max-w-[1500px] space-y-7"
       >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <button
+              type="button"
+              onClick={() => navigate("/theatre-owner/screens")}
+              className="mb-4 flex items-center gap-2 text-sm text-gray-400 transition hover:text-red-400"
+            >
+              <FaArrowLeft />
+              Back to screens
+            </button>
 
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-bold">
-            {screenId
-              ? "Edit Screen"
-              : "Create Screen"}
-          </h1>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
+              {isEditMode ? "Edit Screen" : "Create Screen"}
+            </h1>
 
-          <p className="text-white/50 mt-2">
-            Manual Theatre Layout Designer
-          </p>
-        </div>
-
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <input
-            type="text"
-            placeholder="Screen Name"
-            value={formData.name}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                name: e.target.value,
-              })
-            }
-            className="
-              bg-[#111]
-              border
-              border-white/10
-              rounded-xl
-              px-4
-              py-3
-              w-full
-            "
-          />
-
-          <select
-            value={formData.screenType}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                screenType: e.target.value,
-              })
-            }
-            className="
-              bg-[#111]
-              border
-              border-white/10
-              rounded-xl
-              px-4
-              py-3
-              w-full
-            "
-          >
-            <option>2D</option>
-            <option>3D</option>
-            <option>IMAX</option>
-          </select>
-        </div>
-
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {seatTypes.map((type) => (
-            <div key={type}>
-              <label className="text-sm capitalize">
-                {type} Price
-              </label>
-
-              <input
-                type="number"
-                value={prices[type]}
-                onChange={(e) =>
-                  setPrices({
-                    ...prices,
-                    [type]: e.target.value,
-                  })
-                }
-                className="
-                  mt-2
-                  w-full
-                  bg-[#111]
-                  border
-                  border-white/10
-                  rounded-xl
-                  px-4
-                  py-3
-                "
-              />
-            </div>
-          ))}
-        </div>
-
-        <div
-          className="
-            bg-[#111]
-            border
-            border-pink-500/20
-            rounded-2xl
-            p-4
-
-            grid
-            grid-cols-2
-            sm:flex
-            sm:flex-wrap
-
-            gap-4
-
-            text-sm
-          "
-        >
-          <p>Left Click → Gap</p>
-
-          <p>Right Click → Type</p>
-
-          <p>G → Full Gap</p>
-
-          <p>+ → Add</p>
-
-          <p>- → Delete</p>
-        </div>
-
-        <div
-          className="
-            overflow-x-auto
-
-            bg-[#111]
-
-            border
-            border-white/10
-
-            rounded-3xl
-
-            p-4 sm:p-6
-          "
-        >
-
-          <div className="flex mb-3 min-w-max">
-            <div className="w-8" />
-
-            <div className="flex gap-1 sm:gap-2">
-              {seatLayout?.[0]?.map((_, colIndex) => (
-                <div
-                  key={colIndex}
-                  className="
-                    w-8 sm:w-9
-
-                    flex
-                    flex-col
-
-                    items-center
-
-                    gap-1
-                  "
-                >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      toggleEntireColumnGap(colIndex)
-                    }
-                    className="
-                      h-4
-                      w-4
-
-                      rounded
-
-                      bg-yellow-500
-
-                      text-[9px]
-                    "
-                  >
-                    G
-                  </button>
-
-                  <div className="flex gap-[2px]">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        insertColumnRight(colIndex)
-                      }
-                      className="
-                        h-4
-                        w-4
-
-                        rounded
-
-                        bg-blue-600
-
-                        text-[9px]
-                      "
-                    >
-                      +
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        deleteColumn(colIndex)
-                      }
-                      className="
-                        h-4
-                        w-4
-
-                        rounded
-
-                        bg-red-600
-
-                        text-[9px]
-                      "
-                    >
-                      -
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="mt-2 text-sm text-gray-400">
+              Design your theatre seating plan and set ticket prices.
+            </p>
           </div>
 
-          <div className="flex flex-col gap-2 min-w-max">
-            {seatLayout.map((row, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="
-                  flex
-                  items-center
-                  gap-2
-                "
+          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#111] px-4 py-3">
+            <FaTicketAlt className="text-xl text-red-400" />
+            <div>
+              <p className="text-xs text-gray-500">Available seats</p>
+              <p className="text-lg font-bold">{counts.total}</p>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
+            <FaExclamationCircle className="mt-0.5 shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
+
+        <section className="rounded-2xl border border-white/10 bg-[#111] p-4 sm:p-6">
+          <h2 className="mb-5 text-lg font-semibold">Screen Details</h2>
+
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm text-gray-400">
+                Screen Name
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Screen 1"
+                value={formData.name}
+                maxLength={80}
+                onChange={(event) =>
+                  setFormData((previous) => ({
+                    ...previous,
+                    name: event.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-white/10 bg-[#080808] px-4 py-3 text-sm outline-none transition placeholder:text-gray-600 focus:border-red-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-gray-400">
+                Screen Type
+              </label>
+              <select
+                value={formData.screenType}
+                onChange={(event) =>
+                  setFormData((previous) => ({
+                    ...previous,
+                    screenType: event.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border border-white/10 bg-[#080808] px-4 py-3 text-sm outline-none focus:border-red-500"
               >
+                <option value="2D">2D</option>
+                <option value="3D">3D</option>
+                <option value="IMAX">IMAX</option>
+              </select>
+            </div>
+          </div>
+        </section>
 
-                <div
-                  className="
-                    w-8
+        <section className="rounded-2xl border border-white/10 bg-[#111] p-4 sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold">Seat Pricing</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              Set the ticket price for each seat category.
+            </p>
+          </div>
 
-                    flex
-                    flex-col
-
-                    items-center
-
-                    gap-1
-                  "
-                >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      toggleEntireRowGap(rowIndex)
-                    }
-                    className="
-                      h-4
-                      w-4
-
-                      rounded
-
-                      bg-yellow-500
-
-                      text-[9px]
-                    "
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {seatTypes.map((type) => (
+              <div
+                key={type.value}
+                className={`rounded-xl border bg-[#080808] p-4 ${type.color}`}
+              >
+                <div className="mb-3 flex items-center gap-2">
+                  <FaCouch />
+                  <label
+                    htmlFor={`price-${type.value}`}
+                    className="text-sm font-semibold"
                   >
-                    G
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      insertRowBelow(rowIndex)
-                    }
-                    className="
-                      h-4
-                      w-4
-
-                      rounded
-
-                      bg-green-600
-
-                      text-[9px]
-                    "
-                  >
-                    +
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => deleteRow(rowIndex)}
-                    className="
-                      h-4
-                      w-4
-
-                      rounded
-
-                      bg-red-600
-
-                      text-[9px]
-                    "
-                  >
-                    -
-                  </button>
+                    {type.label}
+                  </label>
                 </div>
 
-                <div className="flex gap-1 sm:gap-2">
-                  {row.map((seat, colIndex) => (
-                    <button
-                      key={colIndex}
-                      type="button"
-                      onClick={() =>
-                        toggleGap(rowIndex, colIndex)
-                      }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-
-                        changeSeatType(
-                          rowIndex,
-                          colIndex,
-                        );
-                      }}
-                      className={`
-                        h-8
-                        w-8
-
-                        sm:h-9
-                        sm:w-9
-
-                        rounded-xl
-
-                        border
-
-                        text-[8px]
-                        sm:text-[9px]
-
-                        font-semibold
-
-                        transition-all
-
-                        flex
-                        flex-col
-                        items-center
-                        justify-center
-
-                        shrink-0
-
-                        ${getSeatClasses(seat)}
-                      `}
-                    >
-                      <span>{seat?.seatNumber}</span>
-
-                      {seat && (
-                        <span className="text-[6px]">
-                          {seat.type === "regular"
-                            ? "R"
-                            : seat.type === "vip"
-                              ? "V"
-                              : seat.type === "recliner"
-                                ? "RL"
-                                : "C"}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#111] px-3">
+                  <span className="text-gray-500">₹</span>
+                  <input
+                    id={`price-${type.value}`}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={prices[type.value]}
+                    onChange={(event) =>
+                      setPrices((previous) => ({
+                        ...previous,
+                        [type.value]: event.target.value,
+                      }))
+                    }
+                    className="w-full bg-transparent py-3 text-sm text-white outline-none"
+                  />
                 </div>
+
+                <p className="mt-2 text-xs text-gray-500">
+                  {counts[type.value] || 0} seats assigned
+                </p>
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
+          <div className="border-b border-white/10 p-4 sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Seat Layout Designer</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Choose a seat type, then click or drag over seats to assign it.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => addRow()}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-gray-300 transition hover:border-red-500/40 hover:text-red-400"
+                >
+                  <FaPlus />
+                  Add Row
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => addColumn()}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-gray-300 transition hover:border-red-500/40 hover:text-red-400"
+                >
+                  <FaPlus />
+                  Add Column
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6 p-4 sm:p-6">
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Select seat type
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {seatTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setActiveTool(type.value)}
+                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                      activeTool === type.value
+                        ? `${type.active} ring-2 ring-white/10`
+                        : "border-white/10 bg-[#080808] text-gray-300 hover:border-white/20"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border text-xs font-bold ${type.color}`}
+                    >
+                      {type.short}
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        {type.label}
+                      </span>
+                      <span className="mt-1 block text-xs text-gray-500">
+                        ₹{Number(prices[type.value] || 0)}
+                      </span>
+                    </span>
+
+                    {activeTool === type.value && (
+                      <FaCheck className="shrink-0 text-sm" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTool("gap")}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition ${
+                    activeTool === "gap"
+                      ? "border-red-500 bg-red-500/15 text-red-400"
+                      : "border-white/10 bg-[#080808] text-gray-400 hover:border-red-500/40"
+                  }`}
+                >
+                  <FaEraser />
+                  {activeTool === "gap" ? "Gap Tool Selected" : "Gap / Restore Tool"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={clearAllGaps}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-400 transition hover:border-red-500/40 hover:text-red-400"
+                >
+                  <FaUndo />
+                  Restore All Seats
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {seatTypes.map((type) => (
+                <div
+                  key={type.value}
+                  className="rounded-xl border border-white/10 bg-[#080808] p-3"
+                >
+                  <p className="text-xs text-gray-500">{type.label}</p>
+                  <p className="mt-1 text-xl font-bold">
+                    {counts[type.value] || 0}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-[#080808] p-3 sm:p-5">
+              <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-4 text-center sm:px-6">
+                <div className="mx-auto mb-2 h-1 w-2/3 rounded-full bg-gradient-to-r from-transparent via-red-500 to-transparent" />
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-red-400">
+                  Screen
+                </p>
+              </div>
+
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-gray-500">
+                  {seatLayout.length} rows · {seatLayout[0]?.length || 0} columns
+                </p>
+                <p className="text-xs text-gray-500">
+                  Active tool:{" "}
+                  <span className="font-semibold text-red-400">
+                    {activeTool === "gap"
+                      ? "Gap / Restore"
+                      : getSeatType(activeTool).label}
+                  </span>
+                </p>
+              </div>
+
+              <div className="overflow-x-auto pb-3">
+                <div className="min-w-max space-y-3">
+                  <div className="flex items-end gap-2">
+                    <div className="w-10 shrink-0 text-center text-[10px] text-gray-600">
+                      Row
+                    </div>
+
+                    {seatLayout[0]?.map((_, colIndex) => (
+                      <div
+                        key={colIndex}
+                        className="flex w-9 shrink-0 flex-col items-center gap-1"
+                      >
+                        <span className="text-[10px] text-gray-500">
+                          {colIndex + 1}
+                        </span>
+
+                        <button
+                          type="button"
+                          title={`Toggle gap in column ${colIndex + 1}`}
+                          onClick={() => toggleEntireColumnGap(colIndex)}
+                          className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-[#181818] text-xs text-gray-400 transition hover:border-red-500/40 hover:text-red-400"
+                        >
+                          <FaEraser size={10} />
+                        </button>
+
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            title={`Insert column after ${colIndex + 1}`}
+                            onClick={() => addColumn(colIndex)}
+                            className="flex h-5 w-5 items-center justify-center rounded bg-white/10 text-xs text-gray-300 hover:bg-red-600 hover:text-white"
+                          >
+                            +
+                          </button>
+
+                          <button
+                            type="button"
+                            title={`Delete column ${colIndex + 1}`}
+                            onClick={() => deleteColumn(colIndex)}
+                            className="flex h-5 w-5 items-center justify-center rounded bg-red-500/10 text-xs text-red-400 hover:bg-red-600 hover:text-white"
+                          >
+                            <FaMinus size={8} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {seatLayout.map((row, rowIndex) => (
+                    <div key={rowIndex} className="flex items-center gap-2">
+                      <div className="flex w-10 shrink-0 flex-col items-center gap-1">
+                        <span className="text-xs font-bold text-gray-400">
+                          {String.fromCharCode(65 + rowIndex)}
+                        </span>
+
+                        <button
+                          type="button"
+                          title={`Toggle gap in row ${rowIndex + 1}`}
+                          onClick={() => toggleEntireRowGap(rowIndex)}
+                          className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-[#181818] text-xs text-gray-400 transition hover:border-red-500/40 hover:text-red-400"
+                        >
+                          <FaEraser size={10} />
+                        </button>
+
+                        <div className="flex flex-col gap-1">
+                          <button
+                            type="button"
+                            title={`Insert row below ${rowIndex + 1}`}
+                            onClick={() => addRow(rowIndex)}
+                            className="flex h-5 w-5 items-center justify-center rounded bg-white/10 text-xs text-gray-300 hover:bg-red-600 hover:text-white"
+                          >
+                            +
+                          </button>
+
+                          <button
+                            type="button"
+                            title={`Delete row ${rowIndex + 1}`}
+                            onClick={() => deleteRow(rowIndex)}
+                            className="flex h-5 w-5 items-center justify-center rounded bg-red-500/10 text-xs text-red-400 hover:bg-red-600 hover:text-white"
+                          >
+                            <FaMinus size={8} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {row.map((seat, colIndex) => {
+                        const type = seat ? getSeatType(seat.type) : null;
+
+                        return (
+                          <button
+                            key={colIndex}
+                            type="button"
+                            title={
+                              seat
+                                ? `${seat.seatNumber} · ${type.label} · ₹${Number(prices[seat.type] || 0)}`
+                                : "Empty space · click to restore"
+                            }
+                            onPointerDown={(event) =>
+                              handleSeatPointerDown(event, rowIndex, colIndex)
+                            }
+                            onPointerEnter={() =>
+                              handleSeatPointerEnter(rowIndex, colIndex)
+                            }
+                            onClick={() =>
+                              handleSeatClick(rowIndex, colIndex)
+                            }
+                            className={`flex h-9 w-9 shrink-0 touch-none select-none flex-col items-center justify-center rounded-lg border text-[9px] font-semibold transition sm:h-10 sm:w-10 sm:rounded-xl sm:text-[10px] ${
+                              !seat
+                                ? "border-dashed border-white/15 bg-transparent text-gray-700 hover:border-red-500/50"
+                                : `${type.color} hover:brightness-125`
+                            }`}
+                          >
+                            {seat ? (
+                              <>
+                                <span>{seat.seatNumber}</span>
+                                <span className="text-[7px] opacity-80">
+                                  {type.short}
+                                </span>
+                              </>
+                            ) : (
+                              <FaPlus size={10} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-white/10 pt-4">
+                {seatTypes.map((type) => (
+                  <div key={type.value} className="flex items-center gap-2">
+                    <span className={`h-3 w-3 rounded border ${type.color}`} />
+                    <span className="text-xs text-gray-400">{type.label}</span>
+                  </div>
+                ))}
+
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded border border-dashed border-white/30" />
+                  <span className="text-xs text-gray-400">Empty space</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-[#080808] p-4">
+              <h3 className="mb-3 text-sm font-semibold text-white">
+                Quick instructions
+              </h3>
+
+              <div className="grid grid-cols-1 gap-3 text-xs text-gray-400 sm:grid-cols-2 lg:grid-cols-3">
+                <p className="flex items-start gap-2">
+                  <FaMousePointer className="mt-0.5 shrink-0 text-red-400" />
+                  Choose a seat type above, then click a seat to assign it.
+                </p>
+
+                <p className="flex items-start gap-2">
+                  {/* <FaGrip className="mt-0.5 shrink-0 text-red-400" /> */}
+                  Drag across seats to assign the selected type to multiple seats.
+                </p>
+
+                <p className="flex items-start gap-2">
+                  <FaEraser className="mt-0.5 shrink-0 text-red-400" />
+                  Select Gap / Restore, then click or drag to create or restore gaps.
+                </p>
+
+                <p className="flex items-start gap-2">
+                  <FaPlus className="mt-0.5 shrink-0 text-red-400" />
+                  Use the plus buttons to insert rows or columns.
+                </p>
+
+                <p className="flex items-start gap-2">
+                  <FaTrash className="mt-0.5 shrink-0 text-red-400" />
+                  Use the minus buttons to remove rows or columns.
+                </p>
+
+                <p className="flex items-start gap-2">
+                  <FaUndo className="mt-0.5 shrink-0 text-red-400" />
+                  Restore All Seats fills empty spaces with Regular seats.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => navigate("/theatre-owner/screens")}
+            className="rounded-xl border border-white/10 px-6 py-3 text-sm font-semibold text-gray-300 transition hover:bg-white/5"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-8 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                Saving Screen...
+              </>
+            ) : (
+              <>
+                <FaCheck />
+                {isEditMode ? "Update Screen" : "Save Screen"}
+              </>
+            )}
+          </button>
         </div>
-
-
-        <button
-          type="submit"
-          className="
-            w-full
-            sm:w-auto
-
-            px-8
-            py-4
-
-            rounded-2xl
-
-            bg-pink-600
-            hover:bg-pink-700
-
-            font-semibold
-
-            transition
-          "
-        >
-          Save Screen
-        </button>
       </form>
 
-
       {toast && (
-        <div
-          className="
-            fixed
-
-            bottom-4
-            right-4
-            left-4
-
-            sm:left-auto
-            sm:bottom-6
-            sm:right-6
-
-            z-50
-
-            bg-[#111]
-
-            border
-            border-pink-500/20
-
-            px-5
-            py-3
-
-            rounded-2xl
-
-            shadow-2xl
-          "
-        >
+        <div className="fixed bottom-5 left-4 right-4 z-50 mx-auto flex max-w-sm items-center gap-3 rounded-xl border border-red-500/30 bg-[#181818] px-5 py-4 text-sm text-white shadow-2xl shadow-black/50 sm:bottom-6 sm:left-auto sm:right-6">
+          <FaCheck className="shrink-0 text-red-400" />
           {toast}
         </div>
       )}
     </div>
   );
-};
+}
 
 export default CreateEditScreen;

@@ -20,7 +20,7 @@ const bookedSeatSchema = new mongoose.Schema(
     type: {
       type: String,
 
-      enum: ["regular", "vip", "recliner"],
+      enum: ["regular", "vip", "recliner", "couple"],
 
       required: true,
     },

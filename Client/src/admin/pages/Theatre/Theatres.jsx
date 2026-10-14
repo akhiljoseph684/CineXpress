@@ -1,8 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
-
+import React, { useEffect, useState } from "react";
 import {
   FaTrash,
   FaPlus,
@@ -10,1124 +6,377 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaClock,
+  FaEdit,
+  FaSpinner,
 } from "react-icons/fa";
-
-import { useNavigate }
-from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 import {
   deleteTheatre,
   getAllTheatres,
 } from "../../../services/theatreApi";
 
 function Theatres() {
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
+  const [theatres, setTheatres] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedTheatre, setSelectedTheatre] = useState(null);
 
-  const [theatres,
-    setTheatres] =
-    useState([]);
+  const fetchTheatres = async (status = "all", searchValue = "") => {
+    try {
+      setLoading(true);
+      setError("");
 
-  const [loading,
-    setLoading] =
-    useState(false);
+      const query = [];
 
-  const [error,
-    setError] =
-    useState("");
+      if (status && status !== "all") {
+        query.push(`status=${encodeURIComponent(status)}`);
+      }
 
-  const [activeFilter,
-    setActiveFilter] =
-    useState("all");
+      if (searchValue.trim()) {
+        query.push(`search=${encodeURIComponent(searchValue.trim())}`);
+      }
 
-  const [search,
-    setSearch] =
-    useState("");
+      const queryString = query.length ? `?${query.join("&")}` : "";
+      const res = await getAllTheatres(queryString);
 
-  const [showDeleteModal,
-    setShowDeleteModal] =
-    useState(false);
+      if (!res.success) {
+        setError(res.message || "Failed to fetch theatres");
+        setTheatres([]);
+        return;
+      }
 
-  const [selectedTheatre,
-    setSelectedTheatre] =
-    useState(null);
+      setTheatres(res.theatres || []);
+    } catch (error) {
+      setError(error?.message || "Failed to fetch theatres");
+      setTheatres([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchTheatres(activeFilter, search);
+    }, 400);
 
-    fetchTheatres("all");
+    return () => clearTimeout(timer);
+  }, [activeFilter, search]);
 
-  }, []);
+  const handleDelete = async () => {
+    if (!selectedTheatre?._id || deleting) return;
 
-  useEffect(() => {
+    try {
+      setDeleting(true);
+      setError("");
 
-    const timer =
-      setTimeout(() => {
+      const res = await deleteTheatre(selectedTheatre._id);
 
-        fetchTheatres(
-          activeFilter,
-          search
-        );
-
-      }, 500);
-
-    return () =>
-      clearTimeout(timer);
-
-  }, [
-
-    search,
-
-    activeFilter,
-  ]);
-
-  const fetchTheatres =
-    async (
-
-      status = "all",
-
-      searchValue = ""
-
-    ) => {
-
-      try {
-
-        setLoading(true);
-
-        setError("");
-
-        let query = [];
-
-        if (
-          status &&
-          status !== "all"
-        ) {
-
-          query.push(
-
-            `status=${status}`
-          );
-        }
-
-        if (
-          searchValue.trim()
-        ) {
-
-          query.push(
-
-            `search=${searchValue}`
-          );
-        }
-
-        const queryString =
-
-          `?${query.join("&")}`;
-
-        const res =
-          await getAllTheatres(
-            queryString
-          );
-
-        if (!res.success) {
-
-          setError(
-            res.message
-          );
-
-          return;
-        }
-
-        setTheatres(
-          res.theatres || []
-        );
-
-      } catch (error) {
-
-        setError(
-
-          error?.message ||
-
-          "Failed to fetch theatres"
-        );
-
-      } finally {
-
-        setLoading(false);
+      if (!res.success) {
+        setError(res.message || "Failed to delete theatre");
+        return;
       }
-    };
 
-  const handleDelete =
-    async (id) => {
+      setShowDeleteModal(false);
+      setSelectedTheatre(null);
 
-      try {
+      await fetchTheatres(activeFilter, search);
 
-        const res =
-          await deleteTheatre(
-            id
-          );
+      navigate("/admin/theatre");
+    } catch (error) {
+      setError(error?.message || "Failed to delete theatre");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
-        if (!res.success) {
+  const filters = [
+    { label: "All", value: "all" },
+    { label: "Approved", value: "approved" },
+    { label: "Pending", value: "pending" },
+    { label: "Rejected", value: "rejected" },
+  ];
 
-          setError(
-            res.message
-          );
+  const statusStyle = (status) => {
+    if (status === "approved") {
+      return "border-green-500/20 bg-green-500/10 text-green-400";
+    }
 
-          return;
-        }
+    if (status === "pending") {
+      return "border-yellow-500/20 bg-yellow-500/10 text-yellow-400";
+    }
 
-        fetchTheatres();
-
-      } catch (error) {
-
-        setError(
-
-          error?.message ||
-
-          "Failed to delete theatre"
-        );
-      }
-    };
+    return "border-red-500/20 bg-red-500/10 text-red-400";
+  };
 
   return (
-
-    <div className="w-full">
-
-      <div
-        className="
-          flex
-          flex-col
-          md:flex-row
-
-          md:items-center
-          md:justify-between
-
-          gap-4
-          mb-8
-        "
-      >
-
+    <div className="mx-auto w-full min-w-0 max-w-7xl text-white">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-2xl">
+              🎭
+            </div>
 
-          <h1
-            className="
-              text-2xl
-              md:text-3xl
-
-              font-bold
-            "
-          >
-
-            Theatres 🎭
-
-          </h1>
-
-          <p
-            className="
-              text-gray-400
-              text-sm
-              mt-2
-            "
-          >
-
-            Manage all theatres here
-
-          </p>
-
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Theatres
+              </h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Manage all theatres in CineXpress
+              </p>
+            </div>
+          </div>
         </div>
 
         <button
-          onClick={() =>
-
-            navigate(
-              "/admin/theatre-owner/register"
-            )
-          }
-
-          className="
-            flex
-            items-center
-            justify-center
-            gap-2
-
-            bg-gradient-to-r
-            from-[#8b5c76]
-            to-[#6f4660]
-
-            px-5
-            py-3
-
-            rounded-xl
-
-            font-medium
-
-            hover:opacity-90
-
-            transition
-
-            w-full
-            md:w-auto
-          "
+          type="button"
+          onClick={() => navigate("/admin/theatre-owner/register")}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/40 sm:w-auto"
         >
-
           <FaPlus />
-
           Create Theatre
-
         </button>
-
       </div>
 
-      {
-        error && (
-
-          <div
-            className="
-              w-full
-
-              bg-[#1a1a1a]
-
-              border
-              border-red-500/30
-
-              rounded-2xl
-
-              py-14
-              px-6
-
-              flex
-              flex-col
-
-              items-center
-              justify-center
-
-              text-center
-
-              mb-8
-            "
+      {error && (
+        <div className="mb-6 flex items-start justify-between gap-4 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => setError("")}
+            className="shrink-0 text-red-400 transition hover:text-white"
+            aria-label="Dismiss error"
           >
+            <FaTimesCircle />
+          </button>
+        </div>
+      )}
 
-            <div
-              className="
-                w-20
-                h-20
-
-                rounded-full
-
-                bg-red-500/10
-
-                flex
-                items-center
-                justify-center
-
-                text-4xl
-
-                mb-5
-              "
-            >
-
-              ⚠️
-
-            </div>
-
-            <h2
-              className="
-                text-2xl
-                font-bold
-              "
-            >
-
-              {error}
-
-            </h2>
-
-          </div>
-        )
-      }
-
-      <div className="mb-8">
-
+      <div className="mb-6">
         <input
           type="text"
-
-          placeholder="
-            Search theatres...
-          "
-
+          placeholder="Search theatres by name or city..."
           value={search}
-
-          onChange={(e) =>
-
-            setSearch(
-              e.target.value
-            )
-          }
-
-          className="
-            w-full
-
-            bg-[#1a1a1a]
-
-            border
-            border-gray-800
-
-            rounded-2xl
-
-            px-5
-            py-4
-
-            outline-none
-
-            focus:border-[#8b5c76]
-
-            transition
-          "
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-[#111111] px-5 py-4 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
         />
-
       </div>
 
-      <div
-        className="
-          flex
-          flex-wrap
-
-          items-center
-
-          gap-3
-
-          mb-8
-        "
-      >
-
-        {
-          [
-            {
-              label: "All",
-              value: "all",
-            },
-
-            {
-              label: "Approved",
-              value: "approved",
-            },
-
-            {
-              label: "Pending",
-              value: "pending",
-            },
-
-            {
-              label: "Rejected",
-              value: "rejected",
-            },
-          ].map((item) => (
-
-            <button
-              key={item.value}
-
-              onClick={() => {
-
-                setActiveFilter(
-                  item.value
-                );
-
-                fetchTheatres(
-                  item.value,
-                  search
-                );
-              }}
-
-              className={`
-                px-5 py-3
-
-                rounded-xl
-
-                text-sm
-                font-medium
-
-                transition
-
-                border
-
-                ${
-                  activeFilter ===
-                  item.value
-
-                    ? `
-                      bg-gradient-to-r
-                      from-[#8b5c76]
-                      to-[#6f4660]
-
-                      border-[#8b5c76]
-
-                      text-white
-                    `
-
-                    : `
-                      bg-[#1a1a1a]
-
-                      border-gray-800
-
-                      text-gray-300
-
-                      hover:border-[#8b5c76]
-                    `
-                }
-              `}
-            >
-
-              {item.label}
-
-            </button>
-          ))
-        }
-
-      </div>
-
-      <div
-        className={`
-          w-full
-
-          ${
-            !theatres.length
-
-              ? `
-                flex
-                items-center
-                justify-center
-
-                min-h-[70vh]
-              `
-
-              : `
-                grid
-                grid-cols-1
-                md:grid-cols-2
-                xl:grid-cols-3
-
-                gap-6
-              `
-          }
-        `}
-      >
-
-        {
-          theatres.length
-
-            ? (
-
-              theatres.map(
-                (theatre) => (
-
-                  <div
-                    key={theatre._id}
-
-                    className="
-                      bg-[#1a1a1a]
-
-                      rounded-2xl
-
-                      overflow-hidden
-
-                      shadow-2xl
-
-                      border
-                      border-gray-800
-
-                      hover:border-[#8b5c76]
-
-                      transition
-                    "
-                  >
-
-                    <div
-                      className="
-                        relative
-                      "
-                    >
-
-                      <div
-                        className={`
-                          absolute
-                          top-4
-                          left-4
-
-                          z-10
-
-                          px-4
-                          py-2
-
-                          rounded-xl
-
-                          text-xs
-                          font-semibold
-
-                          ${
-                            theatre.status ===
-                            "approved"
-
-                              ? `
-                                bg-green-500
-                                text-black
-                              `
-
-                              : theatre.status ===
-                                "pending"
-
-                                ? `
-                                  bg-yellow-500
-                                  text-black
-                                `
-
-                                : `
-                                  bg-red-500
-                                  text-white
-                                `
-                          }
-                        `}
-                      >
-
-                        {
-                          theatre.status
-                        }
-
-                      </div>
-                                            
-                      <div
-                        className="
-                          absolute
-                          top-4
-                          right-4
-                                            
-                          z-10
-                                            
-                          flex
-                          items-center
-                                            
-                          gap-2
-                        "
-                      >
-                                            
-                        <button
-                          onClick={() =>
-                          
-                            navigate(
-                            
-                              `/admin/theatres/edit/${theatre._id}`
-                            )
-                          }
-                        
-                          className="
-                            w-11
-                            h-11
-                        
-                            rounded-xl
-                        
-                            bg-blue-500/90
-                        
-                            flex
-                            items-center
-                            justify-center
-                        
-                            hover:scale-105
-                        
-                            transition
-                          "
-                        >
-                        
-                          ✏️
-                        
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                          
-                            setSelectedTheatre(
-                              theatre
-                            );
-                          
-                            setShowDeleteModal(
-                              true
-                            );
-                          }}
-                        
-                          className="
-                            w-11
-                            h-11
-                        
-                            rounded-xl
-                        
-                            bg-red-500/90
-                        
-                            flex
-                            items-center
-                            justify-center
-                        
-                            hover:scale-105
-                        
-                            transition
-                          "
-                        >
-                        
-                          <FaTrash />
-                        
-                        </button>
-                        
-                      </div>
-
-                      <img
-                        src={
-                          theatre.bannerImage
-                        }
-
-                        alt={
-                          theatre.name
-                        }
-
-                        className="
-                          w-full
-                          h-[250px]
-
-                          object-cover
-                        "
-                      />
-
-                    </div>
-
-                    <div className="p-5">
-
-                      <h2
-                        className="
-                          text-xl
-                          font-bold
-
-                          line-clamp-1
-                        "
-                      >
-
-                        {
-                          theatre.name
-                        }
-
-                      </h2>
-
-                      <div
-                        className="
-                          mt-5
-
-                          space-y-3
-
-                          text-sm
-                          text-gray-400
-                        "
-                      >
-
-                        <div
-                          className="
-                            flex
-                            items-center
-                            justify-between
-
-                            gap-5
-                          "
-                        >
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              gap-2
-                            "
-                          >
-
-                            👤 Owner
-
-                          </div>
-
-                          <div
-                            className="
-                              text-right
-                            "
-                          >
-
-                            <h3
-                              className="
-                                text-white
-                                text-sm
-
-                                font-medium
-                              "
-                            >
-
-                              {
-                                theatre.ownerId?.name ||
-
-                                "Waiting Registration"
-                              }
-
-                            </h3>
-
-                            <p
-                              className="
-                                text-xs
-                                text-gray-500
-                              "
-                            >
-
-                              {
-                                theatre.ownerId?.email ||
-
-                                theatre.ownerEmail ||
-
-                                "-"
-                              }
-
-                            </p>
-
-                          </div>
-
-                        </div>
-
-                        {
-                          theatre.secretCode && (
-
-                            <div
-                              className="
-                                flex
-                                items-center
-                                justify-between
-
-                                gap-5
-                              "
-                            >
-
-                              <div
-                                className="
-                                  flex
-                                  items-center
-                                  gap-2
-                                "
-                              >
-
-                                🔐 Secret Code
-
-                              </div>
-
-                              <span
-                                className="
-                                  text-yellow-400
-                                  font-bold
-
-                                  tracking-widest
-                                "
-                              >
-
-                                {
-                                  theatre.secretCode
-                                }
-
-                              </span>
-
-                            </div>
-                          )
-                        }
-
-                        <div
-                          className="
-                            flex
-                            items-center
-                            justify-between
-
-                            gap-5
-                          "
-                        >
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              gap-2
-                            "
-                          >
-
-                            <FaMapMarkerAlt />
-
-                            City
-
-                          </div>
-
-                          <span
-                            className="
-                              text-white
-                            "
-                          >
-
-                            {
-                              theatre.city
-                            }
-
-                          </span>
-
-                        </div>
-
-                        <div
-                          className="
-                            flex
-                            items-center
-                            justify-between
-                          "
-                        >
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              gap-2
-                            "
-                          >
-
-                            {
-                              theatre.status ===
-                              "approved"
-
-                                ? <FaCheckCircle />
-
-                                : theatre.status ===
-                                  "pending"
-
-                                  ? <FaClock />
-
-                                  : <FaTimesCircle />
-                            }
-
-                            Status
-
-                          </div>
-
-                          <span
-                            className="
-                              text-white
-                            "
-                          >
-
-                            {
-                              theatre.status
-                            }
-
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-                )
-              )
-            )
-
-            : (
-
-              <div
-                className="
-                  flex
-                  flex-col
-
-                  items-center
-                  justify-center
-
-                  py-20
-
-                  text-center
-                "
-              >
-
-                <h2
-                  className="
-                    text-2xl
-                    font-semibold
-
-                    text-gray-700
-                  "
-                >
-
-                  No Theatres Found 🎭
-
-                </h2>
-
-                <p
-                  className="
-                    mt-2
-                    text-gray-500
-                  "
-                >
-
-                  No theatres available
-
-                </p>
-
-              </div>
-            )
-        }
-
-      </div>
-
-      {
-        showDeleteModal && (
-
-          <div
-            className="
-              fixed
-              inset-0
-
-              bg-black/70
-
-              z-50
-
-              flex
-              items-center
-              justify-center
-
-              px-5
-            "
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        {filters.map((item) => (
+          <button
+            type="button"
+            key={item.value}
+            onClick={() => setActiveFilter(item.value)}
+            className={`rounded-xl border px-5 py-3 text-sm font-medium transition ${
+              activeFilter === item.value
+                ? "border-red-500 bg-red-600 text-white"
+                : "border-white/10 bg-[#111111] text-gray-400 hover:border-red-500/50 hover:text-white"
+            }`}
           >
+            {item.label}
+          </button>
+        ))}
+      </div>
 
+      {loading ? (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
+          <FaSpinner className="animate-spin text-3xl text-red-500" />
+          <p className="text-sm text-gray-400">Loading theatres...</p>
+        </div>
+      ) : theatres.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {theatres.map((theatre) => (
             <div
-              className="
-                w-full
-                max-w-md
-
-                bg-[#1a1a1a]
-
-                border
-                border-gray-800
-
-                rounded-3xl
-
-                p-8
-              "
+              key={theatre._id}
+              className="group min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-[#111111] shadow-xl transition duration-300 hover:border-red-500/40"
             >
+              <div className="relative h-[230px] overflow-hidden bg-[#080808]">
+                <img
+                  src={theatre.bannerImage}
+                  alt={theatre.name}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                />
 
-              <h2
-                className="
-                  text-2xl
-                  font-bold
-
-                  mb-4
-                "
-              >
-
-                Delete Theatre?
-
-              </h2>
-
-              <p
-                className="
-                  text-gray-400
-                  leading-7
-                "
-              >
-
-                Are you sure you want
-                to delete
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
 
                 <span
-                  className="
-                    text-white
-                    font-medium
-                  "
+                  className={`absolute left-4 top-4 rounded-lg border px-3 py-2 text-xs font-semibold capitalize backdrop-blur-md ${statusStyle(
+                    theatre.status
+                  )}`}
                 >
-
-                  {" "}
-                  {
-                    selectedTheatre?.name
-                  }
-
+                  {theatre.status}
                 </span>
 
-                ?
+                <div className="absolute right-4 top-4 flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={`Edit ${theatre.name}`}
+                    onClick={() =>
+                      navigate(`/admin/theatres/edit/${theatre._id}`)
+                    }
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-white transition hover:border-red-500 hover:bg-red-600"
+                  >
+                    <FaEdit />
+                  </button>
 
-              </p>
-
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-end
-
-                  gap-4
-
-                  mt-8
-                "
-              >
-
-                <button
-                  onClick={() => {
-
-                    setShowDeleteModal(
-                      false
-                    );
-
-                    setSelectedTheatre(
-                      null
-                    );
-                  }}
-
-                  className="
-                    px-5
-                    py-3
-
-                    rounded-xl
-
-                    bg-gray-800
-                  "
-                >
-
-                  Cancel
-
-                </button>
-
-                <button
-                  onClick={async () => {
-
-                    await handleDelete(
-
-                      selectedTheatre._id
-                    );
-
-                    setShowDeleteModal(
-                      false
-                    );
-
-                    setSelectedTheatre(
-                      null
-                    );
-                  }}
-
-                  className="
-                    px-5
-                    py-3
-
-                    rounded-xl
-
-                    bg-red-500
-
-                    font-medium
-                  "
-                >
-
-                  Delete
-
-                </button>
-
+                  <button
+                    type="button"
+                    aria-label={`Delete ${theatre.name}`}
+                    onClick={() => {
+                      setSelectedTheatre(theatre);
+                      setShowDeleteModal(true);
+                    }}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/90 text-white transition hover:bg-red-700"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
               </div>
 
+              <div className="p-5">
+                <h2 className="truncate text-xl font-bold text-white">
+                  {theatre.name}
+                </h2>
+
+                <div className="mt-5 space-y-4 text-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="shrink-0 text-gray-500">👤 Owner</span>
+                    <div className="min-w-0 text-right">
+                      <p className="break-words font-medium text-gray-200">
+                        {theatre.ownerId?.name || "Waiting Registration"}
+                      </p>
+                      <p className="mt-1 break-all text-xs text-gray-500">
+                        {theatre.ownerId?.email ||
+                          theatre.ownerEmail ||
+                          "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {theatre.secretCode && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-gray-500">🔐 Secret Code</span>
+                      <span className="break-all font-bold tracking-widest text-red-400">
+                        {theatre.secretCode}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="flex items-center gap-2 text-gray-500">
+                      <FaMapMarkerAlt className="text-red-500" />
+                      City
+                    </span>
+                    <span className="text-right text-gray-200">
+                      {theatre.city || "-"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 border-t border-white/[0.06] pt-4">
+                    <span className="text-gray-500">Status</span>
+                    <span className="flex items-center gap-2 text-sm capitalize text-gray-200">
+                      {theatre.status === "approved" ? (
+                        <FaCheckCircle className="text-green-400" />
+                      ) : theatre.status === "pending" ? (
+                        <FaClock className="text-yellow-400" />
+                      ) : (
+                        <FaTimesCircle className="text-red-400" />
+                      )}
+                      {theatre.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex min-h-[35vh] flex-col items-center justify-center rounded-2xl border border-white/[0.07] bg-[#111111] px-6 py-16 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 text-3xl">
+            🎭
+          </div>
+          <h2 className="text-xl font-semibold text-white">
+            No Theatres Found
+          </h2>
+          <p className="mt-2 max-w-sm text-sm text-gray-500">
+            No theatres match your current search or selected status filter.
+          </p>
+          {(search || activeFilter !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setActiveFilter("all");
+              }}
+              className="mt-5 rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/10"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111111] p-6 shadow-2xl sm:p-8">
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-xl text-red-500">
+              <FaTrash />
             </div>
 
-          </div>
-        )
-      }
+            <h2 className="text-xl font-bold text-white">
+              Delete Theatre?
+            </h2>
 
+            <p className="mt-3 text-sm leading-6 text-gray-400">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-white">
+                {selectedTheatre?.name}
+              </span>
+              ? This action cannot be undone.
+            </p>
+
+            <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedTheatre(null);
+                }}
+                className="rounded-xl border border-white/10 bg-[#1a1a1a] px-5 py-3 text-sm font-medium text-gray-300 transition hover:bg-white/10 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDelete}
+                className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleting ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FaTrash />
+                    Delete Theatre
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

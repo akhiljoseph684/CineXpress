@@ -1,36 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
+import { FaCalendarAlt, FaMapMarkerAlt, FaTicketAlt } from "react-icons/fa";
 import { getMovieShows } from "../services/showApi";
 import { getMovieById } from "../services/moviesApi";
 
 const MovieShowsPage = () => {
   const { movieId } = useParams();
-
   const navigate = useNavigate();
 
   const [shows, setShows] = useState([]);
   const [movie, setMovie] = useState({});
   const [loading, setLoading] = useState(true);
-
+  const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0],
+    new Date().toLocaleDateString("en-CA")
   );
 
   useEffect(() => {
     window.scrollTo({
       top: 0,
-
       behavior: "smooth",
     });
   }, []);
 
   useEffect(() => {
-    fetchShows();
-  }, [selectedDate]);
+    if (movieId) {
+      fetchShows();
+    }
+  }, [movieId, selectedDate]);
 
   useEffect(() => {
-    fetchMovie();
+    if (movieId) {
+      fetchMovie();
+    }
   }, [movieId]);
 
   const fetchMovie = async () => {
@@ -38,19 +40,21 @@ const MovieShowsPage = () => {
       const res = await getMovieById(movieId);
       setMovie(res.movie || {});
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
   const fetchShows = async () => {
     try {
       setLoading(true);
+      setError("");
 
       const res = await getMovieShows(movieId, selectedDate);
-
       setShows(res.shows || []);
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      setError("Unable to load shows. Please try again.");
+      setShows([]);
     } finally {
       setLoading(false);
     }
@@ -64,145 +68,117 @@ const MovieShowsPage = () => {
     });
   };
 
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatShowTime = (time) => {
+    if (!time) return "--:--";
+
+    const parsedDate = new Date(`2000-01-01T${time}`);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return time;
+    }
+
+    return parsedDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      <div className="relative border-b border-white/10 bg-gradient-to-b from-[#141414] to-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14">
+    <div className="min-h-screen overflow-hidden bg-black text-white">
+      <div className="relative border-b border-gray-800 bg-gradient-to-b from-[#171717] to-black">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-14">
           <div className="max-w-3xl">
-            <p className="text-pink-500 uppercase tracking-[4px] text-xs sm:text-sm mb-3">
+            <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[4px] text-red-500 sm:text-sm">
+              <FaTicketAlt />
               Book Tickets
             </p>
 
-            <h1
-              className="
-                text-3xl
-                sm:text-4xl
-                md:text-5xl
-                lg:text-6xl
-                font-black
-                leading-tight
-                break-words
-              "
-            >
-              {movie.title}
+            <h1 className="break-words text-3xl font-black leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
+              {movie.title || "Movie Shows"}
             </h1>
 
-            <div className="flex flex-wrap gap-2 mt-5">
+            <div className="mt-5 flex flex-wrap gap-2">
               {movie.genre?.map((genre) => (
-                <div
-                  key={genre.name}
-                  className="
-                    px-3 py-1.5
-                    sm:px-4 sm:py-2
-                    rounded-full
-                    bg-white/5
-                    border border-white/10
-                    text-xs sm:text-sm
-                    text-white/70
-                    backdrop-blur-md
-                  "
+                <span
+                  key={genre._id || genre.name}
+                  className="rounded-full border border-red-600/30 bg-red-600/10 px-3 py-1.5 text-xs text-red-300 sm:px-4 sm:py-2 sm:text-sm"
                 >
                   {genre.name}
-                </div>
+                </span>
               ))}
             </div>
           </div>
         </div>
       </div>
 
-      <div
-        className="
-          sticky top-0 z-40
-          bg-black/90
-          backdrop-blur-2xl
-          border-b border-white/10
-        "
-      >
-        <div
-          className="
-            max-w-7xl mx-auto
-            px-3 sm:px-6 lg:px-8
-            py-3
-
-            grid
-            grid-cols-7
-            gap-2
-          "
-        >
+      <div className="sticky top-0 z-40 border-b border-gray-800 bg-black/90 backdrop-blur-2xl">
+        <div className="mx-auto grid max-w-7xl grid-cols-7 gap-2 px-3 py-3 sm:px-6 lg:px-8">
           {generateDates().map((date) => {
-            const formattedDate = date.toISOString().split("T")[0];
-
+            const formattedDate = formatDate(date);
             const isSelected = selectedDate === formattedDate;
 
             return (
               <button
                 key={formattedDate}
                 onClick={() => setSelectedDate(formattedDate)}
-                className={`
-                    flex-1
-                    min-w-0
-                
-                    rounded-xl
-                
-                    px-2 py-2
-                    sm:px-3 sm:py-3
-                
-                    border
-                    transition-all duration-300
-                
-                    ${
-                      isSelected
-                        ? `
-                          bg-pink-600
-                          border-pink-500
-                        `
-                        : `
-                          bg-[#111]
-                          border-white/10
-                        `
-                    }
-                  `}
+                className={`flex min-w-0 flex-col items-center rounded-xl border px-1 py-2 transition-all duration-300 sm:px-3 sm:py-3 ${
+                  isSelected
+                    ? "border-red-500 bg-red-600 text-white shadow-lg shadow-red-600/20"
+                    : "border-gray-800 bg-[#111111] text-gray-300 hover:border-red-600/60 hover:bg-red-600/10"
+                }`}
               >
-                <p className="text-[9px] sm:text-[10px] uppercase text-white/60">
+                <span className="text-[9px] uppercase text-white/70 sm:text-[10px]">
                   {date.toLocaleDateString("en-US", {
                     weekday: "short",
                   })}
-                </p>
+                </span>
 
-                <h2 className="text-base sm:text-lg font-black mt-0.5">
+                <span className="mt-0.5 text-base font-black sm:text-lg">
                   {date.getDate()}
-                </h2>
+                </span>
 
-                <p className="text-[9px] sm:text-[10px] mt-0.5 text-white/60">
+                <span className="mt-0.5 text-[9px] text-white/70 sm:text-[10px]">
                   {date.toLocaleDateString("en-US", {
                     month: "short",
                   })}
-                </p>
+                </span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         {loading ? (
-          <div className="flex justify-center items-center py-24">
-            <div className="h-12 w-12 rounded-full border-4 border-pink-500 border-t-transparent animate-spin" />
+          <div className="flex items-center justify-center py-24">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-800 border-t-red-600" />
+          </div>
+        ) : error ? (
+          <div className="rounded-3xl border border-red-600/30 bg-[#111111] p-8 text-center sm:p-12">
+            <p className="text-lg font-semibold text-red-400">{error}</p>
+            <button
+              onClick={fetchShows}
+              className="mt-5 rounded-xl bg-red-600 px-6 py-3 font-semibold transition hover:bg-red-700"
+            >
+              Try Again
+            </button>
           </div>
         ) : shows.length === 0 ? (
-          <div
-            className="
-              bg-[#111]
-              border border-white/10
-              rounded-3xl
-              p-8 sm:p-12
-              text-center
-            "
-          >
-            <h2 className="text-2xl sm:text-3xl font-bold">No Shows Found</h2>
-
-            <p className="text-white/50 mt-3 text-sm sm:text-base">
-              No shows available for selected date
+          <div className="rounded-3xl border border-gray-800 bg-[#111111] p-8 text-center sm:p-12">
+            <FaCalendarAlt className="mx-auto mb-5 text-4xl text-red-500" />
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              No Shows Found
+            </h2>
+            <p className="mt-3 text-sm text-gray-400 sm:text-base">
+              No shows available for the selected date.
             </p>
           </div>
         ) : (
@@ -210,113 +186,57 @@ const MovieShowsPage = () => {
             {shows.map((item) => (
               <div
                 key={item._id}
-                className="
-                  bg-[#111]
-                  border border-white/10
-                  rounded-3xl
-                  overflow-hidden
-                "
+                className="overflow-hidden rounded-3xl border border-gray-800 bg-[#111111] transition hover:border-red-600/30"
               >
-                <div
-                  className="
-                    flex flex-col
-                    xl:flex-row
-                  "
-                >
-                  <div
-                    className="
-                      xl:w-80
-                      w-full
-                      p-5 sm:p-6 lg:p-8
-                      border-b xl:border-b-0 xl:border-r
-                      border-white/10
-                      bg-[#151515]
-                    "
-                  >
-                    <h2
-                      className="
-                        text-2xl
-                        sm:text-3xl
-                        font-bold
-                        leading-tight
-                        break-words
-                      "
-                    >
-                      {item.theatre?.name}
+                <div className="flex flex-col xl:flex-row">
+                  <div className="w-full border-b border-gray-800 bg-[#151515] p-5 sm:p-6 xl:w-80 xl:border-b-0 xl:border-r lg:p-8">
+                    <h2 className="break-words text-2xl font-bold leading-tight sm:text-3xl">
+                      {item.theatre?.name || "Theatre"}
                     </h2>
 
-                    <p className="text-white/50 mt-4 text-sm sm:text-base leading-relaxed">
-                      {item.theatre?.address}
+                    <p className="mt-4 flex items-start gap-2 text-sm leading-relaxed text-gray-400 sm:text-base">
+                      <FaMapMarkerAlt className="mt-1 shrink-0 text-red-500" />
+                      {item.theatre?.address || "Address unavailable"}
                     </p>
 
-                    <div className="flex items-center gap-2 mt-6">
-                      <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-
-                      <p className="text-sm text-green-400 font-medium">
+                    <div className="mt-6 flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                      <p className="text-sm font-medium text-green-400">
                         Shows Available
                       </p>
                     </div>
                   </div>
 
                   <div className="flex-1 p-4 sm:p-6 lg:p-8">
-                    <div
-                      className="
-                        grid
-                        grid-cols-2
-                        sm:grid-cols-3
-                        md:grid-cols-4
-                        xl:grid-cols-5
-                        gap-3 sm:gap-4
-                      "
-                    >
-                      {item.shows.map((show) => (
-                        <button
-                          key={show._id}
-                          onClick={() => navigate(`/booking/movie/${show._id}`)}
-                          className="
-                            group
-                            w-full
-
-                            bg-black
-                            border border-pink-500/20
-
-                            rounded-2xl
-
-                            px-3 py-4
-                            sm:px-5 sm:py-5
-
-                            hover:bg-pink-500/10
-                            hover:border-pink-500
-                            hover:-translate-y-1
-
-                            transition-all duration-300
-                          "
-                        >
-                          <h2
-                            className="
-                              text-lg
-                              sm:text-xl
-                              lg:text-2xl
-                              font-bold
-                              text-pink-400
-                              group-hover:text-pink-300
-                            "
+                    {!item.shows?.length ? (
+                      <p className="py-6 text-center text-gray-500">
+                        No showtimes available at this theatre.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5">
+                        {item.shows.map((show) => (
+                          <button
+                            key={show._id}
+                            onClick={() =>
+                              navigate(`/booking/movie/${show._id}`)
+                            }
+                            className="group w-full rounded-2xl border border-red-600/20 bg-black px-3 py-4 transition-all duration-300 hover:-translate-y-1 hover:border-red-500 hover:bg-red-600/10 sm:px-5 sm:py-5"
                           >
-                            {new Date(
-                              `2000-01-01T${show.startTime}`,
-                            ).toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: true,
-                            })}
-                          </h2>
+                            <h3 className="text-lg font-bold text-red-400 transition group-hover:text-red-300 sm:text-xl lg:text-2xl">
+                              {formatShowTime(show.startTime)}
+                            </h3>
 
-                          <p className="text-[11px] sm:text-xs text-white/50 mt-2">
-                            {show.screen}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
+                            <p className="mt-2 text-[11px] text-gray-500 sm:text-xs">
+                              {show.screen || "Standard Screen"}
+                            </p>
+
+                            <span className="mt-3 inline-block text-xs font-medium text-gray-400 transition group-hover:text-red-400">
+                              Select Show →
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
